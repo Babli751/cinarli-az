@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { categories, products } from "@/data/catalog";
 
 export const Route = createFileRoute("/")({
@@ -13,6 +14,24 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [catOpen, setCatOpen] = useState(false);
+  const [activeSlug, setActiveSlug] = useState(categories[0].slug);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!catOpen) return;
+    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setCatOpen(false);
+    document.addEventListener("keydown", onEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onEsc);
+      document.body.style.overflow = "";
+    };
+  }, [catOpen]);
+
+  const activeCategory = categories.find((c) => c.slug === activeSlug)!;
+  const activeProducts = products.filter((p) => p.category === activeSlug).slice(0, 8);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top bar */}
@@ -41,9 +60,16 @@ function Index() {
             <span className="text-xl font-extrabold tracking-tight">MebelMart</span>
           </a>
 
-          <Link to="/kataloq" className="ml-2 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
-            <Menu className="h-5 w-5" /> Kataloq
-          </Link>
+          <button
+            onClick={() => setCatOpen((v) => !v)}
+            className={`ml-2 flex items-center gap-2 rounded-lg px-4 py-3 font-semibold transition ${
+              catOpen
+                ? "bg-[var(--brand)]/90 text-[var(--brand-foreground)]"
+                : "bg-[var(--brand)] text-[var(--brand-foreground)] hover:opacity-90"
+            }`}
+          >
+            {catOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />} Kataloq
+          </button>
 
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
@@ -65,6 +91,76 @@ function Index() {
           </button>
         </div>
       </header>
+
+      {/* Catalog mega-menu overlay */}
+      {catOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setCatOpen(false)}>
+          <div
+            ref={panelRef}
+            onClick={(e) => e.stopPropagation()}
+            className="mx-auto mt-[140px] max-h-[calc(100vh-160px)] max-w-7xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+          >
+            <div className="grid grid-cols-[260px_1fr] max-h-[calc(100vh-160px)]">
+              {/* Categories list */}
+              <div className="overflow-y-auto border-r border-border bg-secondary/30 py-2">
+                {categories.map((c) => (
+                  <button
+                    key={c.slug}
+                    onMouseEnter={() => setActiveSlug(c.slug)}
+                    onClick={() => setActiveSlug(c.slug)}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition ${
+                      activeSlug === c.slug
+                        ? "bg-background font-semibold text-[var(--brand)]"
+                        : "hover:bg-background/60"
+                    }`}
+                  >
+                    <span className="text-xl">{c.icon}</span>
+                    <span className="flex-1">{c.name}</span>
+                    <ChevronRight className="h-4 w-4 opacity-40" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Active category preview */}
+              <div className="overflow-y-auto p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold">{activeCategory.name}</h3>
+                    <p className="text-sm text-muted-foreground">{activeCategory.description}</p>
+                  </div>
+                  <Link
+                    to="/kateqoriya/$slug"
+                    params={{ slug: activeCategory.slug }}
+                    onClick={() => setCatOpen(false)}
+                    className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90"
+                  >
+                    Hamısına bax →
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  {activeProducts.map((p) => (
+                    <Link
+                      key={p.name}
+                      to="/kateqoriya/$slug"
+                      params={{ slug: p.category }}
+                      onClick={() => setCatOpen(false)}
+                      className="group rounded-xl border border-border bg-card p-3 transition hover:border-[var(--brand)] hover:shadow-md"
+                    >
+                      <div className="grid h-20 place-items-center text-4xl">{p.img}</div>
+                      <div className="mt-2 line-clamp-2 text-xs font-medium group-hover:text-[var(--brand)]">{p.name}</div>
+                      <div className="mt-1 text-sm font-bold">{p.price} ₼</div>
+                    </Link>
+                  ))}
+                  {activeProducts.length === 0 && (
+                    <div className="col-span-full text-sm text-muted-foreground">Bu kateqoriyada məhsul tezliklə.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
