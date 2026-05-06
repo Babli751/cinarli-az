@@ -113,7 +113,7 @@ function Index() {
         <div className="grid grid-cols-2 gap-4 rounded-2xl bg-secondary/40 p-6 md:grid-cols-5">
           {[
             { icon: Store, label: "56 mağaza" },
-            { icon: Smartphone, label: "40 mindən çox seçim" },
+            { icon: Sofa, label: "10 mindən çox model" },
             { icon: Truck, label: "Sürətli çatdırılma" },
             { icon: ShieldCheck, label: "Rəsmi zəmanət" },
             { icon: Gift, label: "Bonus proqramı" },
