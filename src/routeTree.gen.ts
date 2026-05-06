@@ -9,9 +9,93 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as YeniRouteImport } from './routes/yeni'
+import { Route as SebetRouteImport } from './routes/sebet'
+import { Route as OutletRouteImport } from './routes/outlet'
+import { Route as MuqayiseRouteImport } from './routes/muqayise'
+import { Route as MagazalarRouteImport } from './routes/magazalar'
+import { Route as KorporativRouteImport } from './routes/korporativ'
+import { Route as KampaniyalarRouteImport } from './routes/kampaniyalar'
+import { Route as KabinetRouteImport } from './routes/kabinet'
+import { Route as HaqqimizdaRouteImport } from './routes/haqqimizda'
+import { Route as GeriQaytarmaRouteImport } from './routes/geri-qaytarma'
+import { Route as ElaqeRouteImport } from './routes/elaqe'
+import { Route as CatdirilmaRouteImport } from './routes/catdirilma'
+import { Route as BeyendimRouteImport } from './routes/beyendim'
+import { Route as AylikOdenisRouteImport } from './routes/aylik-odenis'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KateqoriyaSlugRouteImport } from './routes/kateqoriya.$slug'
 
+const YeniRoute = YeniRouteImport.update({
+  id: '/yeni',
+  path: '/yeni',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SebetRoute = SebetRouteImport.update({
+  id: '/sebet',
+  path: '/sebet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OutletRoute = OutletRouteImport.update({
+  id: '/outlet',
+  path: '/outlet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MuqayiseRoute = MuqayiseRouteImport.update({
+  id: '/muqayise',
+  path: '/muqayise',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MagazalarRoute = MagazalarRouteImport.update({
+  id: '/magazalar',
+  path: '/magazalar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KorporativRoute = KorporativRouteImport.update({
+  id: '/korporativ',
+  path: '/korporativ',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KampaniyalarRoute = KampaniyalarRouteImport.update({
+  id: '/kampaniyalar',
+  path: '/kampaniyalar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KabinetRoute = KabinetRouteImport.update({
+  id: '/kabinet',
+  path: '/kabinet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HaqqimizdaRoute = HaqqimizdaRouteImport.update({
+  id: '/haqqimizda',
+  path: '/haqqimizda',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GeriQaytarmaRoute = GeriQaytarmaRouteImport.update({
+  id: '/geri-qaytarma',
+  path: '/geri-qaytarma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ElaqeRoute = ElaqeRouteImport.update({
+  id: '/elaqe',
+  path: '/elaqe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatdirilmaRoute = CatdirilmaRouteImport.update({
+  id: '/catdirilma',
+  path: '/catdirilma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BeyendimRoute = BeyendimRouteImport.update({
+  id: '/beyendim',
+  path: '/beyendim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AylikOdenisRoute = AylikOdenisRouteImport.update({
+  id: '/aylik-odenis',
+  path: '/aylik-odenis',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -25,32 +109,235 @@ const KateqoriyaSlugRoute = KateqoriyaSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aylik-odenis': typeof AylikOdenisRoute
+  '/beyendim': typeof BeyendimRoute
+  '/catdirilma': typeof CatdirilmaRoute
+  '/elaqe': typeof ElaqeRoute
+  '/geri-qaytarma': typeof GeriQaytarmaRoute
+  '/haqqimizda': typeof HaqqimizdaRoute
+  '/kabinet': typeof KabinetRoute
+  '/kampaniyalar': typeof KampaniyalarRoute
+  '/korporativ': typeof KorporativRoute
+  '/magazalar': typeof MagazalarRoute
+  '/muqayise': typeof MuqayiseRoute
+  '/outlet': typeof OutletRoute
+  '/sebet': typeof SebetRoute
+  '/yeni': typeof YeniRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aylik-odenis': typeof AylikOdenisRoute
+  '/beyendim': typeof BeyendimRoute
+  '/catdirilma': typeof CatdirilmaRoute
+  '/elaqe': typeof ElaqeRoute
+  '/geri-qaytarma': typeof GeriQaytarmaRoute
+  '/haqqimizda': typeof HaqqimizdaRoute
+  '/kabinet': typeof KabinetRoute
+  '/kampaniyalar': typeof KampaniyalarRoute
+  '/korporativ': typeof KorporativRoute
+  '/magazalar': typeof MagazalarRoute
+  '/muqayise': typeof MuqayiseRoute
+  '/outlet': typeof OutletRoute
+  '/sebet': typeof SebetRoute
+  '/yeni': typeof YeniRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aylik-odenis': typeof AylikOdenisRoute
+  '/beyendim': typeof BeyendimRoute
+  '/catdirilma': typeof CatdirilmaRoute
+  '/elaqe': typeof ElaqeRoute
+  '/geri-qaytarma': typeof GeriQaytarmaRoute
+  '/haqqimizda': typeof HaqqimizdaRoute
+  '/kabinet': typeof KabinetRoute
+  '/kampaniyalar': typeof KampaniyalarRoute
+  '/korporativ': typeof KorporativRoute
+  '/magazalar': typeof MagazalarRoute
+  '/muqayise': typeof MuqayiseRoute
+  '/outlet': typeof OutletRoute
+  '/sebet': typeof SebetRoute
+  '/yeni': typeof YeniRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/kateqoriya/$slug'
+  fullPaths:
+    | '/'
+    | '/aylik-odenis'
+    | '/beyendim'
+    | '/catdirilma'
+    | '/elaqe'
+    | '/geri-qaytarma'
+    | '/haqqimizda'
+    | '/kabinet'
+    | '/kampaniyalar'
+    | '/korporativ'
+    | '/magazalar'
+    | '/muqayise'
+    | '/outlet'
+    | '/sebet'
+    | '/yeni'
+    | '/kateqoriya/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/kateqoriya/$slug'
-  id: '__root__' | '/' | '/kateqoriya/$slug'
+  to:
+    | '/'
+    | '/aylik-odenis'
+    | '/beyendim'
+    | '/catdirilma'
+    | '/elaqe'
+    | '/geri-qaytarma'
+    | '/haqqimizda'
+    | '/kabinet'
+    | '/kampaniyalar'
+    | '/korporativ'
+    | '/magazalar'
+    | '/muqayise'
+    | '/outlet'
+    | '/sebet'
+    | '/yeni'
+    | '/kateqoriya/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/aylik-odenis'
+    | '/beyendim'
+    | '/catdirilma'
+    | '/elaqe'
+    | '/geri-qaytarma'
+    | '/haqqimizda'
+    | '/kabinet'
+    | '/kampaniyalar'
+    | '/korporativ'
+    | '/magazalar'
+    | '/muqayise'
+    | '/outlet'
+    | '/sebet'
+    | '/yeni'
+    | '/kateqoriya/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AylikOdenisRoute: typeof AylikOdenisRoute
+  BeyendimRoute: typeof BeyendimRoute
+  CatdirilmaRoute: typeof CatdirilmaRoute
+  ElaqeRoute: typeof ElaqeRoute
+  GeriQaytarmaRoute: typeof GeriQaytarmaRoute
+  HaqqimizdaRoute: typeof HaqqimizdaRoute
+  KabinetRoute: typeof KabinetRoute
+  KampaniyalarRoute: typeof KampaniyalarRoute
+  KorporativRoute: typeof KorporativRoute
+  MagazalarRoute: typeof MagazalarRoute
+  MuqayiseRoute: typeof MuqayiseRoute
+  OutletRoute: typeof OutletRoute
+  SebetRoute: typeof SebetRoute
+  YeniRoute: typeof YeniRoute
   KateqoriyaSlugRoute: typeof KateqoriyaSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/yeni': {
+      id: '/yeni'
+      path: '/yeni'
+      fullPath: '/yeni'
+      preLoaderRoute: typeof YeniRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sebet': {
+      id: '/sebet'
+      path: '/sebet'
+      fullPath: '/sebet'
+      preLoaderRoute: typeof SebetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/outlet': {
+      id: '/outlet'
+      path: '/outlet'
+      fullPath: '/outlet'
+      preLoaderRoute: typeof OutletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/muqayise': {
+      id: '/muqayise'
+      path: '/muqayise'
+      fullPath: '/muqayise'
+      preLoaderRoute: typeof MuqayiseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/magazalar': {
+      id: '/magazalar'
+      path: '/magazalar'
+      fullPath: '/magazalar'
+      preLoaderRoute: typeof MagazalarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/korporativ': {
+      id: '/korporativ'
+      path: '/korporativ'
+      fullPath: '/korporativ'
+      preLoaderRoute: typeof KorporativRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kampaniyalar': {
+      id: '/kampaniyalar'
+      path: '/kampaniyalar'
+      fullPath: '/kampaniyalar'
+      preLoaderRoute: typeof KampaniyalarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kabinet': {
+      id: '/kabinet'
+      path: '/kabinet'
+      fullPath: '/kabinet'
+      preLoaderRoute: typeof KabinetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/haqqimizda': {
+      id: '/haqqimizda'
+      path: '/haqqimizda'
+      fullPath: '/haqqimizda'
+      preLoaderRoute: typeof HaqqimizdaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/geri-qaytarma': {
+      id: '/geri-qaytarma'
+      path: '/geri-qaytarma'
+      fullPath: '/geri-qaytarma'
+      preLoaderRoute: typeof GeriQaytarmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/elaqe': {
+      id: '/elaqe'
+      path: '/elaqe'
+      fullPath: '/elaqe'
+      preLoaderRoute: typeof ElaqeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catdirilma': {
+      id: '/catdirilma'
+      path: '/catdirilma'
+      fullPath: '/catdirilma'
+      preLoaderRoute: typeof CatdirilmaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/beyendim': {
+      id: '/beyendim'
+      path: '/beyendim'
+      fullPath: '/beyendim'
+      preLoaderRoute: typeof BeyendimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aylik-odenis': {
+      id: '/aylik-odenis'
+      path: '/aylik-odenis'
+      fullPath: '/aylik-odenis'
+      preLoaderRoute: typeof AylikOdenisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -70,8 +357,32 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AylikOdenisRoute: AylikOdenisRoute,
+  BeyendimRoute: BeyendimRoute,
+  CatdirilmaRoute: CatdirilmaRoute,
+  ElaqeRoute: ElaqeRoute,
+  GeriQaytarmaRoute: GeriQaytarmaRoute,
+  HaqqimizdaRoute: HaqqimizdaRoute,
+  KabinetRoute: KabinetRoute,
+  KampaniyalarRoute: KampaniyalarRoute,
+  KorporativRoute: KorporativRoute,
+  MagazalarRoute: MagazalarRoute,
+  MuqayiseRoute: MuqayiseRoute,
+  OutletRoute: OutletRoute,
+  SebetRoute: SebetRoute,
+  YeniRoute: YeniRoute,
   KateqoriyaSlugRoute: KateqoriyaSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
