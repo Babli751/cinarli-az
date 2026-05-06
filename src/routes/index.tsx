@@ -219,13 +219,14 @@ function Index() {
 
       {/* Feature strip */}
       <section className="mx-auto max-w-7xl px-4">
-        <div className="grid grid-cols-2 gap-4 rounded-2xl bg-secondary/40 p-6 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 rounded-2xl bg-secondary/40 p-6 md:grid-cols-6">
           {[
             { icon: Store, label: "56 mağaza" },
-            { icon: Sofa, label: "10 mindən çox model" },
+            { icon: Sofa, label: "40 mindən çox seçim" },
             { icon: Truck, label: "Sürətli çatdırılma" },
             { icon: ShieldCheck, label: "Rəsmi zəmanət" },
             { icon: Gift, label: "Bonus proqramı" },
+            { icon: Zap, label: "Sürətli alış-veriş" },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-2 text-center">
               <Icon className="h-8 w-8 text-[var(--brand)]" />
