@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { categories, products } from "@/data/catalog";
 
 export const Route = createFileRoute("/")({
