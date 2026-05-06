@@ -85,7 +85,7 @@ function Index() {
           <h1 className="mt-3 text-5xl font-black leading-tight md:text-6xl">70%-dək<br />ENDİRİMLƏR</h1>
           <p className="mt-4 max-w-md text-white/90">Minlərlə məhsulda möhtəşəm qiymətlər. Yalnız bu həftə.</p>
           <button className="mt-6 rounded-lg bg-white px-6 py-3 font-bold text-[var(--brand)] hover:bg-white/90">İndi alış-veriş et</button>
-          <div className="absolute -bottom-10 -right-10 text-[14rem] opacity-20">🛒</div>
+          <div className="absolute -bottom-10 -right-10 text-[14rem] opacity-20">🛋️</div>
           <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
             <span className="h-1.5 w-8 rounded-full bg-white"></span>
             <span className="h-1.5 w-2 rounded-full bg-white/50"></span>
@@ -98,9 +98,9 @@ function Index() {
             <span className="font-semibold">Həftənin təklifi</span>
             <span className="font-mono text-[var(--accent-orange)]">05 : 09 : 44 : 35</span>
           </div>
-          <h3 className="text-lg font-bold">Premium Buxar Ütüsü FV-9850</h3>
+          <h3 className="text-lg font-bold">Lüks Yataq Dəsti Royal</h3>
           <span className="mt-1 inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs text-[var(--brand)]">Stokda var</span>
-          <div className="my-4 grid place-items-center text-7xl">🪨</div>
+          <div className="my-4 grid place-items-center text-7xl">🛏️</div>
           <div className="mb-1 text-sm text-muted-foreground line-through">299.99 AZN</div>
           <div className="text-3xl font-black">229.99 AZN</div>
           <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">−70 AZN · Faizsiz təklif</div>
