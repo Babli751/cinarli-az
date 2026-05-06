@@ -14,6 +14,24 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [catOpen, setCatOpen] = useState(false);
+  const [activeSlug, setActiveSlug] = useState(categories[0].slug);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!catOpen) return;
+    const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setCatOpen(false);
+    document.addEventListener("keydown", onEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onEsc);
+      document.body.style.overflow = "";
+    };
+  }, [catOpen]);
+
+  const activeCategory = categories.find((c) => c.slug === activeSlug)!;
+  const activeProducts = products.filter((p) => p.category === activeSlug).slice(0, 8);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Top bar */}
