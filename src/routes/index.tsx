@@ -169,13 +169,26 @@ function Index() {
 
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
-        <div className="relative col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand)] to-emerald-600 p-10 text-white">
-          <p className="text-sm font-semibold uppercase tracking-widest opacity-90">Mövsüm endirimləri</p>
-          <h1 className="mt-3 text-5xl font-black leading-tight md:text-6xl">70%-dək<br />ENDİRİMLƏR</h1>
-          <p className="mt-4 max-w-md text-white/90">Minlərlə məhsulda möhtəşəm qiymətlər. Yalnız bu həftə.</p>
-          <button className="mt-6 rounded-lg bg-white px-6 py-3 font-bold text-[var(--brand)] hover:bg-white/90">İndi alış-veriş et</button>
-          <div className="absolute -bottom-10 -right-10 text-[14rem] opacity-20">🛋️</div>
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+        <div className="relative col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand)] via-emerald-500 to-emerald-700 p-10 text-white">
+          <div className="relative z-10">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-white/80">Mövsüm kampaniyası</p>
+            <h1 className="mt-3 font-black leading-none tracking-tight">
+              <span className="block text-6xl md:text-7xl">Yaşıl</span>
+              <span className="block -mt-1 text-6xl italic md:text-7xl">cümə</span>
+            </h1>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold backdrop-blur">
+              📅 8 — 11 may
+            </div>
+            <div className="mt-6 flex items-end gap-2">
+              <span className="text-7xl font-black md:text-8xl">70%</span>
+              <span className="mb-2 text-2xl font-bold">-dək<br/>ENDİRİMLƏR</span>
+            </div>
+            <button className="mt-6 rounded-lg bg-white px-7 py-3 font-bold text-[var(--brand)] shadow-lg hover:bg-white/90">İndi alış-veriş et →</button>
+          </div>
+          <div className="absolute -bottom-6 -right-6 flex items-end gap-2 text-7xl opacity-40 md:text-8xl">
+            <span>🛋️</span><span>🛏️</span><span>🪑</span>
+          </div>
+          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
             <span className="h-1.5 w-8 rounded-full bg-white"></span>
             <span className="h-1.5 w-2 rounded-full bg-white/50"></span>
             <span className="h-1.5 w-2 rounded-full bg-white/50"></span>
