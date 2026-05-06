@@ -1,27 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Smartphone, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ElektroMart — Onlayn elektronika mağazası" },
-      { name: "description", content: "Telefon, noutbuk, məişət texnikası və daha çoxu. Sürətli çatdırılma, faizsiz aylıq ödəniş." },
+      { title: "MebelMart — Onlayn mebel mağazası" },
+      { name: "description", content: "Divan, çarpayı, masa, şkaf və daha çoxu. Sürətli çatdırılma, faizsiz aylıq ödəniş." },
     ],
   }),
   component: Index,
 });
 
-const categories = ["Telefonlar", "Noutbuklar", "Televizorlar", "Soyuducular", "Paltaryuyanlar", "Kondisionerlər", "Qulaqlıqlar", "Saatlar"];
+const categories = ["Divanlar", "Çarpayılar", "Masalar", "Stullar", "Şkaflar", "Kreslolar", "Yumşaq mebel", "Uşaq otağı"];
 
 const products = [
-  { name: "Smartfon Pro 256 GB", price: 1899, old: 2199, discount: 14, img: "📱" },
-  { name: "Noutbuk Air 13", price: 2499, old: 2799, discount: 11, img: "💻" },
-  { name: "Simsiz qulaqlıqlar", price: 249, old: 299, discount: 17, img: "🎧" },
-  { name: '4K TV 55"', price: 1299, old: 1599, discount: 19, img: "📺" },
-  { name: "Ağıllı saat", price: 399, old: 449, discount: 11, img: "⌚" },
-  { name: "Kondisioner 12 BTU", price: 899, old: 1099, discount: 18, img: "❄️" },
-  { name: "Tozsoran Robot", price: 599, old: 749, discount: 20, img: "🤖" },
-  { name: "Kofe maşını", price: 449, old: 529, discount: 15, img: "☕" },
+  { name: "Künc divan Milano", price: 1899, old: 2199, discount: 14, img: "🛋️" },
+  { name: "İkinəfərlik çarpayı Oslo", price: 2499, old: 2799, discount: 11, img: "🛏️" },
+  { name: "Yemək masası dəsti", price: 849, old: 999, discount: 15, img: "🪑" },
+  { name: "Geyim şkafı 4 qapılı", price: 1299, old: 1599, discount: 19, img: "🚪" },
+  { name: "Ofis kresloları", price: 399, old: 449, discount: 11, img: "💺" },
+  { name: "TV altlığı modul", price: 599, old: 749, discount: 20, img: "📺" },
+  { name: "Jurnal masası", price: 249, old: 299, discount: 17, img: "🪟" },
+  { name: "Kitab rəfi", price: 449, old: 529, discount: 15, img: "📚" },
 ];
 
 function Index() {
