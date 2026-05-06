@@ -41,9 +41,9 @@ function Index() {
             <span className="text-xl font-extrabold tracking-tight">MebelMart</span>
           </a>
 
-          <button className="ml-2 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
+          <Link to="/kataloq" className="ml-2 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
             <Menu className="h-5 w-5" /> Kataloq
-          </button>
+          </Link>
 
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
