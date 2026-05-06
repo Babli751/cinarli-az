@@ -1,27 +1,27 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Smartphone, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ElektroMart — Onlayn elektronika mağazası" },
-      { name: "description", content: "Telefon, noutbuk, məişət texnikası və daha çoxu. Sürətli çatdırılma, faizsiz aylıq ödəniş." },
+      { title: "MebelMart — Onlayn mebel mağazası" },
+      { name: "description", content: "Divan, çarpayı, masa, şkaf və daha çoxu. Sürətli çatdırılma, faizsiz aylıq ödəniş." },
     ],
   }),
   component: Index,
 });
 
-const categories = ["Telefonlar", "Noutbuklar", "Televizorlar", "Soyuducular", "Paltaryuyanlar", "Kondisionerlər", "Qulaqlıqlar", "Saatlar"];
+const categories = ["Divanlar", "Çarpayılar", "Masalar", "Stullar", "Şkaflar", "Kreslolar", "Yumşaq mebel", "Uşaq otağı"];
 
 const products = [
-  { name: "Smartfon Pro 256 GB", price: 1899, old: 2199, discount: 14, img: "📱" },
-  { name: "Noutbuk Air 13", price: 2499, old: 2799, discount: 11, img: "💻" },
-  { name: "Simsiz qulaqlıqlar", price: 249, old: 299, discount: 17, img: "🎧" },
-  { name: '4K TV 55"', price: 1299, old: 1599, discount: 19, img: "📺" },
-  { name: "Ağıllı saat", price: 399, old: 449, discount: 11, img: "⌚" },
-  { name: "Kondisioner 12 BTU", price: 899, old: 1099, discount: 18, img: "❄️" },
-  { name: "Tozsoran Robot", price: 599, old: 749, discount: 20, img: "🤖" },
-  { name: "Kofe maşını", price: 449, old: 529, discount: 15, img: "☕" },
+  { name: "Künc divan Milano", price: 1899, old: 2199, discount: 14, img: "🛋️" },
+  { name: "İkinəfərlik çarpayı Oslo", price: 2499, old: 2799, discount: 11, img: "🛏️" },
+  { name: "Yemək masası dəsti", price: 849, old: 999, discount: 15, img: "🪑" },
+  { name: "Geyim şkafı 4 qapılı", price: 1299, old: 1599, discount: 19, img: "🚪" },
+  { name: "Ofis kresloları", price: 399, old: 449, discount: 11, img: "💺" },
+  { name: "TV altlığı modul", price: 599, old: 749, discount: 20, img: "📺" },
+  { name: "Jurnal masası", price: 249, old: 299, discount: 17, img: "🪟" },
+  { name: "Kitab rəfi", price: 449, old: 529, discount: 15, img: "📚" },
 ];
 
 function Index() {
@@ -35,7 +35,7 @@ function Index() {
             <a href="#">Mağazalar</a>
             <a href="#">Korporativ</a>
             <a href="#">Outlet</a>
-            <span className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Kondisionerlər</span>
+            <span className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Künc divanlar</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-bold text-[var(--brand)]">*0171</span>
@@ -49,8 +49,8 @@ function Index() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <a href="/" className="flex items-center gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand)] text-[var(--brand-foreground)] font-black">E</div>
-            <span className="text-xl font-extrabold tracking-tight">ElektroMart</span>
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand)] text-[var(--brand-foreground)] font-black">M</div>
+            <span className="text-xl font-extrabold tracking-tight">MebelMart</span>
           </a>
 
           <button className="ml-2 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
@@ -85,7 +85,7 @@ function Index() {
           <h1 className="mt-3 text-5xl font-black leading-tight md:text-6xl">70%-dək<br />ENDİRİMLƏR</h1>
           <p className="mt-4 max-w-md text-white/90">Minlərlə məhsulda möhtəşəm qiymətlər. Yalnız bu həftə.</p>
           <button className="mt-6 rounded-lg bg-white px-6 py-3 font-bold text-[var(--brand)] hover:bg-white/90">İndi alış-veriş et</button>
-          <div className="absolute -bottom-10 -right-10 text-[14rem] opacity-20">🛒</div>
+          <div className="absolute -bottom-10 -right-10 text-[14rem] opacity-20">🛋️</div>
           <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
             <span className="h-1.5 w-8 rounded-full bg-white"></span>
             <span className="h-1.5 w-2 rounded-full bg-white/50"></span>
@@ -98,9 +98,9 @@ function Index() {
             <span className="font-semibold">Həftənin təklifi</span>
             <span className="font-mono text-[var(--accent-orange)]">05 : 09 : 44 : 35</span>
           </div>
-          <h3 className="text-lg font-bold">Premium Buxar Ütüsü FV-9850</h3>
+          <h3 className="text-lg font-bold">Lüks Yataq Dəsti Royal</h3>
           <span className="mt-1 inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs text-[var(--brand)]">Stokda var</span>
-          <div className="my-4 grid place-items-center text-7xl">🪨</div>
+          <div className="my-4 grid place-items-center text-7xl">🛏️</div>
           <div className="mb-1 text-sm text-muted-foreground line-through">299.99 AZN</div>
           <div className="text-3xl font-black">229.99 AZN</div>
           <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">−70 AZN · Faizsiz təklif</div>
@@ -113,7 +113,7 @@ function Index() {
         <div className="grid grid-cols-2 gap-4 rounded-2xl bg-secondary/40 p-6 md:grid-cols-5">
           {[
             { icon: Store, label: "56 mağaza" },
-            { icon: Smartphone, label: "40 mindən çox seçim" },
+            { icon: Sofa, label: "10 mindən çox model" },
             { icon: Truck, label: "Sürətli çatdırılma" },
             { icon: ShieldCheck, label: "Rəsmi zəmanət" },
             { icon: Gift, label: "Bonus proqramı" },
@@ -179,10 +179,10 @@ function Index() {
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-12 md:grid-cols-4">
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded bg-[var(--brand)] font-black text-[var(--brand-foreground)]">E</div>
-              <span className="font-extrabold">ElektroMart</span>
+              <div className="grid h-8 w-8 place-items-center rounded bg-[var(--brand)] font-black text-[var(--brand-foreground)]">M</div>
+              <span className="font-extrabold">MebelMart</span>
             </div>
-            <p className="text-sm text-muted-foreground">Etibarlı elektronika mağazası. 24/7 dəstək.</p>
+            <p className="text-sm text-muted-foreground">Etibarlı mebel mağazası. 24/7 dəstək.</p>
           </div>
           <div>
             <h4 className="mb-3 font-semibold">Şirkət</h4>
@@ -199,11 +199,11 @@ function Index() {
           <div>
             <h4 className="mb-3 font-semibold">Əlaqə</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>*0171</li><li>info@elektromart.az</li><li>Bakı, Azərbaycan</li>
+              <li>*0171</li><li>info@mebelmart.az</li><li>Bakı, Azərbaycan</li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">© 2026 ElektroMart</div>
+        <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">© 2026 MebelMart</div>
       </footer>
     </div>
   );
