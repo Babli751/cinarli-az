@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { Heart, Scale, Zap, ChevronLeft } from "lucide-react";
-import { categories, products } from "@/data/catalog";
+import { categories, products, type Product } from "@/data/catalog";
 
 const searchSchema = z.object({
   sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
@@ -48,7 +48,7 @@ function CategoryPage() {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
-    let list = products.filter((p) => p.category === slug);
+    let list: Product[] = products.filter((p) => p.category === slug);
     list = list.filter((p) => p.price >= min && p.price <= max);
     if (search.trim()) list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     switch (sort) {
