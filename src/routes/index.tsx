@@ -49,7 +49,7 @@ function Index() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <a href="/" className="flex items-center gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand)] text-[var(--brand-foreground)] font-black">E</div>
+            <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand)] text-[var(--brand-foreground)] font-black">M</div>
             <span className="text-xl font-extrabold tracking-tight">MebelMart</span>
           </a>
 
@@ -179,7 +179,7 @@ function Index() {
         <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-12 md:grid-cols-4">
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <div className="grid h-8 w-8 place-items-center rounded bg-[var(--brand)] font-black text-[var(--brand-foreground)]">E</div>
+              <div className="grid h-8 w-8 place-items-center rounded bg-[var(--brand)] font-black text-[var(--brand-foreground)]">M</div>
               <span className="font-extrabold">MebelMart</span>
             </div>
             <p className="text-sm text-muted-foreground">Etibarlı mebel mağazası. 24/7 dəstək.</p>
