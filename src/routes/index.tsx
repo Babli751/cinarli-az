@@ -50,7 +50,7 @@ function Index() {
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
           <a href="/" className="flex items-center gap-2">
             <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand)] text-[var(--brand-foreground)] font-black">E</div>
-            <span className="text-xl font-extrabold tracking-tight">ElektroMart</span>
+            <span className="text-xl font-extrabold tracking-tight">MebelMart</span>
           </a>
 
           <button className="ml-2 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
@@ -180,9 +180,9 @@ function Index() {
           <div>
             <div className="mb-3 flex items-center gap-2">
               <div className="grid h-8 w-8 place-items-center rounded bg-[var(--brand)] font-black text-[var(--brand-foreground)]">E</div>
-              <span className="font-extrabold">ElektroMart</span>
+              <span className="font-extrabold">MebelMart</span>
             </div>
-            <p className="text-sm text-muted-foreground">Etibarlı elektronika mağazası. 24/7 dəstək.</p>
+            <p className="text-sm text-muted-foreground">Etibarlı mebel mağazası. 24/7 dəstək.</p>
           </div>
           <div>
             <h4 className="mb-3 font-semibold">Şirkət</h4>
@@ -199,11 +199,11 @@ function Index() {
           <div>
             <h4 className="mb-3 font-semibold">Əlaqə</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>*0171</li><li>info@elektromart.az</li><li>Bakı, Azərbaycan</li>
+              <li>*0171</li><li>info@mebelmart.az</li><li>Bakı, Azərbaycan</li>
             </ul>
           </div>
         </div>
-        <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">© 2026 ElektroMart</div>
+        <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">© 2026 MebelMart</div>
       </footer>
     </div>
   );
