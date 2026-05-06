@@ -104,13 +104,13 @@ function CategoryPage() {
               <input
                 type="number"
                 value={min}
-                onChange={(e) => navigate({ search: (p) => ({ ...p, min: Number(e.target.value) || 0 }) })}
+                onChange={(e) => navigate({ search: (prev) => ({ ...prev, min: Number(e.target.value) || 0 }) as any })}
                 className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
               />
               <input
                 type="number"
                 value={max}
-                onChange={(e) => navigate({ search: (p) => ({ ...p, max: Number(e.target.value) || 0 }) })}
+                onChange={(e) => navigate({ search: (prev) => ({ ...prev, max: Number(e.target.value) || 0 }) as any })}
                 className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
               />
             </div>
@@ -118,7 +118,7 @@ function CategoryPage() {
             <label className="mb-2 mt-5 block text-xs font-medium text-muted-foreground">Sıralama</label>
             <select
               value={sort}
-              onChange={(e) => navigate({ search: (p) => ({ ...p, sort: e.target.value as typeof sort }) })}
+              onChange={(e) => navigate({ search: (prev) => ({ ...prev, sort: e.target.value as typeof sort }) as any })}
               className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
             >
               <option value="popular">Populyarlıq</option>
