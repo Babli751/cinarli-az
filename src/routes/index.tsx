@@ -38,16 +38,19 @@ function Index() {
       <div className="border-b border-border bg-secondary/40 text-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2">
           <div className="flex items-center gap-5 text-muted-foreground">
-            <a href="#">Kampaniyalar</a>
-            <a href="#">Mağazalar</a>
-            <a href="#">Korporativ</a>
-            <a href="#">Outlet</a>
+            <a href="#" className="hover:text-foreground">Kampaniyalar</a>
+            <a href="#" className="hover:text-foreground">Mağazalar</a>
+            <a href="#" className="hover:text-foreground">Korporativ</a>
+            <span className="font-bold tracking-wider text-foreground/80">EMBAWOOD</span>
+            <span className="rounded border border-border bg-background px-2 py-0.5 text-xs font-bold">IKEA</span>
+            <span className="font-serif text-base italic text-foreground/80">Natuzzi</span>
+            <a href="#" className="hover:text-foreground">Outlet</a>
             <span className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Künc divanlar</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-bold text-[var(--brand)]">*0171</span>
             <span>🇦🇿 Azərbaycan dili</span>
-            <a href="#" className="flex items-center gap-1"><User className="h-4 w-4" /> Şəxsi kabinet</a>
+            <a href="#" className="flex items-center gap-1 hover:text-foreground"><User className="h-4 w-4" /> Şəxsi kabinet</a>
           </div>
         </div>
       </div>
