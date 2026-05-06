@@ -38,16 +38,19 @@ function Index() {
       <div className="border-b border-border bg-secondary/40 text-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2">
           <div className="flex items-center gap-5 text-muted-foreground">
-            <a href="#">Kampaniyalar</a>
-            <a href="#">Mağazalar</a>
-            <a href="#">Korporativ</a>
-            <a href="#">Outlet</a>
+            <a href="#" className="hover:text-foreground">Kampaniyalar</a>
+            <a href="#" className="hover:text-foreground">Mağazalar</a>
+            <a href="#" className="hover:text-foreground">Korporativ</a>
+            <span className="font-bold tracking-wider text-foreground/80">EMBAWOOD</span>
+            <span className="rounded border border-border bg-background px-2 py-0.5 text-xs font-bold">IKEA</span>
+            <span className="font-serif text-base italic text-foreground/80">Natuzzi</span>
+            <a href="#" className="hover:text-foreground">Outlet</a>
             <span className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Künc divanlar</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-bold text-[var(--brand)]">*0171</span>
             <span>🇦🇿 Azərbaycan dili</span>
-            <a href="#" className="flex items-center gap-1"><User className="h-4 w-4" /> Şəxsi kabinet</a>
+            <a href="#" className="flex items-center gap-1 hover:text-foreground"><User className="h-4 w-4" /> Şəxsi kabinet</a>
           </div>
         </div>
       </div>
@@ -55,9 +58,11 @@ function Index() {
       {/* Header */}
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
-          <a href="/" className="flex items-center gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-lg bg-[var(--brand)] text-[var(--brand-foreground)] font-black">M</div>
-            <span className="text-xl font-extrabold tracking-tight">MebelMart</span>
+          <a href="/" className="flex items-center gap-3">
+            <div className="flex flex-col items-start rounded-lg border-2 border-[var(--brand)] bg-[var(--brand)]/5 px-3 py-1.5 leading-none">
+              <span className="text-lg font-black text-[var(--brand)]">mebel</span>
+              <span className="-mt-0.5 text-lg font-black italic text-[var(--accent-orange)]">mart</span>
+            </div>
           </a>
 
           <button
@@ -164,23 +169,43 @@ function Index() {
 
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
-        <div className="relative col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand)] to-emerald-600 p-10 text-white">
-          <p className="text-sm font-semibold uppercase tracking-widest opacity-90">Mövsüm endirimləri</p>
-          <h1 className="mt-3 text-5xl font-black leading-tight md:text-6xl">70%-dək<br />ENDİRİMLƏR</h1>
-          <p className="mt-4 max-w-md text-white/90">Minlərlə məhsulda möhtəşəm qiymətlər. Yalnız bu həftə.</p>
-          <button className="mt-6 rounded-lg bg-white px-6 py-3 font-bold text-[var(--brand)] hover:bg-white/90">İndi alış-veriş et</button>
-          <div className="absolute -bottom-10 -right-10 text-[14rem] opacity-20">🛋️</div>
-          <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
+        <div className="relative col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand)] via-emerald-500 to-emerald-700 p-10 text-white">
+          <div className="relative z-10">
+            <p className="text-sm font-bold uppercase tracking-[0.3em] text-white/80">Mövsüm kampaniyası</p>
+            <h1 className="mt-3 font-black leading-none tracking-tight">
+              <span className="block text-6xl md:text-7xl">Yaşıl</span>
+              <span className="block -mt-1 text-6xl italic md:text-7xl">cümə</span>
+            </h1>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold backdrop-blur">
+              📅 8 — 11 may
+            </div>
+            <div className="mt-6 flex items-end gap-2">
+              <span className="text-7xl font-black md:text-8xl">70%</span>
+              <span className="mb-2 text-2xl font-bold">-dək<br/>ENDİRİMLƏR</span>
+            </div>
+            <button className="mt-6 rounded-lg bg-white px-7 py-3 font-bold text-[var(--brand)] shadow-lg hover:bg-white/90">İndi alış-veriş et →</button>
+          </div>
+          <div className="absolute -bottom-6 -right-6 flex items-end gap-2 text-7xl opacity-40 md:text-8xl">
+            <span>🛋️</span><span>🛏️</span><span>🪑</span>
+          </div>
+          <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 gap-2">
             <span className="h-1.5 w-8 rounded-full bg-white"></span>
             <span className="h-1.5 w-2 rounded-full bg-white/50"></span>
             <span className="h-1.5 w-2 rounded-full bg-white/50"></span>
           </div>
         </div>
 
-        <div className="rounded-2xl border-2 border-[var(--accent-orange)]/30 bg-card p-5">
+        <div className="rounded-2xl border border-[var(--accent-orange)]/40 bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between rounded-lg bg-[var(--accent-orange)]/10 px-3 py-2 text-sm">
             <span className="font-semibold">Həftənin təklifi</span>
-            <span className="font-mono text-[var(--accent-orange)]">05 : 09 : 44 : 35</span>
+            <div className="flex items-center gap-1 font-mono text-xs">
+              {["05","09","44","35"].map((v, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <span className="rounded bg-[var(--accent-orange)] px-1.5 py-0.5 font-bold text-white">{v}</span>
+                  {i < 3 && <span className="text-[var(--accent-orange)]">:</span>}
+                </span>
+              ))}
+            </div>
           </div>
           <h3 className="text-lg font-bold">Lüks Yataq Dəsti Royal</h3>
           <span className="mt-1 inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs text-[var(--brand)]">Stokda var</span>
@@ -194,13 +219,14 @@ function Index() {
 
       {/* Feature strip */}
       <section className="mx-auto max-w-7xl px-4">
-        <div className="grid grid-cols-2 gap-4 rounded-2xl bg-secondary/40 p-6 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 rounded-2xl bg-secondary/40 p-6 md:grid-cols-6">
           {[
             { icon: Store, label: "56 mağaza" },
-            { icon: Sofa, label: "10 mindən çox model" },
+            { icon: Sofa, label: "40 mindən çox seçim" },
             { icon: Truck, label: "Sürətli çatdırılma" },
             { icon: ShieldCheck, label: "Rəsmi zəmanət" },
             { icon: Gift, label: "Bonus proqramı" },
+            { icon: Zap, label: "Sürətli alış-veriş" },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-2 text-center">
               <Icon className="h-8 w-8 text-[var(--brand)]" />
