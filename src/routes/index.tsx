@@ -92,6 +92,76 @@ function Index() {
         </div>
       </header>
 
+      {/* Catalog mega-menu overlay */}
+      {catOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setCatOpen(false)}>
+          <div
+            ref={panelRef}
+            onClick={(e) => e.stopPropagation()}
+            className="mx-auto mt-[140px] max-h-[calc(100vh-160px)] max-w-7xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
+          >
+            <div className="grid grid-cols-[260px_1fr] max-h-[calc(100vh-160px)]">
+              {/* Categories list */}
+              <div className="overflow-y-auto border-r border-border bg-secondary/30 py-2">
+                {categories.map((c) => (
+                  <button
+                    key={c.slug}
+                    onMouseEnter={() => setActiveSlug(c.slug)}
+                    onClick={() => setActiveSlug(c.slug)}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition ${
+                      activeSlug === c.slug
+                        ? "bg-background font-semibold text-[var(--brand)]"
+                        : "hover:bg-background/60"
+                    }`}
+                  >
+                    <span className="text-xl">{c.icon}</span>
+                    <span className="flex-1">{c.name}</span>
+                    <ChevronRight className="h-4 w-4 opacity-40" />
+                  </button>
+                ))}
+              </div>
+
+              {/* Active category preview */}
+              <div className="overflow-y-auto p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold">{activeCategory.name}</h3>
+                    <p className="text-sm text-muted-foreground">{activeCategory.description}</p>
+                  </div>
+                  <Link
+                    to="/kateqoriya/$slug"
+                    params={{ slug: activeCategory.slug }}
+                    onClick={() => setCatOpen(false)}
+                    className="rounded-lg bg-[var(--brand)] px-4 py-2 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90"
+                  >
+                    Hamısına bax →
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  {activeProducts.map((p) => (
+                    <Link
+                      key={p.name}
+                      to="/kateqoriya/$slug"
+                      params={{ slug: p.category }}
+                      onClick={() => setCatOpen(false)}
+                      className="group rounded-xl border border-border bg-card p-3 transition hover:border-[var(--brand)] hover:shadow-md"
+                    >
+                      <div className="grid h-20 place-items-center text-4xl">{p.img}</div>
+                      <div className="mt-2 line-clamp-2 text-xs font-medium group-hover:text-[var(--brand)]">{p.name}</div>
+                      <div className="mt-1 text-sm font-bold">{p.price} ₼</div>
+                    </Link>
+                  ))}
+                  {activeProducts.length === 0 && (
+                    <div className="col-span-full text-sm text-muted-foreground">Bu kateqoriyada məhsul tezliklə.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
         <div className="relative col-span-2 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand)] to-emerald-600 p-10 text-white">
