@@ -195,10 +195,17 @@ function Index() {
           </div>
         </div>
 
-        <div className="rounded-2xl border-2 border-[var(--accent-orange)]/30 bg-card p-5">
+        <div className="rounded-2xl border border-[var(--accent-orange)]/40 bg-card p-5 shadow-sm">
           <div className="mb-3 flex items-center justify-between rounded-lg bg-[var(--accent-orange)]/10 px-3 py-2 text-sm">
             <span className="font-semibold">Həftənin təklifi</span>
-            <span className="font-mono text-[var(--accent-orange)]">05 : 09 : 44 : 35</span>
+            <div className="flex items-center gap-1 font-mono text-xs">
+              {["05","09","44","35"].map((v, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  <span className="rounded bg-[var(--accent-orange)] px-1.5 py-0.5 font-bold text-white">{v}</span>
+                  {i < 3 && <span className="text-[var(--accent-orange)]">:</span>}
+                </span>
+              ))}
+            </div>
           </div>
           <h3 className="text-lg font-bold">Lüks Yataq Dəsti Royal</h3>
           <span className="mt-1 inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs text-[var(--brand)]">Stokda var</span>
