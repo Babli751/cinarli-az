@@ -35,7 +35,7 @@ function Index() {
             <a href="#">Mağazalar</a>
             <a href="#">Korporativ</a>
             <a href="#">Outlet</a>
-            <span className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Kondisionerlər</span>
+            <span className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Künc divanlar</span>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-bold text-[var(--brand)]">*0171</span>
