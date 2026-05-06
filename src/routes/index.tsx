@@ -119,9 +119,9 @@ function Index() {
         <h2 className="mb-5 text-2xl font-bold">Kateqoriyalar</h2>
         <div className="flex flex-wrap gap-2">
           {categories.map((c) => (
-            <a key={c} href="#" className="rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-[var(--brand)] hover:text-[var(--brand)]">
-              {c}
-            </a>
+            <Link key={c.slug} to="/kateqoriya/$slug" params={{ slug: c.slug }} className="rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-[var(--brand)] hover:text-[var(--brand)]">
+              {c.name}
+            </Link>
           ))}
         </div>
       </section>
