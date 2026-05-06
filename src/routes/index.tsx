@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Heart, ShoppingCart, Scale, User, Menu, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { categories, products } from "@/data/catalog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -10,19 +11,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
-
-const categories = ["Divanlar", "Çarpayılar", "Masalar", "Stullar", "Şkaflar", "Kreslolar", "Yumşaq mebel", "Uşaq otağı"];
-
-const products = [
-  { name: "Künc divan Milano", price: 1899, old: 2199, discount: 14, img: "🛋️" },
-  { name: "İkinəfərlik çarpayı Oslo", price: 2499, old: 2799, discount: 11, img: "🛏️" },
-  { name: "Yemək masası dəsti", price: 849, old: 999, discount: 15, img: "🪑" },
-  { name: "Geyim şkafı 4 qapılı", price: 1299, old: 1599, discount: 19, img: "🚪" },
-  { name: "Ofis kresloları", price: 399, old: 449, discount: 11, img: "💺" },
-  { name: "TV altlığı modul", price: 599, old: 749, discount: 20, img: "📺" },
-  { name: "Jurnal masası", price: 249, old: 299, discount: 17, img: "🪟" },
-  { name: "Kitab rəfi", price: 449, old: 529, discount: 15, img: "📚" },
-];
 
 function Index() {
   return (
@@ -131,9 +119,9 @@ function Index() {
         <h2 className="mb-5 text-2xl font-bold">Kateqoriyalar</h2>
         <div className="flex flex-wrap gap-2">
           {categories.map((c) => (
-            <a key={c} href="#" className="rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-[var(--brand)] hover:text-[var(--brand)]">
-              {c}
-            </a>
+            <Link key={c.slug} to="/kateqoriya/$slug" params={{ slug: c.slug }} className="rounded-full border border-border bg-card px-4 py-2 text-sm hover:border-[var(--brand)] hover:text-[var(--brand)]">
+              {c.name}
+            </Link>
           ))}
         </div>
       </section>
