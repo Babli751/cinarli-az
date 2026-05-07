@@ -23,8 +23,14 @@ import { Route as ElaqeRouteImport } from './routes/elaqe'
 import { Route as CatdirilmaRouteImport } from './routes/catdirilma'
 import { Route as BeyendimRouteImport } from './routes/beyendim'
 import { Route as AylikOdenisRouteImport } from './routes/aylik-odenis'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as KateqoriyaSlugRouteImport } from './routes/kateqoriya.$slug'
+import { Route as AdminSifarislerRouteImport } from './routes/admin.sifarisler'
+import { Route as AdminMehsullarRouteImport } from './routes/admin.mehsullar'
+import { Route as AdminKateqoriyalarRouteImport } from './routes/admin.kateqoriyalar'
+import { Route as AdminIstifadecilerRouteImport } from './routes/admin.istifadeciler'
 
 const YeniRoute = YeniRouteImport.update({
   id: '/yeni',
@@ -96,6 +102,16 @@ const AylikOdenisRoute = AylikOdenisRouteImport.update({
   path: '/aylik-odenis',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -106,9 +122,31 @@ const KateqoriyaSlugRoute = KateqoriyaSlugRouteImport.update({
   path: '/kateqoriya/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSifarislerRoute = AdminSifarislerRouteImport.update({
+  id: '/sifarisler',
+  path: '/sifarisler',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMehsullarRoute = AdminMehsullarRouteImport.update({
+  id: '/mehsullar',
+  path: '/mehsullar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKateqoriyalarRoute = AdminKateqoriyalarRouteImport.update({
+  id: '/kateqoriyalar',
+  path: '/kateqoriyalar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIstifadecilerRoute = AdminIstifadecilerRouteImport.update({
+  id: '/istifadeciler',
+  path: '/istifadeciler',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
   '/aylik-odenis': typeof AylikOdenisRoute
   '/beyendim': typeof BeyendimRoute
   '/catdirilma': typeof CatdirilmaRoute
@@ -123,10 +161,16 @@ export interface FileRoutesByFullPath {
   '/outlet': typeof OutletRoute
   '/sebet': typeof SebetRoute
   '/yeni': typeof YeniRoute
+  '/admin/istifadeciler': typeof AdminIstifadecilerRoute
+  '/admin/kateqoriyalar': typeof AdminKateqoriyalarRoute
+  '/admin/mehsullar': typeof AdminMehsullarRoute
+  '/admin/sifarisler': typeof AdminSifarislerRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
   '/aylik-odenis': typeof AylikOdenisRoute
   '/beyendim': typeof BeyendimRoute
   '/catdirilma': typeof CatdirilmaRoute
@@ -141,11 +185,17 @@ export interface FileRoutesByTo {
   '/outlet': typeof OutletRoute
   '/sebet': typeof SebetRoute
   '/yeni': typeof YeniRoute
+  '/admin/istifadeciler': typeof AdminIstifadecilerRoute
+  '/admin/kateqoriyalar': typeof AdminKateqoriyalarRoute
+  '/admin/mehsullar': typeof AdminMehsullarRoute
+  '/admin/sifarisler': typeof AdminSifarislerRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/auth': typeof AuthRoute
   '/aylik-odenis': typeof AylikOdenisRoute
   '/beyendim': typeof BeyendimRoute
   '/catdirilma': typeof CatdirilmaRoute
@@ -160,12 +210,18 @@ export interface FileRoutesById {
   '/outlet': typeof OutletRoute
   '/sebet': typeof SebetRoute
   '/yeni': typeof YeniRoute
+  '/admin/istifadeciler': typeof AdminIstifadecilerRoute
+  '/admin/kateqoriyalar': typeof AdminKateqoriyalarRoute
+  '/admin/mehsullar': typeof AdminMehsullarRoute
+  '/admin/sifarisler': typeof AdminSifarislerRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/auth'
     | '/aylik-odenis'
     | '/beyendim'
     | '/catdirilma'
@@ -180,10 +236,16 @@ export interface FileRouteTypes {
     | '/outlet'
     | '/sebet'
     | '/yeni'
+    | '/admin/istifadeciler'
+    | '/admin/kateqoriyalar'
+    | '/admin/mehsullar'
+    | '/admin/sifarisler'
     | '/kateqoriya/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
+    | '/auth'
     | '/aylik-odenis'
     | '/beyendim'
     | '/catdirilma'
@@ -198,10 +260,16 @@ export interface FileRouteTypes {
     | '/outlet'
     | '/sebet'
     | '/yeni'
+    | '/admin/istifadeciler'
+    | '/admin/kateqoriyalar'
+    | '/admin/mehsullar'
+    | '/admin/sifarisler'
     | '/kateqoriya/$slug'
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/auth'
     | '/aylik-odenis'
     | '/beyendim'
     | '/catdirilma'
@@ -216,11 +284,17 @@ export interface FileRouteTypes {
     | '/outlet'
     | '/sebet'
     | '/yeni'
+    | '/admin/istifadeciler'
+    | '/admin/kateqoriyalar'
+    | '/admin/mehsullar'
+    | '/admin/sifarisler'
     | '/kateqoriya/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AuthRoute: typeof AuthRoute
   AylikOdenisRoute: typeof AylikOdenisRoute
   BeyendimRoute: typeof BeyendimRoute
   CatdirilmaRoute: typeof CatdirilmaRoute
@@ -338,6 +412,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AylikOdenisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -352,11 +440,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KateqoriyaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/sifarisler': {
+      id: '/admin/sifarisler'
+      path: '/sifarisler'
+      fullPath: '/admin/sifarisler'
+      preLoaderRoute: typeof AdminSifarislerRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/mehsullar': {
+      id: '/admin/mehsullar'
+      path: '/mehsullar'
+      fullPath: '/admin/mehsullar'
+      preLoaderRoute: typeof AdminMehsullarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kateqoriyalar': {
+      id: '/admin/kateqoriyalar'
+      path: '/kateqoriyalar'
+      fullPath: '/admin/kateqoriyalar'
+      preLoaderRoute: typeof AdminKateqoriyalarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/istifadeciler': {
+      id: '/admin/istifadeciler'
+      path: '/istifadeciler'
+      fullPath: '/admin/istifadeciler'
+      preLoaderRoute: typeof AdminIstifadecilerRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminIstifadecilerRoute: typeof AdminIstifadecilerRoute
+  AdminKateqoriyalarRoute: typeof AdminKateqoriyalarRoute
+  AdminMehsullarRoute: typeof AdminMehsullarRoute
+  AdminSifarislerRoute: typeof AdminSifarislerRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminIstifadecilerRoute: AdminIstifadecilerRoute,
+  AdminKateqoriyalarRoute: AdminKateqoriyalarRoute,
+  AdminMehsullarRoute: AdminMehsullarRoute,
+  AdminSifarislerRoute: AdminSifarislerRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AuthRoute: AuthRoute,
   AylikOdenisRoute: AylikOdenisRoute,
   BeyendimRoute: BeyendimRoute,
   CatdirilmaRoute: CatdirilmaRoute,
