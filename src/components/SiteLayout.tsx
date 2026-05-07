@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight } from "lucide-react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, Shield } from "lucide-react";
 import { categories, products } from "@/data/catalog";
+import { useAuth } from "@/hooks/useAuth";
 
 export function SiteHeader() {
   const [catOpen, setCatOpen] = useState(false);
   const [activeSlug, setActiveSlug] = useState(categories[0].slug);
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     if (!catOpen) return;
@@ -39,6 +41,11 @@ export function SiteHeader() {
           <div className="flex items-center gap-4">
             <span className="font-bold text-[var(--brand)]">*0171</span>
             <span>🇦🇿 Azərbaycan dili</span>
+            {isAdmin && (
+              <Link to="/admin" className="flex items-center gap-1 rounded-md bg-[var(--brand)] px-2 py-0.5 font-semibold text-[var(--brand-foreground)]">
+                <Shield className="h-3.5 w-3.5" /> Admin
+              </Link>
+            )}
             <Link to="/kabinet" className="flex items-center gap-1 hover:text-foreground"><User className="h-4 w-4" /> Şəxsi kabinet</Link>
           </div>
         </div>
