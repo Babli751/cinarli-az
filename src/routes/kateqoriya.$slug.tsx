@@ -145,22 +145,26 @@ function CategoryPage() {
             ) : (
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
                 {filtered.map((p) => (
-                  <article key={p.name} className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4 transition hover:shadow-lg">
-                    <div className="absolute right-3 top-3 grid h-12 w-12 place-items-center rounded-full bg-[var(--accent-orange)] text-sm font-bold text-white">−{p.discount}%</div>
-                    <div className="absolute left-3 top-3 flex gap-2 text-muted-foreground">
-                      <button className="hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
-                      <button className="hover:text-[var(--accent-orange)]"><Heart className="h-4 w-4" /></button>
+                  <article key={p.name} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
+                    <div className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-[var(--accent-orange)] text-xs font-bold text-white shadow-md">−{p.discount}%</div>
+                    <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
+                      <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
+                      <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
                     </div>
-                    <div className="my-6 grid h-40 place-items-center text-7xl">{p.img}</div>
-                    <h3 className="line-clamp-2 min-h-[3rem] text-sm font-medium">{p.name}</h3>
-                    <div className="mt-3 flex items-baseline gap-2">
-                      <span className="text-xl font-black">{p.price} ₼</span>
-                      <span className="text-sm text-muted-foreground line-through">{p.old} ₼</span>
+                    <div className="aspect-square overflow-hidden bg-secondary/30">
+                      <img src={p.image} alt={p.name} width={768} height={768} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
                     </div>
-                    <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan</div>
-                    <button className="mt-3 w-full rounded-lg bg-[var(--brand)] py-2 text-sm font-semibold text-[var(--brand-foreground)] opacity-0 transition group-hover:opacity-100">
-                      Səbətə əlavə et
-                    </button>
+                    <div className="flex flex-1 flex-col p-4">
+                      <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium">{p.name}</h3>
+                      <div className="mt-3 flex items-baseline gap-2">
+                        <span className="text-xl font-black">{p.price} ₼</span>
+                        <span className="text-sm text-muted-foreground line-through">{p.old} ₼</span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan</div>
+                      <button className="mt-3 w-full rounded-lg bg-[var(--brand)] py-2 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90">
+                        Səbətə əlavə et
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>

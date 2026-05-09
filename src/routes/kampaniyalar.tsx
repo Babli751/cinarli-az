@@ -23,13 +23,17 @@ export const Route = createFileRoute("/kampaniyalar")({
         <h2 className="mt-12 mb-5 text-2xl font-bold">Ən böyük endirimlər</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {topDeals.map((p) => (
-            <Link key={p.name} to="/kateqoriya/$slug" params={{ slug: p.category }} className="rounded-2xl border border-border bg-card p-4 hover:shadow-lg">
-              <div className="grid h-32 place-items-center text-6xl">{p.img}</div>
-              <div className="mt-2 text-sm font-medium line-clamp-2">{p.name}</div>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-black">{p.price} ₼</span>
-                <span className="text-xs text-muted-foreground line-through">{p.old} ₼</span>
-                <span className="ml-auto rounded bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white">−{p.discount}%</span>
+            <Link key={p.name} to="/kateqoriya/$slug" params={{ slug: p.category }} className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
+              <div className="aspect-square overflow-hidden bg-secondary/30">
+                <img src={p.image} alt={p.name} width={768} height={768} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+              </div>
+              <div className="p-4">
+                <div className="line-clamp-2 text-sm font-medium">{p.name}</div>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="font-black">{p.price} ₼</span>
+                  <span className="text-xs text-muted-foreground line-through">{p.old} ₼</span>
+                  <span className="ml-auto rounded bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white">−{p.discount}%</span>
+                </div>
               </div>
             </Link>
           ))}
