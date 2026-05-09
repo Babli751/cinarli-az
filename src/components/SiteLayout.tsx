@@ -136,11 +136,15 @@ export function SiteHeader() {
                       to="/kateqoriya/$slug"
                       params={{ slug: p.category }}
                       onClick={() => setCatOpen(false)}
-                      className="group rounded-xl border border-border bg-card p-3 transition hover:border-[var(--brand)] hover:shadow-md"
+                      className="group overflow-hidden rounded-xl border border-border bg-card transition hover:border-[var(--brand)] hover:shadow-md"
                     >
-                      <div className="grid h-20 place-items-center text-4xl">{p.img}</div>
-                      <div className="mt-2 line-clamp-2 text-xs font-medium group-hover:text-[var(--brand)]">{p.name}</div>
-                      <div className="mt-1 text-sm font-bold">{p.price} ₼</div>
+                      <div className="aspect-square overflow-hidden bg-secondary/30">
+                        <img src={p.image} alt={p.name} width={400} height={400} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                      </div>
+                      <div className="p-2">
+                        <div className="line-clamp-2 text-xs font-medium group-hover:text-[var(--brand)]">{p.name}</div>
+                        <div className="mt-1 text-sm font-bold">{p.price} ₼</div>
+                      </div>
                     </Link>
                   ))}
                 </div>
