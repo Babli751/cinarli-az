@@ -26,6 +26,7 @@ import { Route as AylikOdenisRouteImport } from './routes/aylik-odenis'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MehsulSlugRouteImport } from './routes/mehsul.$slug'
 import { Route as KateqoriyaSlugRouteImport } from './routes/kateqoriya.$slug'
 import { Route as AdminSifarislerRouteImport } from './routes/admin.sifarisler'
 import { Route as AdminMehsullarRouteImport } from './routes/admin.mehsullar'
@@ -117,6 +118,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MehsulSlugRoute = MehsulSlugRouteImport.update({
+  id: '/mehsul/$slug',
+  path: '/mehsul/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KateqoriyaSlugRoute = KateqoriyaSlugRouteImport.update({
   id: '/kateqoriya/$slug',
   path: '/kateqoriya/$slug',
@@ -166,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/admin/mehsullar': typeof AdminMehsullarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
+  '/mehsul/$slug': typeof MehsulSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/admin/mehsullar': typeof AdminMehsullarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
+  '/mehsul/$slug': typeof MehsulSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/admin/mehsullar': typeof AdminMehsullarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
+  '/mehsul/$slug': typeof MehsulSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
     | '/admin/mehsullar'
     | '/admin/sifarisler'
     | '/kateqoriya/$slug'
+    | '/mehsul/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -265,6 +275,7 @@ export interface FileRouteTypes {
     | '/admin/mehsullar'
     | '/admin/sifarisler'
     | '/kateqoriya/$slug'
+    | '/mehsul/$slug'
   id:
     | '__root__'
     | '/'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/admin/mehsullar'
     | '/admin/sifarisler'
     | '/kateqoriya/$slug'
+    | '/mehsul/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -310,6 +322,7 @@ export interface RootRouteChildren {
   SebetRoute: typeof SebetRoute
   YeniRoute: typeof YeniRoute
   KateqoriyaSlugRoute: typeof KateqoriyaSlugRoute
+  MehsulSlugRoute: typeof MehsulSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -433,6 +446,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mehsul/$slug': {
+      id: '/mehsul/$slug'
+      path: '/mehsul/$slug'
+      fullPath: '/mehsul/$slug'
+      preLoaderRoute: typeof MehsulSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kateqoriya/$slug': {
       id: '/kateqoriya/$slug'
       path: '/kateqoriya/$slug'
@@ -506,6 +526,7 @@ const rootRouteChildren: RootRouteChildren = {
   SebetRoute: SebetRoute,
   YeniRoute: YeniRoute,
   KateqoriyaSlugRoute: KateqoriyaSlugRoute,
+  MehsulSlugRoute: MehsulSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

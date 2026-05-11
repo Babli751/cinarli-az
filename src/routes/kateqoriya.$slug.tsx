@@ -4,6 +4,7 @@ import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { Heart, Scale, Zap, ChevronLeft } from "lucide-react";
 import { categories, products, type Product } from "@/data/catalog";
+import { slugify } from "@/lib/slug";
 
 const searchSchema = z.object({
   sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
