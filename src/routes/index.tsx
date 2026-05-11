@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { categories, products } from "@/data/catalog";
+import { slugify } from "@/lib/slug";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
 import bannerBedroom from "@/assets/banner-bedroom.jpg";
@@ -166,8 +167,8 @@ function Index() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products.slice(0, 12).map((p) => (
             <Link
-              to="/kateqoriya/$slug"
-              params={{ slug: p.category }}
+              to="/mehsul/$slug"
+              params={{ slug: slugify(p.name) }}
               key={p.name}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl"
             >

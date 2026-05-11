@@ -4,6 +4,7 @@ import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { Heart, Scale, Zap, ChevronLeft } from "lucide-react";
 import { categories, products, type Product } from "@/data/catalog";
+import { slugify } from "@/lib/slug";
 
 const searchSchema = z.object({
   sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
@@ -151,11 +152,11 @@ function CategoryPage() {
                       <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
                       <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
                     </div>
-                    <div className="aspect-square overflow-hidden bg-secondary/30">
+                    <Link to="/mehsul/$slug" params={{ slug: slugify(p.name) }} className="aspect-square overflow-hidden bg-secondary/30 block">
                       <img src={p.image} alt={p.name} width={768} height={768} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
-                    </div>
+                    </Link>
                     <div className="flex flex-1 flex-col p-4">
-                      <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium">{p.name}</h3>
+                      <Link to="/mehsul/$slug" params={{ slug: slugify(p.name) }} className="line-clamp-2 min-h-[2.5rem] text-sm font-medium hover:text-[var(--brand)]">{p.name}</Link>
                       <div className="mt-3 flex items-baseline gap-2">
                         <span className="text-xl font-black">{p.price} ₼</span>
                         <span className="text-sm text-muted-foreground line-through">{p.old} ₼</span>
