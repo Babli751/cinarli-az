@@ -207,6 +207,8 @@ function ProductPage() {
           </div>
         </div>
 
+        <ProductReviews productSlug={slug} />
+
         {/* Related */}
         {related.length > 0 && (
           <section className="mt-14">
