@@ -4,6 +4,7 @@ import { Heart, Scale, Truck, ShieldCheck, RotateCcw, Zap, ChevronLeft, Minus, P
 import { products, categories, type Product } from "@/data/catalog";
 import { slugify } from "@/lib/slug";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
+import { ProductReviews } from "@/components/ProductReviews";
 
 export const Route = createFileRoute("/mehsul/$slug")({
   beforeLoad: ({ params }) => {
