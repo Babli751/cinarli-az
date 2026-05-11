@@ -167,8 +167,8 @@ function Index() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {products.slice(0, 12).map((p) => (
             <Link
-              to="/kateqoriya/$slug"
-              params={{ slug: p.category }}
+              to="/mehsul/$slug"
+              params={{ slug: slugify(p.name) }}
               key={p.name}
               className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl"
             >
