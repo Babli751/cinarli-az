@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { categories, products } from "@/data/catalog";
+import { slugify } from "@/lib/slug";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
 import bannerBedroom from "@/assets/banner-bedroom.jpg";
