@@ -156,7 +156,7 @@ function CategoryPage() {
                       <img src={p.image} alt={p.name} width={768} height={768} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
                     </Link>
                     <div className="flex flex-1 flex-col p-4">
-                      <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium">{p.name}</h3>
+                      <Link to="/mehsul/$slug" params={{ slug: slugify(p.name) }} className="line-clamp-2 min-h-[2.5rem] text-sm font-medium hover:text-[var(--brand)]">{p.name}</Link>
                       <div className="mt-3 flex items-baseline gap-2">
                         <span className="text-xl font-black">{p.price} ₼</span>
                         <span className="text-sm text-muted-foreground line-through">{p.old} ₼</span>
