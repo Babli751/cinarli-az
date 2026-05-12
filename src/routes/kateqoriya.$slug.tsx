@@ -177,6 +177,7 @@ function CategoryPage() {
           </div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
