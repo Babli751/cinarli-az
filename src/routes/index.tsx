@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { categories, products } from "@/data/catalog";
 import { slugify } from "@/lib/slug";
@@ -20,6 +21,10 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [tab, setTab] = useState<"popular" | "new">("popular");
+  const list = tab === "popular"
+    ? products.slice(0, 12)
+    : [...products].sort((a, b) => b.discount - a.discount).slice(0, 12);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
