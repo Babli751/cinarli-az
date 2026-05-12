@@ -2,9 +2,10 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Heart, Scale, Zap, ChevronLeft } from "lucide-react";
+import { Heart, Scale, Zap, ChevronRight } from "lucide-react";
 import { categories, products, type Product } from "@/data/catalog";
 import { slugify } from "@/lib/slug";
+import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 
 const searchSchema = z.object({
   sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
@@ -62,10 +63,13 @@ function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <SiteHeader />
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> Ana səhifə
-        </Link>
+        <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+          <Link to="/" className="hover:text-foreground">MebelMart</Link>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-foreground">{cat.name}</span>
+        </nav>
         <h1 className="mt-3 text-3xl font-bold">{cat.name}</h1>
 
         {/* Category chips */}
@@ -173,6 +177,7 @@ function CategoryPage() {
           </div>
         </div>
       </div>
+      <SiteFooter />
     </div>
   );
 }
