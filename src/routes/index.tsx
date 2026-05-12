@@ -160,8 +160,18 @@ function Index() {
       <section className="mx-auto max-w-7xl px-4 pb-16">
         <div className="mb-6 flex items-end justify-between">
           <div className="flex items-baseline gap-6">
-            <h2 className="text-2xl font-bold md:text-3xl">Populyar məhsullar</h2>
-            <Link to="/yeni" className="hidden text-lg text-muted-foreground hover:text-foreground md:inline">Yeni məhsullar</Link>
+            <button
+              onClick={() => setTab("popular")}
+              className={`text-2xl font-bold md:text-3xl transition ${tab === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}
+            >
+              Populyar məhsullar
+            </button>
+            <button
+              onClick={() => setTab("new")}
+              className={`hidden text-lg transition md:inline ${tab === "new" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}
+            >
+              Yeni məhsullar
+            </button>
           </div>
           <div className="flex gap-2">
             <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></button>
@@ -170,7 +180,7 @@ function Index() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {products.slice(0, 12).map((p) => (
+          {list.map((p) => (
             <Link
               to="/mehsul/$slug"
               params={{ slug: slugify(p.name) }}
