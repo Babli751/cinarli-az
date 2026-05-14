@@ -1,56 +1,41 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { Heart, Scale, Zap, ChevronRight } from "lucide-react";
-import { categories, products, type Product } from "@/data/catalog";
-import { slugify } from "@/lib/slug";
+import { Heart, Scale, Zap, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import { api, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 
 const searchSchema = z.object({
   sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
   min: fallback(z.number(), 0).default(0),
-  max: fallback(z.number(), 5000).default(5000),
+  max: fallback(z.number(), 99999).default(99999),
 });
 
 export const Route = createFileRoute("/kateqoriya/$slug")({
   validateSearch: zodValidator(searchSchema),
-  beforeLoad: ({ params }) => {
-    if (!categories.find((c) => c.slug === params.slug)) throw notFound();
-  },
-  head: ({ params }) => {
-    const cat = categories.find((c) => c.slug === params.slug);
-    return {
-      meta: [
-        { title: `${cat?.name ?? "Kateqoriya"} — MebelMart` },
-        { name: "description", content: `${cat?.name} kateqoriyasında məhsullar, qiymət və endirim filtrləri.` },
-      ],
-    };
-  },
   component: CategoryPage,
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-      <h1 className="text-3xl font-bold">Kateqoriya tapılmadı</h1>
-      <Link to="/" className="mt-4 inline-block text-[var(--brand)]">Ana səhifəyə qayıt</Link>
-    </div>
-  ),
-  errorComponent: ({ error }) => (
-    <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-      <p className="text-destructive">{error.message}</p>
-    </div>
-  ),
 });
 
 function CategoryPage() {
   const { slug } = Route.useParams();
   const { sort, min, max } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const cat = categories.find((c) => c.slug === slug)!;
 
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  useEffect(() => {
+    api.getProducts({ active: true }).then(setAllProducts).catch(() => {});
+    api.getCategories().then(setCategories).catch(() => {});
+  }, []);
+
+  const cat = categories.find((c) => c.slug === slug);
 
   const filtered = useMemo(() => {
-    let list: Product[] = products.filter((p) => p.category === slug);
+    let list = allProducts.filter((p) => p.category_slug === slug);
     list = list.filter((p) => p.price >= min && p.price <= max);
     if (search.trim()) list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     switch (sort) {
@@ -59,114 +44,126 @@ function CategoryPage() {
       case "discount": list = [...list].sort((a, b) => b.discount - a.discount); break;
     }
     return list;
-  }, [slug, sort, min, max, search]);
+  }, [allProducts, slug, sort, min, max, search]);
+
+  const resetFilters = () => { setSearch(""); navigate({ search: { sort: "popular", min: 0, max: 99999 } }); };
+
+  const FilterPanel = () => (
+    <div className="space-y-4">
+      <label className="block text-xs font-medium text-muted-foreground">Axtarış</label>
+      <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Məhsul adı..."
+        className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
+      <label className="block text-xs font-medium text-muted-foreground">Qiymət (₼)</label>
+      <div className="flex gap-2">
+        <input type="number" value={min || ""} placeholder="Min"
+          onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, min: Number(e.target.value) || 0 }) })}
+          className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
+        <input type="number" value={max === 99999 ? "" : max} placeholder="Max"
+          onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, max: Number(e.target.value) || 99999 }) })}
+          className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
+      </div>
+      <label className="block text-xs font-medium text-muted-foreground">Sıralama</label>
+      <select value={sort} onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, sort: e.target.value }) })}
+        className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]">
+        <option value="popular">Populyarlıq</option>
+        <option value="price-asc">Qiymət: ucuzdan</option>
+        <option value="price-desc">Qiymət: bahadan</option>
+        <option value="discount">Ən böyük endirim</option>
+      </select>
+      <button onClick={resetFilters} className="w-full rounded-lg border border-border py-2 text-sm hover:bg-secondary">
+        Filtrləri sıfırla
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">MebelMart</Link>
+      <div className="mx-auto max-w-7xl px-3 py-4 md:px-4 md:py-6">
+        <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground md:text-sm">
+          <Link to="/" className="hover:text-foreground">Çınarlı</Link>
           <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground">{cat.name}</span>
+          <span className="text-foreground">{cat?.name ?? slug}</span>
         </nav>
-        <h1 className="mt-3 text-3xl font-bold">{cat.name}</h1>
+        <h1 className="mt-2 text-2xl font-bold md:mt-3 md:text-3xl">{cat?.name ?? slug}</h1>
 
-        {/* Category chips */}
-        <div className="mt-6 flex flex-wrap gap-2">
+        {/* Category chips — horizontal scroll on mobile */}
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none md:flex-wrap md:overflow-visible">
           {categories.map((c) => (
-            <Link
-              key={c.slug}
-              to="/kateqoriya/$slug"
-              params={{ slug: c.slug }}
-              className={`rounded-full border px-4 py-2 text-sm ${
-                c.slug === slug
-                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
-                  : "border-border bg-card hover:border-[var(--brand)] hover:text-[var(--brand)]"
-              }`}
-            >
+            <Link key={c.slug} to="/kateqoriya/$slug" params={{ slug: c.slug }}
+              className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm ${c.slug === slug
+                ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                : "border-border bg-card hover:border-[var(--brand)] hover:text-[var(--brand)]"}`}>
               {c.name}
             </Link>
           ))}
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[260px_1fr]">
-          {/* Filters */}
-          <aside className="rounded-2xl border border-border bg-card p-5">
-            <h3 className="mb-4 font-bold">Filtrlər</h3>
+        {/* Mobile filter bar */}
+        <div className="mt-4 flex items-center justify-between lg:hidden">
+          <p className="text-sm text-muted-foreground">{filtered.length} məhsul</p>
+          <button onClick={() => setFilterOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary">
+            <SlidersHorizontal className="h-4 w-4" /> Filtrlər
+          </button>
+        </div>
 
-            <label className="mb-2 block text-xs font-medium text-muted-foreground">Axtarış</label>
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Məhsul adı..."
-              className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
-            />
-
-            <label className="mb-2 mt-5 block text-xs font-medium text-muted-foreground">Qiymət (₼)</label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                value={min}
-                onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, min: Number(e.target.value) || 0 }) as any })}
-                className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
-              />
-              <input
-                type="number"
-                value={max}
-                onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, max: Number(e.target.value) || 0 }) as any })}
-                className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
-              />
+        {/* Mobile filter drawer */}
+        {filterOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden" onClick={() => setFilterOpen(false)}>
+            <div className="absolute inset-0 bg-black/50" />
+            <div onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-background p-5 shadow-2xl max-h-[85vh] overflow-y-auto">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-bold">Filtrlər</h3>
+                <button onClick={() => setFilterOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg hover:bg-secondary">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <FilterPanel />
+              <button onClick={() => setFilterOpen(false)}
+                className="mt-4 w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)]">
+                Tətbiq et
+              </button>
             </div>
+          </div>
+        )}
 
-            <label className="mb-2 mt-5 block text-xs font-medium text-muted-foreground">Sıralama</label>
-            <select
-              value={sort}
-              onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, sort: e.target.value as typeof sort }) as any })}
-              className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]"
-            >
-              <option value="popular">Populyarlıq</option>
-              <option value="price-asc">Qiymət: ucuzdan</option>
-              <option value="price-desc">Qiymət: bahadan</option>
-              <option value="discount">Ən böyük endirim</option>
-            </select>
-
-            <button
-              onClick={() => { setSearch(""); navigate({ search: { sort: "popular", min: 0, max: 5000 } }); }}
-              className="mt-5 w-full rounded-lg border border-border py-2 text-sm hover:bg-secondary"
-            >
-              Filtrləri sıfırla
-            </button>
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:mt-8 lg:grid-cols-[260px_1fr] lg:gap-6">
+          {/* Desktop sidebar */}
+          <aside className="hidden rounded-2xl border border-border bg-card p-5 lg:block">
+            <h3 className="mb-4 font-bold">Filtrlər</h3>
+            <FilterPanel />
           </aside>
 
-          {/* Results */}
           <div>
-            <p className="mb-4 text-sm text-muted-foreground">{filtered.length} məhsul tapıldı</p>
+            <p className="mb-3 hidden text-sm text-muted-foreground lg:block">{filtered.length} məhsul tapıldı</p>
             {filtered.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
-                Filtrə uyğun məhsul yoxdur.
+                {allProducts.length === 0 ? "Yüklənir..." : "Bu kateqoriyada məhsul yoxdur"}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
                 {filtered.map((p) => (
-                  <article key={p.name} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
-                    <div className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-[var(--accent-orange)] text-xs font-bold text-white shadow-md">−{p.discount}%</div>
-                    <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
-                      <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
-                      <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
+                  <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
+                    {p.discount > 0 && (
+                      <div className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-[var(--accent-orange)] text-[10px] font-bold text-white shadow-md md:right-3 md:top-3 md:h-11 md:w-11 md:text-xs">−{p.discount}%</div>
+                    )}
+                    <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 md:left-3 md:top-3 md:gap-2">
+                      <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Heart className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
+                      <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Scale className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                     </div>
-                    <Link to="/mehsul/$slug" params={{ slug: slugify(p.name) }} className="aspect-square overflow-hidden bg-secondary/30 block">
-                      <img src={p.image} alt={p.name} width={768} height={768} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+                    <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-square overflow-hidden bg-secondary/30 block">
+                      <ProductImg p={p} />
                     </Link>
-                    <div className="flex flex-1 flex-col p-4">
-                      <Link to="/mehsul/$slug" params={{ slug: slugify(p.name) }} className="line-clamp-2 min-h-[2.5rem] text-sm font-medium hover:text-[var(--brand)]">{p.name}</Link>
-                      <div className="mt-3 flex items-baseline gap-2">
-                        <span className="text-xl font-black">{p.price} ₼</span>
-                        <span className="text-sm text-muted-foreground line-through">{p.old} ₼</span>
+                    <div className="flex flex-1 flex-col p-3 md:p-4">
+                      <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="line-clamp-2 min-h-[2.5rem] text-xs font-medium hover:text-[var(--brand)] md:text-sm">{p.name}</Link>
+                      <div className="mt-2 flex items-baseline gap-1.5">
+                        <span className="text-base font-black md:text-xl">{p.price} ₼</span>
+                        {p.old_price && <span className="text-xs text-muted-foreground line-through md:text-sm">{p.old_price} ₼</span>}
                       </div>
-                      <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan</div>
-                      <button className="mt-3 w-full rounded-lg bg-[var(--brand)] py-2 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90">
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan</div>
+                      <button className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:mt-3 md:py-2 md:text-sm">
                         Səbətə əlavə et
                       </button>
                     </div>
@@ -180,4 +177,11 @@ function CategoryPage() {
       <SiteFooter />
     </div>
   );
+}
+
+function ProductImg({ p }: { p: Product }) {
+  if (p.image?.startsWith("http") || p.image?.startsWith("/")) {
+    return <img src={p.image} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+  }
+  return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

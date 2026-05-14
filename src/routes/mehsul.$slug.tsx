@@ -1,91 +1,58 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
-  Heart, Scale, Share2, Truck, ShieldCheck, Store, MessageSquare,
-  ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star,
+  Heart, Scale, Share2, Truck, ShieldCheck, Store,
+  ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
 } from "lucide-react";
-import { products, categories, type Product } from "@/data/catalog";
-import { slugify } from "@/lib/slug";
+import { api, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
-import { ProductReviews } from "@/components/ProductReviews";
 
 export const Route = createFileRoute("/mehsul/$slug")({
-  beforeLoad: ({ params }) => {
-    if (!products.find((p) => slugify(p.name) === params.slug)) throw notFound();
-  },
-  head: ({ params }) => {
-    const product = products.find((p) => slugify(p.name) === params.slug);
-    return {
-      meta: [
-        { title: `${product?.name ?? "Məhsul"} — MebelMart` },
-        { name: "description", content: `${product?.name} ${product?.price} ₼ — endirim, çatdırılma və aylıq ödəniş seçimləri.` },
-        { property: "og:title", content: product?.name ?? "Məhsul" },
-        { property: "og:image", content: product?.image ?? "" },
-        { name: "twitter:image", content: product?.image ?? "" },
-      ],
-    };
-  },
   component: ProductPage,
-  notFoundComponent: () => (
-    <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-      <h1 className="text-3xl font-bold">Məhsul tapılmadı</h1>
-      <Link to="/" className="mt-4 inline-block text-[var(--brand)]">Ana səhifəyə qayıt</Link>
-    </div>
-  ),
-  errorComponent: ({ error }) => (
-    <div className="mx-auto max-w-7xl px-4 py-20 text-center">
-      <p className="text-destructive">{error.message}</p>
-    </div>
-  ),
 });
-
-type Tab = "info" | "specs" | "reviews";
 
 function ProductPage() {
   const { slug } = Route.useParams();
-  const product = products.find((p) => slugify(p.name) === slug)!;
-  const category = categories.find((c) => c.slug === product.category);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
+  const [qty, setQty] = useState(1);
 
-  const gallery = useMemo(() => {
-    const siblings: Product[] = products.filter((p) => p.category === product.category && p.name !== product.name);
-    const extras = siblings.slice(0, 4).map((p) => p.image);
-    return Array.from(new Set([product.image, ...extras, category?.image].filter(Boolean) as string[]));
-  }, [product, category]);
+  useEffect(() => {
+    const id = Number(slug);
+    if (!id) return;
+    api.getProduct(id).then((p) => {
+      setProduct(p);
+      if (p.category_slug) {
+        api.getCategories().then((cats) => {
+          setCategory(cats.find((c) => c.slug === p.category_slug) ?? null);
+        });
+        api.getProducts({ category: p.category_slug, active: true }).then((list) => {
+          setRelated(list.filter((x) => x.id !== p.id).slice(0, 4));
+        });
+      }
+    }).catch(() => {});
+  }, [slug]);
 
-  const [active, setActive] = useState(0);
-  const [zoomActive, setZoomActive] = useState(false);
-  const [origin, setOrigin] = useState({ x: 50, y: 50 });
-  const imgWrapRef = useRef<HTMLDivElement>(null);
-  const [tab, setTab] = useState<Tab>("info");
-  const [color, setColor] = useState(0);
-  const productCode = "MM-" + slugify(product.name).slice(0, 7).toUpperCase();
-  const colors = ["#1e3a5f", "#9ca3af", "#f59e0b"];
-
-  const installments = [
-    { months: 6, monthly: Math.round(product.price / 6) },
-    { months: 12, monthly: Math.round(product.price / 12) },
-    { months: 18, monthly: Math.round(product.price / 18) },
-  ];
-
-  function handleMove(e: React.MouseEvent) {
-    const rect = imgWrapRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setOrigin({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <SiteHeader />
+        <div className="mx-auto max-w-7xl px-4 py-20 text-center text-muted-foreground">Yüklənir...</div>
+        <SiteFooter />
+      </div>
+    );
   }
 
-  const related = products.filter((p) => p.category === product.category && p.name !== product.name).slice(0, 4);
-  const saving = product.old - product.price;
+  const hasImg = product.image?.startsWith("http") || product.image?.startsWith("/");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SiteHeader />
-
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        {/* Breadcrumbs */}
-        <nav className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">MebelMart</Link>
+      <div className="mx-auto max-w-7xl px-3 py-4 md:px-4 md:py-6">
+        {/* Breadcrumb */}
+        <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-4 md:text-sm md:mb-6">
+          <Link to="/" className="hover:text-foreground">Çınarlı</Link>
           <ChevronRight className="h-3 w-3" />
           {category && (
             <>
@@ -93,273 +60,128 @@ function ProductPage() {
               <ChevronRight className="h-3 w-3" />
             </>
           )}
-          <span className="text-foreground">{product.name}</span>
+          <span className="text-foreground line-clamp-1">{product.name}</span>
         </nav>
 
-        {/* Title row */}
-        <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold leading-tight md:text-4xl">{product.name}</h1>
-            <div className="mt-3 inline-flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-sm font-medium text-emerald-600">
-              <Store className="h-4 w-4" /> Stokda var
-            </div>
+        <div className="grid grid-cols-1 gap-4 lg:gap-8 lg:grid-cols-2">
+          {/* Image */}
+          <div className="overflow-hidden rounded-2xl border border-border bg-secondary/20 aspect-square flex items-center justify-center">
+            {hasImg
+              ? <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              : <span className="text-8xl">{product.image || "📦"}</span>}
           </div>
-        </div>
 
-        {/* Main 3-column grid */}
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[80px_minmax(0,1fr)_360px]">
-          {/* Thumbnails */}
-          <div className="order-2 flex gap-2 lg:order-1 lg:flex-col">
-            {gallery.map((src, i) => (
-              <button
-                key={src + i}
-                onClick={() => setActive(i)}
-                className={`aspect-square w-16 shrink-0 overflow-hidden rounded-lg border-2 bg-secondary/40 transition lg:w-full ${
-                  i === active ? "border-[var(--brand)]" : "border-border hover:border-muted-foreground"
-                }`}
-                aria-label={`Şəkil ${i + 1}`}
-              >
-                <img src={src} alt="" className="h-full w-full object-cover" />
+          {/* Info */}
+          <div className="flex flex-col">
+            <h1 className="text-xl font-bold md:text-3xl">{product.name}</h1>
+
+            <div className="mt-2 flex items-center gap-2">
+              <div className="flex text-amber-400">{[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current md:h-4 md:w-4" />)}</div>
+              <span className="text-xs text-muted-foreground md:text-sm">5.0</span>
+            </div>
+
+            <div className="mt-3 flex items-baseline gap-2 md:mt-4 md:gap-3">
+              <span className="text-3xl font-black md:text-4xl">{product.price} ₼</span>
+              {product.old_price && <span className="text-base text-muted-foreground line-through md:text-xl">{product.old_price} ₼</span>}
+              {product.discount > 0 && (
+                <span className="rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white md:px-3 md:text-sm">−{product.discount}%</span>
+              )}
+            </div>
+
+            {product.old_price && (
+              <div className="mt-1 text-sm text-green-600 font-medium">
+                {(product.old_price - product.price).toFixed(0)} ₼ qənaət
+              </div>
+            )}
+
+            <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
+              <span className="font-semibold text-[var(--brand)]">Faizsiz aylıq ödəniş:</span>{" "}
+              24 aya {Math.round(product.price / 24)} ₼ / ay
+            </div>
+
+            {product.description && (
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+            )}
+
+            <div className="mt-3 flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium md:text-sm ${product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                {product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
+              </span>
+            </div>
+
+            {/* Qty + Actions */}
+            <div className="mt-4 flex items-center gap-2 md:mt-6 md:gap-3">
+              <div className="flex items-center rounded-xl border border-border">
+                <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-3 text-lg hover:bg-secondary rounded-l-xl md:px-4">−</button>
+                <span className="w-10 text-center font-semibold md:w-12">{qty}</span>
+                <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
+              </div>
+              <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
+                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" /> Səbətə əlavə et
               </button>
-            ))}
-          </div>
-
-          {/* Main image + info under it */}
-          <div className="order-1 lg:order-2 grid grid-cols-1 gap-6 md:grid-cols-[1.15fr_1fr]">
-            <div
-              ref={imgWrapRef}
-              className="relative aspect-square cursor-zoom-in overflow-hidden rounded-2xl border border-border bg-white"
-              onMouseEnter={() => setZoomActive(true)}
-              onMouseLeave={() => setZoomActive(false)}
-              onMouseMove={handleMove}
-            >
-              <img
-                src={gallery[active]}
-                alt={product.name}
-                className="h-full w-full object-cover transition-transform duration-150 ease-out"
-                style={{
-                  transform: zoomActive ? "scale(2.2)" : "scale(1)",
-                  transformOrigin: `${origin.x}% ${origin.y}%`,
-                }}
-              />
-              <div className="absolute right-4 top-4 grid h-14 w-14 place-items-center rounded-full bg-[var(--accent-orange)] text-sm font-bold text-white shadow-lg">
-                −{product.discount}%
-              </div>
             </div>
 
-            {/* Info column */}
-            <div className="flex flex-col">
-              <div className="inline-flex w-fit items-center gap-2 rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-1 text-sm font-semibold text-[var(--accent-orange)]">
-                −{saving} ₼
-              </div>
-
-              <div className="mt-4 flex items-center gap-2">
-                <button className="grid h-10 w-10 place-items-center rounded-lg border border-border hover:border-[var(--brand)] hover:text-[var(--brand)]" aria-label="Müqayisə"><Scale className="h-4 w-4" /></button>
-                <button className="grid h-10 w-10 place-items-center rounded-lg border border-border hover:border-[var(--brand)] hover:text-[var(--brand)]" aria-label="Bəyəndim"><Heart className="h-4 w-4" /></button>
-                <button className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-border px-3 text-sm hover:border-[var(--brand)] hover:text-[var(--brand)]"><Share2 className="h-4 w-4" /> Paylaş</button>
-              </div>
-
-              {/* Color */}
-              <div className="mt-5">
-                <p className="text-sm text-muted-foreground">Rəng:</p>
-                <div className="mt-2 flex gap-2">
-                  {colors.map((c, i) => (
-                    <button
-                      key={c}
-                      onClick={() => setColor(i)}
-                      style={{ background: c }}
-                      className={`h-9 w-9 rounded-full ring-offset-2 ring-offset-background transition ${i === color ? "ring-2 ring-[var(--brand)]" : ""}`}
-                      aria-label={`Rəng ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Variant */}
-              <div className="mt-5">
-                <p className="text-sm text-muted-foreground">Ölçü / variant:</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <button className="rounded-md border-2 border-[var(--brand)] bg-[var(--brand)]/5 px-4 py-2 text-sm font-semibold text-[var(--brand)]">Standart</button>
-                </div>
-              </div>
-
-              {/* Code */}
-              <div className="mt-5 text-sm">
-                <span className="text-muted-foreground">Malın kodu: </span>
-                <span className="font-semibold">{productCode}</span>
-              </div>
-
-              {/* Rating */}
-              <button onClick={() => setTab("reviews")} className="mt-4 inline-flex w-fit items-center gap-2 text-sm">
-                <span className="inline-flex items-center gap-0.5">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <Star key={n} className="h-4 w-4 text-muted-foreground" />
-                  ))}
-                </span>
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  <MessageSquare className="h-4 w-4" /> 0
-                </span>
-                <span className="text-[var(--brand)] underline-offset-2 hover:underline">Rəy yaz</span>
+            <div className="mt-2 flex gap-2 md:mt-3">
+              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
+                <MousePointerClick className="h-3.5 w-3.5 md:h-4 md:w-4" /> Bir kliklə al
               </button>
-
-              <div className="mt-5 flex items-start gap-3 rounded-lg border border-border bg-secondary/30 p-3 text-xs text-muted-foreground">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-muted-foreground/20 text-[10px] font-bold">i</span>
-                Rəsmiləşdirmə zamanı 5–18% komissiya əlavə oluna bilər.
-              </div>
-            </div>
-          </div>
-
-          {/* Right sidebar */}
-          <aside className="order-3 space-y-4">
-            {/* Installment promo */}
-            <div className="rounded-2xl border-2 border-[var(--brand)]/40 bg-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="grid h-12 w-12 place-items-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-[var(--brand)]/70 text-white">
-                  <CreditCard className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-lg font-bold">{Math.round(product.price / 12)} ₼ x 12 ay</p>
-                  <p className="text-xs text-muted-foreground">Bank ilə 12 aya faizsiz ödə!</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Price + buy */}
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-sm text-muted-foreground line-through">{product.old} ₼</p>
-              <p className="text-3xl font-black">{product.price} ₼</p>
-              <div className="mt-4 flex gap-2">
-                <button className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--accent-orange)] px-4 py-3 text-sm font-bold text-white hover:opacity-90">
-                  <MousePointerClick className="h-4 w-4" /> Bir kliklə al
-                </button>
-                <button className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-emerald-500 text-white hover:opacity-90" aria-label="Səbətə at">
-                  <ShoppingCart className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Installment table */}
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <p className="text-sm font-bold">İlkin ödənişsiz hissə-hissə ödə!</p>
-              <div className="mt-3 overflow-hidden rounded-lg border border-border">
-                <table className="w-full text-xs">
-                  <thead className="bg-secondary/40 text-muted-foreground">
-                    <tr>
-                      <th className="px-2 py-2 text-left font-medium">Müddət</th>
-                      <th className="px-2 py-2 text-right font-medium">Aylıq</th>
-                      <th className="px-2 py-2 text-right font-medium">Yekun</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {installments.map((it) => (
-                      <tr key={it.months} className="border-t border-border">
-                        <td className="px-2 py-2">{it.months} ay</td>
-                        <td className="px-2 py-2 text-right font-semibold">{it.monthly} ₼</td>
-                        <td className="px-2 py-2 text-right">{product.price} ₼</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <Link to="/aylik-odenis" className="mt-3 block w-full rounded-lg border border-border px-3 py-2 text-center text-xs font-semibold hover:border-[var(--brand)] hover:text-[var(--brand)]">
-                Hissəli alış kalkulyatoru
-              </Link>
-            </div>
-
-            {/* Delivery + warranty */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-card p-3 text-xs">
-                <Truck className="mb-1 h-4 w-4 text-[var(--brand)]" />
-                <p className="font-semibold">Çatdırılma</p>
-                <p className="text-muted-foreground">Pulsuz</p>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-3 text-xs">
-                <ShieldCheck className="mb-1 h-4 w-4 text-[var(--brand)]" />
-                <p className="font-semibold">Zəmanət</p>
-                <p className="text-muted-foreground">2 il</p>
-              </div>
-            </div>
-          </aside>
-        </div>
-
-        {/* Tabs */}
-        <div className="mt-12 border-b border-border">
-          <div className="flex flex-wrap gap-1">
-            {[
-              { id: "info" as const, label: "Məhsul haqqında" },
-              { id: "specs" as const, label: "Texniki xüsusiyyətləri" },
-              { id: "reviews" as const, label: "Reytinq və rəylər" },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`relative px-5 py-3 text-sm font-semibold transition ${
-                  tab === t.id ? "text-[var(--accent-orange)]" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-                {tab === t.id && <span className="absolute inset-x-3 -bottom-px h-0.5 bg-[var(--accent-orange)]" />}
+              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
+                <CreditCard className="h-3.5 w-3.5 md:h-4 md:w-4" /> Kredit
               </button>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        <div className="mt-6">
-          {tab === "info" && (
-            <div className="rounded-xl border border-border bg-card p-6 text-sm leading-relaxed text-muted-foreground">
-              <p>
-                {product.name} — premium materiallardan hazırlanmış, müasir dizayna və uzun istifadə müddətinə malik mebel. Evinizin istənilən küncü üçün mükəmməl seçim.
-              </p>
+            <div className="mt-3 flex gap-2">
+              <button className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5">
+                <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" /> Saxla
+              </button>
+              <button className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5">
+                <Scale className="h-3.5 w-3.5 md:h-4 md:w-4" /> Müqayisə
+              </button>
+              <button className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5">
+                <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4" /> Paylaş
+              </button>
             </div>
-          )}
-          {tab === "specs" && (
-            <div className="rounded-xl border border-border bg-card p-6">
-              <dl className="grid grid-cols-1 gap-x-8 gap-y-1 text-sm md:grid-cols-2">
-                {[
-                  ["Kateqoriya", category?.name ?? "—"],
-                  ["Material", "Premium MDF / Şpon"],
-                  ["Zəmanət", "24 ay"],
-                  ["Yığılma", "Pulsuz"],
-                  ["Çatdırılma", "1–3 iş günü"],
-                  ["Mənşə", "Türkiyə"],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between border-b border-border py-2">
-                    <dt className="text-muted-foreground">{k}</dt>
-                    <dd className="font-medium">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+
+            {/* Features */}
+            <div className="mt-4 grid grid-cols-3 gap-2 md:mt-6 md:gap-3">
+              {[
+                { icon: Truck, t: "Sürətli çatdırılma" },
+                { icon: ShieldCheck, t: "Rəsmi zəmanət" },
+                { icon: Store, t: "56 mağazada var" },
+              ].map(({ icon: Icon, t }) => (
+                <div key={t} className="flex flex-col items-center gap-1 rounded-xl border border-border p-2 text-center text-[10px] md:p-3 md:text-xs">
+                  <Icon className="h-4 w-4 text-[var(--brand)] md:h-5 md:w-5" />
+                  {t}
+                </div>
+              ))}
             </div>
-          )}
-          {tab === "reviews" && <ProductReviews productSlug={slug} />}
+          </div>
         </div>
 
         {/* Related */}
         {related.length > 0 && (
-          <section className="mt-14">
-            <h2 className="mb-5 text-2xl font-bold">Oxşar məhsullar</h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="mt-10 md:mt-16">
+            <h2 className="mb-4 text-xl font-bold md:mb-5 md:text-2xl">Oxşar məhsullar</h2>
+            <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
               {related.map((p) => (
-                <Link
-                  key={p.name}
-                  to="/mehsul/$slug"
-                  params={{ slug: slugify(p.name) }}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl"
-                >
+                <Link key={p.id} to="/mehsul/$slug" params={{ slug: String(p.id) }}
+                  className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
                   <div className="aspect-square overflow-hidden bg-secondary/30">
-                    <img src={p.image} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+                    {p.image?.startsWith("http") || p.image?.startsWith("/")
+                      ? <img src={p.image} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
+                      : <div className="flex h-full w-full items-center justify-center text-4xl">{p.image || "📦"}</div>}
                   </div>
-                  <div className="p-3">
-                    <h3 className="line-clamp-2 min-h-[2.5rem] text-sm">{p.name}</h3>
-                    <p className="mt-2 text-lg font-black">{p.price} ₼</p>
+                  <div className="p-3 md:p-4">
+                    <div className="line-clamp-2 text-xs font-medium md:text-sm">{p.name}</div>
+                    <div className="mt-1 font-black md:mt-2">{p.price} ₼</div>
+                    <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> {Math.round(p.price / 12)} ₼/ay</div>
                   </div>
                 </Link>
               ))}
             </div>
-          </section>
+          </div>
         )}
       </div>
-
       <SiteFooter />
     </div>
   );

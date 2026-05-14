@@ -1,49 +1,52 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import type { Session, User } from "@supabase/supabase-js";
+import { useEffect, useState, useCallback } from "react";
+import { api, type User } from "@/lib/api";
 
 export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        setTimeout(async () => {
-          const { data } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", s.user.id)
-            .eq("role", "admin")
-            .maybeSingle();
-          setIsAdmin(!!data);
-        }, 0);
-      } else {
-        setIsAdmin(false);
-      }
-    });
-
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const { data } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", s.user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-        setIsAdmin(!!data);
-      }
+  const loadUser = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    if (!token) { setLoading(false); return; }
+    try {
+      const { user } = await api.me();
+      setUser(user);
+    } catch {
+      localStorage.removeItem("token");
+      setUser(null);
+    } finally {
       setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    }
   }, []);
 
-  return { session, user, isAdmin, loading };
+  useEffect(() => { loadUser(); }, [loadUser]);
+
+  const login = async (email: string, password: string) => {
+    const { token, user } = await api.login(email, password);
+    localStorage.setItem("token", token);
+    setUser(user);
+    return user;
+  };
+
+  const register = async (email: string, password: string, full_name: string) => {
+    const { token, user } = await api.register(email, password, full_name);
+    localStorage.setItem("token", token);
+    setUser(user);
+    return user;
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+  };
+
+  return {
+    user,
+    session: user ? { user } : null,
+    isAdmin: user?.role === "admin",
+    loading,
+    login,
+    register,
+    logout,
+  };
 }
