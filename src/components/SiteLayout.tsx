@@ -305,38 +305,88 @@ export function MobileBottomNav() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-secondary/30 pb-20 lg:pb-0">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-12 md:grid-cols-4">
-        <div className="col-span-2 md:col-span-1">
-          <div className="mb-3">
-            <img src={logoChinarli} alt="Chinarli Mebel" className="h-14 w-auto md:h-20" />
+    <footer className="bg-[#18181a] text-white pb-20 lg:pb-0">
+      <div className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+          {/* Col 1: Logo + QR */}
+          <div className="col-span-2 md:col-span-1">
+            <div className="mb-4">
+              <img src={logoChinarli} alt="Chinarli Mebel" className="h-12 w-auto" />
+            </div>
+            <p className="mb-4 text-sm text-gray-400">Etibarlı mebel mağazası.</p>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold text-gray-300">Mobil tətbiq</p>
+              <div className="h-20 w-20 rounded-lg bg-white/10 flex items-center justify-center text-xs text-gray-500 p-1">
+                QR kodu
+              </div>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">Etibarlı mebel mağazası. 24/7 dəstək.</p>
-        </div>
-        <div>
-          <h4 className="mb-3 font-semibold">Şirkət</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/haqqimizda">Haqqımızda</Link></li>
-            <li><Link to="/magazalar">Mağazalar</Link></li>
-            <li><Link to="/korporativ">Korporativ</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="mb-3 font-semibold">Kömək</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link to="/catdirilma">Çatdırılma</Link></li>
-            <li><Link to="/geri-qaytarma">Geri qaytarma</Link></li>
-            <li><Link to="/elaqe">Əlaqə</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="mb-3 font-semibold">Əlaqə</h4>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>*0171</li><li>info@chinarlimebel.az</li><li>Bakı, Azərbaycan</li>
-          </ul>
+
+          {/* Col 2: Şirkət */}
+          <div>
+            <h4 className="mb-4 font-semibold text-white">Şirkət</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link to="/haqqimizda" className="hover:text-[var(--brand)] transition">Haqqımızda</Link></li>
+              <li><Link to="/magazalar" className="hover:text-[var(--brand)] transition">Mağazalar</Link></li>
+              <li><Link to="/korporativ" className="hover:text-[var(--brand)] transition">Korporativ</Link></li>
+              <li><Link to="/kampaniyalar" className="hover:text-[var(--brand)] transition">Kampaniyalar</Link></li>
+            </ul>
+          </div>
+
+          {/* Col 3: Müştəri üçün */}
+          <div>
+            <h4 className="mb-4 font-semibold text-white">Müştəri üçün</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><Link to="/catdirilma" className="hover:text-[var(--brand)] transition">Çatdırılma</Link></li>
+              <li><Link to="/geri-qaytarma" className="hover:text-[var(--brand)] transition">Geri qaytarma</Link></li>
+              <li><Link to="/aylik-odenis" className="hover:text-[var(--brand)] transition">Aylıq ödəniş</Link></li>
+              <li><Link to="/elaqe" className="hover:text-[var(--brand)] transition">Əlaqə</Link></li>
+            </ul>
+          </div>
+
+          {/* Col 4: Məlumat */}
+          <div>
+            <h4 className="mb-4 font-semibold text-white">Məlumat</h4>
+            <ul className="space-y-2 text-sm text-gray-400">
+              <li><a href="https://chinarli.store/blog" className="hover:text-[var(--brand)] transition">Bloqumuz</a></li>
+              <li><a href="https://chinarli.store/sosyal-mediya" className="hover:text-[var(--brand)] transition">Sosyal media</a></li>
+              <li><Link to="/privacy" className="hover:text-[var(--brand)] transition">Məxfilik siyasəti</Link></li>
+              <li><Link to="/terms" className="hover:text-[var(--brand)] transition">İstifadə şərtləri</Link></li>
+            </ul>
+          </div>
+
+          {/* Col 5: Əlaqə */}
+          <div>
+            <h4 className="mb-4 font-semibold text-white">Əlaqə</h4>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a href="tel:*0171" className="flex items-center gap-2 text-[var(--brand)] font-semibold hover:text-[var(--brand)]/80 transition">
+                  📞 *0171
+                </a>
+              </li>
+              <li>
+                <a href="mailto:info@chinarlimebel.az" className="flex items-center gap-2 text-gray-400 hover:text-[var(--brand)] transition">
+                  ✉️ info@chinarlimebel.az
+                </a>
+              </li>
+              <li className="text-gray-400">
+                📍 Bakı, Azərbaycan
+              </li>
+            </ul>
+            <div className="mt-4 flex gap-2">
+              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition">f</a>
+              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition">𝕏</a>
+              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition">📷</a>
+            </div>
+          </div>
         </div>
       </div>
-      <div className="border-t border-border py-4 text-center text-xs text-muted-foreground">© 2026 Chinarli Mebel</div>
+
+      {/* Bottom bar */}
+      <div className="border-t border-white/10 py-4 text-center">
+        <p className="text-xs text-gray-500">© 2026 Chinarli Mebel. Bütün hüquqlar qorunur.</p>
+      </div>
+
       <MobileBottomNav />
     </footer>
   );
