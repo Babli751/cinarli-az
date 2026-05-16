@@ -310,8 +310,8 @@ export function SiteFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           {/* Col 1: Logo + QR */}
           <div className="col-span-2 md:col-span-1">
-            <div className="mb-6">
-              <img src={logoChinarli} alt="Chinarli Mebel" className="h-28 w-auto brightness-110" />
+            <div className="mb-6 rounded-xl bg-white p-3 w-fit">
+              <img src={logoChinarli} alt="Chinarli Mebel" className="h-28 w-auto" />
             </div>
             <p className="mb-4 text-sm text-gray-400">Etibarlı mebel mağazası.</p>
             <div className="flex flex-col gap-2">
