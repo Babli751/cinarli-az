@@ -19,7 +19,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [tab, setTab] = useState<"popular" | "new">("popular");
+  const [tab1, setTab1] = useState<"popular" | "new">("popular");
+  const [tab2, setTab2] = useState<"bestseller" | "discount">("bestseller");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [featured, setFeatured] = useState<Product | null | undefined>(undefined);
@@ -30,8 +31,12 @@ function Index() {
     api.getFeaturedProduct().then(setFeatured).catch(() => setFeatured(null));
   }, []);
 
-  const list = tab === "popular"
+  const list1 = tab1 === "popular"
     ? products.slice(0, 12)
+    : [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 12);
+
+  const list2 = tab2 === "bestseller"
+    ? [...products].sort((a, b) => b.stock - a.stock).slice(0, 12)
     : [...products].sort((a, b) => b.discount - a.discount).slice(0, 12);
 
   return (
@@ -161,17 +166,17 @@ function Index() {
         </section>
       )}
 
-      {/* Products */}
-      <section className="mx-auto max-w-7xl px-4 pb-16">
+      {/* Products Section 1 */}
+      <section className="mx-auto max-w-7xl px-4 py-12">
         <div className="mb-6 flex items-end justify-between">
           <div className="flex items-baseline gap-6">
-            <button onClick={() => setTab("popular")}
-              className={`text-2xl font-bold md:text-3xl transition ${tab === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+            <button onClick={() => setTab1("popular")}
+              className={`text-2xl font-bold md:text-3xl transition ${tab1 === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
               Populyar məhsullar
             </button>
-            <button onClick={() => setTab("new")}
-              className={`hidden text-lg transition md:inline ${tab === "new" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Çox satılanlar
+            <button onClick={() => setTab1("new")}
+              className={`hidden text-lg transition md:inline ${tab1 === "new" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Yeni məhsullar
             </button>
           </div>
           <div className="flex gap-2">
@@ -180,11 +185,39 @@ function Index() {
           </div>
         </div>
 
-        {list.length === 0 ? (
+        {list1.length === 0 ? (
           <div className="py-16 text-center text-muted-foreground">Admin paneldən məhsul əlavə edin</div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {list.map((p) => <ProductCard key={p.id} p={p} />)}
+            {list1.map((p) => <ProductCard key={p.id} p={p} />)}
+          </div>
+        )}
+      </section>
+
+      {/* Products Section 2 */}
+      <section className="mx-auto max-w-7xl px-4 pb-16">
+        <div className="mb-6 flex items-end justify-between">
+          <div className="flex items-baseline gap-6">
+            <button onClick={() => setTab2("bestseller")}
+              className={`text-2xl font-bold md:text-3xl transition ${tab2 === "bestseller" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Çox satılanlar
+            </button>
+            <button onClick={() => setTab2("discount")}
+              className={`hidden text-lg transition md:inline ${tab2 === "discount" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Endirimli məhsullar
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></button>
+            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-5 w-5" /></button>
+          </div>
+        </div>
+
+        {list2.length === 0 ? (
+          <div className="py-16 text-center text-muted-foreground">Admin paneldən məhsul əlavə edin</div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {list2.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
         )}
       </section>
