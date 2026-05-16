@@ -311,7 +311,7 @@ export function SiteFooter() {
           {/* Col 1: Logo + QR */}
           <div className="col-span-2 md:col-span-1">
             <div className="mb-4">
-              <img src={logoChinarli} alt="Chinarli Mebel" className="h-12 w-auto" />
+              <img src={logoChinarli} alt="Chinarli Mebel" className="h-20 w-auto" />
             </div>
             <p className="mb-4 text-sm text-gray-400">Etibarlı mebel mağazası.</p>
             <div className="flex flex-col gap-2">
