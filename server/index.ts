@@ -20,7 +20,7 @@ type Vars = { user: { id: number; email: string; role: string; full_name: string
 const app = new Hono<{ Variables: Vars }>();
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"] }));
-app.use("/uploads/*", serveStatic({ root: path.join(__dirname, "..") }));
+app.use("/uploads/*", serveStatic({ root: path.join(__dirname, "../server") }));
 
 async function authMiddleware(c: Context<{ Variables: Vars }>, next: Next) {
   const header = c.req.header("Authorization");
@@ -104,6 +104,17 @@ app.get("/api/products/featured", (c) => {
   const p = db.prepare("SELECT * FROM products WHERE is_featured=1 AND is_active=1 LIMIT 1").get();
   if (!p) return c.json(null);
   return c.json(p);
+});
+
+app.get("/api/products/most-sold", (c) => {
+  const limit = Number(c.req.query("limit") || 12);
+  return c.json(db.prepare("SELECT * FROM products WHERE is_active=1 ORDER BY most_sold DESC, created_at DESC LIMIT ?").all(limit));
+});
+
+app.put("/api/products/:id/most-sold", authMiddleware, adminMiddleware, async (c) => {
+  const { most_sold } = await c.req.json();
+  db.prepare("UPDATE products SET most_sold=? WHERE id=?").run(most_sold || 0, c.req.param("id"));
+  return c.json({ ok: true });
 });
 
 app.get("/api/products/:id", (c) => {

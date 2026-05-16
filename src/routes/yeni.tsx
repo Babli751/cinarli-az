@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/SiteLayout";
-import { api, type Product } from "@/lib/api";
+import { api, getImageUrl, type Product } from "@/lib/api";
 import { Zap } from "lucide-react";
 
 export const Route = createFileRoute("/yeni")({
@@ -44,8 +44,9 @@ function YeniPage() {
 }
 
 function ProductImg({ p }: { p: Product }) {
-  if (p.image?.startsWith("http") || p.image?.startsWith("/")) {
-    return <img src={p.image} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+  const url = getImageUrl(p.image);
+  if (url) {
+    return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

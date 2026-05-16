@@ -68,8 +68,9 @@ db.exec(`
   );
 `);
 
-// Migrate: add is_featured column if not exists
+// Migrations
 try { db.exec("ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN most_sold INTEGER DEFAULT 0"); } catch {}
 
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { api, type Campaign } from "@/lib/api";
+import { api, getImageUrl, type Campaign } from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, X, ImageIcon, Calendar } from "lucide-react";
 
@@ -88,8 +88,8 @@ function CampaignsAdmin() {
           <div className="col-span-3 py-12 text-center text-muted-foreground">Kampaniya yoxdur</div>
         ) : items.map((c) => (
           <div key={c.id} className={`rounded-2xl border bg-background overflow-hidden shadow-sm transition-all ${isExpired(c) ? "opacity-60 border-border" : "border-border hover:shadow-md"}`}>
-            {c.image && (c.image.startsWith("http") || c.image.startsWith("/"))
-              ? <img src={c.image} alt="" className="h-40 w-full object-cover" />
+            {getImageUrl(c.image)
+              ? <img src={getImageUrl(c.image)!} alt="" className="h-40 w-full object-cover" />
               : <div className="h-40 bg-secondary flex items-center justify-center text-muted-foreground text-sm">Şəkil yoxdur</div>}
             <div className="p-4">
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -161,8 +161,8 @@ function CampaignsAdmin() {
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                 </label>
               </Field>
-              {(editing.image?.startsWith("http") || editing.image?.startsWith("/")) && (
-                <img src={editing.image} alt="" className="h-32 w-full rounded-xl object-cover border border-border" />
+              {getImageUrl(editing.image) && (
+                <img src={getImageUrl(editing.image)!} alt="" className="h-32 w-full rounded-xl object-cover border border-border" />
               )}
               <label className="flex items-center gap-3 cursor-pointer">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}

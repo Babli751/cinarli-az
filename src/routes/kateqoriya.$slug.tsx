@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { Heart, Scale, Zap, ChevronRight, SlidersHorizontal, X } from "lucide-react";
-import { api, type Product, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 
 const searchSchema = z.object({
@@ -180,8 +180,9 @@ function CategoryPage() {
 }
 
 function ProductImg({ p }: { p: Product }) {
-  if (p.image?.startsWith("http") || p.image?.startsWith("/")) {
-    return <img src={p.image} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+  const url = getImageUrl(p.image);
+  if (url) {
+    return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

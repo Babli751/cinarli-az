@@ -1,5 +1,12 @@
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+export function getImageUrl(image: string | undefined | null): string | null {
+  if (!image) return null;
+  if (image.startsWith("http")) return image;
+  if (image.startsWith("/uploads/")) return `${BASE}${image}`;
+  return null; // emoji or empty
+}
+
 function getToken() {
   return localStorage.getItem("token");
 }
@@ -45,6 +52,7 @@ export const api = {
   },
   getProduct: (id: number) => req<Product>("GET", `/api/products/${id}`),
   getFeaturedProduct: () => req<Product | null>("GET", "/api/products/featured"),
+  getMostSoldProducts: (limit = 12) => req<Product[]>("GET", `/api/products/most-sold?limit=${limit}`),
   setFeatured: (id: number, is_featured: boolean) => req<{ ok: boolean }>("PUT", `/api/products/${id}/featured`, { is_featured }, true),
   createProduct: (data: Partial<Product>) => req<{ id: number }>("POST", "/api/products", data, true),
   updateProduct: (id: number, data: Partial<Product>) => req<{ ok: boolean }>("PUT", `/api/products/${id}`, data, true),
@@ -81,7 +89,8 @@ export const api = {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Yükləmə xətası");
-    return `${BASE}${data.url}`;
+    // Store relative path — resolved at render time via getImageUrl()
+    return data.url;
   },
 };
 
@@ -114,6 +123,7 @@ export interface Product {
   stock: number;
   is_active: number;
   is_featured: number;
+  most_sold: number;
   description: string;
   created_at?: string;
 }

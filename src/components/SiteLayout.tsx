@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, Shield, Home, Grid3x3 } from "lucide-react";
-import { categories } from "@/data/catalog";
+import { api, type Category } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import logoChinarli from "@/assets/logo-chinarli.png";
 
@@ -9,8 +9,16 @@ export function SiteHeader() {
   const [catOpen, setCatOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [activeSlug, setActiveSlug] = useState(categories[0].slug);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeSlug, setActiveSlug] = useState("");
   const { isAdmin } = useAuth();
+
+  useEffect(() => {
+    api.getCategories().then((cats) => {
+      setCategories(cats);
+      if (cats.length > 0) setActiveSlug(cats[0].slug);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const anyOpen = catOpen || mobileMenuOpen;
@@ -29,7 +37,7 @@ export function SiteHeader() {
     };
   }, [catOpen, mobileMenuOpen]);
 
-  const activeCategory = categories.find((c) => c.slug === activeSlug)!;
+  const activeCategory = categories.find((c) => c.slug === activeSlug) ?? categories[0];
 
   return (
     <>
@@ -208,7 +216,7 @@ export function SiteHeader() {
       )}
 
       {/* Desktop catalog mega menu */}
-      {catOpen && (
+      {catOpen && activeCategory && (
         <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setCatOpen(false)}>
           <div
             onClick={(e) => e.stopPropagation()}

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { api, type Product, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, X, Search, ImageIcon, Star } from "lucide-react";
 
@@ -144,8 +144,8 @@ function ProductsAdmin() {
             ) : filtered.map((p) => (
               <tr key={p.id} className="border-t border-border hover:bg-secondary/20 transition-colors">
                 <td className="px-4 py-3">
-                  {p.image?.startsWith("http") || p.image?.startsWith("/")
-                    ? <img src={p.image} alt="" className="h-11 w-11 rounded-lg object-cover border border-border" />
+                  {getImageUrl(p.image)
+                    ? <img src={getImageUrl(p.image)!} alt="" className="h-11 w-11 rounded-lg object-cover border border-border" />
                     : <div className="h-11 w-11 rounded-lg bg-secondary flex items-center justify-center text-xl">{p.image || <ImageIcon className="h-5 w-5 text-muted-foreground" />}</div>}
                 </td>
                 <td className="px-4 py-3">
@@ -237,8 +237,8 @@ function ProductsAdmin() {
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
                 </label>
               </Field>
-              {(editing.image?.startsWith("http") || editing.image?.startsWith("/")) && (
-                <img src={editing.image} alt="" className="h-28 w-28 rounded-xl object-cover border border-border" />
+              {getImageUrl(editing.image) && (
+                <img src={getImageUrl(editing.image)!} alt="" className="h-28 w-28 rounded-xl object-cover border border-border" />
               )}
               <label className="flex items-center gap-3 cursor-pointer">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}

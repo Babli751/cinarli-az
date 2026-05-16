@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
-import { api, type Product, type Category } from "@/lib/api";
+import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { api, getImageUrl, type Product } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
 import bannerBedroom from "@/assets/banner-bedroom.jpg";
@@ -19,20 +19,22 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [tab, setTab] = useState<"popular" | "new">("popular");
+  const [tab, setTab] = useState<"popular" | "new" | "sale">("popular");
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [mostSold, setMostSold] = useState<Product[]>([]);
   const [featured, setFeatured] = useState<Product | null | undefined>(undefined);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setProducts).catch(() => {});
-    api.getCategories().then(setCategories).catch(() => {});
+    api.getMostSoldProducts(12).then(setMostSold).catch(() => {});
     api.getFeaturedProduct().then(setFeatured).catch(() => setFeatured(null));
   }, []);
 
-  const list = tab === "popular"
+  const tabList = tab === "popular"
     ? products.slice(0, 12)
-    : [...products].sort((a, b) => b.discount - a.discount).slice(0, 12);
+    : tab === "new"
+    ? [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 12)
+    : [...products].filter(p => p.discount > 0).sort((a, b) => b.discount - a.discount).slice(0, 12);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -140,38 +142,19 @@ function Index() {
         </div>
       </section>
 
-      {/* Categories */}
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 py-12">
-          <div className="mb-6 flex items-end justify-between">
-            <h2 className="text-2xl font-bold md:text-3xl">Kateqoriyalar</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
-            {categories.map((c) => (
-              <Link key={c.slug} to="/kateqoriya/$slug" params={{ slug: c.slug }}
-                className="group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-3 text-center transition hover:-translate-y-1 hover:border-[var(--brand)] hover:shadow-md">
-                <div className="flex aspect-square w-full items-center justify-center rounded-xl bg-secondary/40 text-4xl">
-                  {c.icon}
-                </div>
-                <span className="text-xs font-semibold md:text-sm">{c.name}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Products */}
-      <section className="mx-auto max-w-7xl px-4 pb-16">
-        <div className="mb-6 flex items-end justify-between">
-          <div className="flex items-baseline gap-6">
-            <button onClick={() => setTab("popular")}
-              className={`text-2xl font-bold md:text-3xl transition ${tab === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Populyar məhsullar
-            </button>
-            <button onClick={() => setTab("new")}
-              className={`hidden text-lg transition md:inline ${tab === "new" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Endirimlər
-            </button>
+      {/* Products — tab bölməsi */}
+      <section className="mx-auto max-w-7xl px-4 pb-10">
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex flex-wrap items-baseline gap-2 md:gap-6">
+            {(["popular", "new", "sale"] as const).map((t) => {
+              const labels = { popular: "Populyar", new: "Yeni gələnlər", sale: "Endirimlər" };
+              return (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition md:text-base ${tab === t ? "bg-[var(--brand)] text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
+                  {labels[t]}
+                </button>
+              );
+            })}
           </div>
           <div className="flex gap-2">
             <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></button>
@@ -179,14 +162,31 @@ function Index() {
           </div>
         </div>
 
-        {list.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">Admin paneldən məhsul əlavə edin</div>
+        {tabList.length === 0 ? (
+          <div className="py-16 text-center text-muted-foreground">
+            {tab === "sale" ? "Endirimli məhsul yoxdur" : "Admin paneldən məhsul əlavə edin"}
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {list.map((p) => <ProductCard key={p.id} p={p} />)}
+            {tabList.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
         )}
       </section>
+
+      {/* Ən çox satılan */}
+      {mostSold.some(p => p.most_sold > 0) && (
+        <section className="mx-auto max-w-7xl px-4 pb-16">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold md:text-3xl">Ən çox satılan</h2>
+            <Link to="/" className="flex items-center gap-1 text-sm font-semibold text-[var(--brand)] hover:underline">
+              Hamısı <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {mostSold.map((p) => <ProductCard key={p.id} p={p} />)}
+          </div>
+        </section>
+      )}
 
       <SiteFooter />
     </div>
@@ -194,8 +194,9 @@ function Index() {
 }
 
 function ProductImg({ p, className }: { p: Product; className?: string }) {
-  if (p.image?.startsWith("http") || p.image?.startsWith("/")) {
-    return <img src={p.image} alt={p.name} className={className ?? "h-full w-full object-cover"} loading="lazy" />;
+  const url = getImageUrl(p.image);
+  if (url) {
+    return <img src={url} alt={p.name} className={className ?? "h-full w-full object-cover"} loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

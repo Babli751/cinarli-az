@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageShell } from "@/components/SiteLayout";
-import { api, type Product, type Campaign, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Campaign, type Category } from "@/lib/api";
 import { Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/kampaniyalar")({
@@ -26,8 +26,8 @@ function KampaniyalarPage() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mb-10">
           {campaigns.map((c) => (
             <div key={c.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              {c.image && (c.image.startsWith("http") || c.image.startsWith("/")) && (
-                <img src={c.image} alt={c.title} className="h-44 w-full object-cover" />
+              {getImageUrl(c.image) && (
+                <img src={getImageUrl(c.image)!} alt={c.title} className="h-44 w-full object-cover" />
               )}
               <div className="p-5">
                 <div className="flex items-start justify-between gap-2">
@@ -94,8 +94,9 @@ function KampaniyalarPage() {
 }
 
 function ProductImg({ p }: { p: Product }) {
-  if (p.image?.startsWith("http") || p.image?.startsWith("/")) {
-    return <img src={p.image} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+  const url = getImageUrl(p.image);
+  if (url) {
+    return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

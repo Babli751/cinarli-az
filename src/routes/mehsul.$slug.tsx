@@ -4,7 +4,7 @@ import {
   Heart, Scale, Share2, Truck, ShieldCheck, Store,
   ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
 } from "lucide-react";
-import { api, type Product, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 
 export const Route = createFileRoute("/mehsul/$slug")({
@@ -44,7 +44,7 @@ function ProductPage() {
     );
   }
 
-  const hasImg = product.image?.startsWith("http") || product.image?.startsWith("/");
+  const hasImg = !!getImageUrl(product.image);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -67,7 +67,7 @@ function ProductPage() {
           {/* Image */}
           <div className="overflow-hidden rounded-2xl border border-border bg-secondary/20 aspect-square flex items-center justify-center">
             {hasImg
-              ? <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+              ? <img src={getImageUrl(product.image)!} alt={product.name} className="h-full w-full object-cover" />
               : <span className="text-8xl">{product.image || "📦"}</span>}
           </div>
 
@@ -167,8 +167,8 @@ function ProductPage() {
                 <Link key={p.id} to="/mehsul/$slug" params={{ slug: String(p.id) }}
                   className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
                   <div className="aspect-square overflow-hidden bg-secondary/30">
-                    {p.image?.startsWith("http") || p.image?.startsWith("/")
-                      ? <img src={p.image} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
+                    {getImageUrl(p.image)
+                      ? <img src={getImageUrl(p.image)!} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
                       : <div className="flex h-full w-full items-center justify-center text-4xl">{p.image || "📦"}</div>}
                   </div>
                   <div className="p-3 md:p-4">
