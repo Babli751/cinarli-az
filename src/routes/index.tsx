@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { api, getImageUrl, type Product } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
@@ -171,65 +171,92 @@ function Index() {
       </section>
 
       {/* Products Section 1 */}
-      <section className="mx-auto max-w-7xl px-4 py-6 md:py-12">
-        <div className="mb-4 md:mb-6 flex items-end justify-between gap-2">
-          <div className="flex items-baseline gap-2 md:gap-6 flex-wrap">
-            <button onClick={() => setTab1("popular")}
-              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab1 === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Populyar
-            </button>
-            <button onClick={() => setTab1("new")}
-              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab1 === "new" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Yeni
-            </button>
-          </div>
-          <div className="flex gap-1 md:gap-2">
-            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-4 md:h-5 w-4 md:w-5" /></button>
-            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-4 md:h-5 w-4 md:w-5" /></button>
-          </div>
-        </div>
-
-        {list1.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">Admin paneldən məhsul əlavə edin</div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {list1.map((p) => <ProductCard key={p.id} p={p} />)}
-          </div>
-        )}
-      </section>
+      <ProductCarousel
+        items={list1}
+        emptyText="Admin paneldən məhsul əlavə edin"
+        tabs={[
+          { key: "popular", label: "Populyar" },
+          { key: "new", label: "Yeni" },
+        ]}
+        activeTab={tab1}
+        onTabChange={(t) => setTab1(t as "popular" | "new")}
+      />
 
       {/* Products Section 2 */}
-      <section className="mx-auto max-w-7xl px-4 py-6 md:py-12 pb-16">
-        <div className="mb-4 md:mb-6 flex items-end justify-between gap-2">
-          <div className="flex items-baseline gap-2 md:gap-6 flex-wrap">
-            <button onClick={() => setTab2("bestseller")}
-              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab2 === "bestseller" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Çox satılan
-            </button>
-            <button onClick={() => setTab2("discount")}
-              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab2 === "discount" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Endirimli
-            </button>
-          </div>
-          <div className="flex gap-1 md:gap-2">
-            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-4 md:h-5 w-4 md:w-5" /></button>
-            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-4 md:h-5 w-4 md:w-5" /></button>
-          </div>
-        </div>
-
-        {list2.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">
-            {tab2 === "discount" ? "Endirimli məhsul yoxdur" : "Admin paneldən məhsul əlavə edin"}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {list2.map((p) => <ProductCard key={p.id} p={p} />)}
-          </div>
-        )}
-      </section>
+      <ProductCarousel
+        items={list2}
+        emptyText={tab2 === "discount" ? "Endirimli məhsul yoxdur" : "Admin paneldən məhsul əlavə edin"}
+        tabs={[
+          { key: "bestseller", label: "Çox satılan" },
+          { key: "discount", label: "Endirimli" },
+        ]}
+        activeTab={tab2}
+        onTabChange={(t) => setTab2(t as "bestseller" | "discount")}
+        isLast
+      />
 
       <SiteFooter />
     </div>
+  );
+}
+
+function ProductCarousel({
+  items, emptyText, tabs, activeTab, onTabChange, isLast,
+}: {
+  items: Product[];
+  emptyText: string;
+  tabs: { key: string; label: string }[];
+  activeTab: string;
+  onTabChange: (t: string) => void;
+  isLast?: boolean;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const scroll = (dir: "left" | "right") => {
+    if (!ref.current) return;
+    const card = ref.current.querySelector("[data-card]") as HTMLElement | null;
+    const amount = card ? card.offsetWidth + 16 : 280;
+    ref.current.scrollBy({ left: dir === "right" ? amount * 2 : -amount * 2, behavior: "smooth" });
+  };
+
+  return (
+    <section className={`mx-auto max-w-7xl px-4 py-6 md:py-10 ${isLast ? "pb-16" : ""}`}>
+      <div className="mb-4 md:mb-6 flex items-center justify-between gap-2">
+        <div className="flex items-baseline gap-3 md:gap-6 flex-wrap">
+          {tabs.map((t) => (
+            <button key={t.key} onClick={() => onTabChange(t.key)}
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${activeTab === t.key ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => scroll("left")}
+            className="grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
+            <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
+          </button>
+          <button onClick={() => scroll("right")}
+            className="grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
+            <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
+          </button>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <div className="py-16 text-center text-muted-foreground">{emptyText}</div>
+      ) : (
+        <div
+          ref={ref}
+          className="flex gap-3 md:gap-4 overflow-x-auto scroll-smooth pb-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {items.map((p) => (
+            <div key={p.id} data-card className="w-[160px] flex-none sm:w-[200px] md:w-[220px] lg:w-[240px]">
+              <ProductCard p={p} />
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

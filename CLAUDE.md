@@ -33,7 +33,7 @@ npm run build
 rsync -az dist/client/ root@167.172.191.202:/var/www/cinarli-frontend/
 
 # 3. API kodunu yüklə
-rsync -az --exclude node_modules server/ root@167.172.191.202:/var/www/cinarli-api/server/
+rsync -az --exclude node_modules --exclude uploads server/ root@167.172.191.202:/var/www/cinarli-api/server/
 
 # 4. Server PM2 restart
 ssh root@167.172.191.202 "pm2 restart cinarli-api"
