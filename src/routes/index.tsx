@@ -191,21 +191,21 @@ function Index() {
       )}
 
       {/* Products Section 1 */}
-      <section className="mx-auto max-w-7xl px-4 py-12">
-        <div className="mb-6 flex items-end justify-between">
-          <div className="flex items-baseline gap-6">
+      <section className="mx-auto max-w-7xl px-4 py-6 md:py-12">
+        <div className="mb-4 md:mb-6 flex items-end justify-between gap-2">
+          <div className="flex items-baseline gap-2 md:gap-6 flex-wrap">
             <button onClick={() => setTab1("popular")}
-              className={`text-2xl font-bold md:text-3xl transition ${tab1 === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Populyar məhsullar
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab1 === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Populyar
             </button>
             <button onClick={() => setTab1("new")}
-              className={`hidden text-lg transition md:inline ${tab1 === "new" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Yeni məhsullar
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab1 === "new" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Yeni
             </button>
           </div>
-          <div className="flex gap-2">
-            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></button>
-            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-5 w-5" /></button>
+          <div className="flex gap-1 md:gap-2">
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-4 md:h-5 w-4 md:w-5" /></button>
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-4 md:h-5 w-4 md:w-5" /></button>
           </div>
         </div>
 
@@ -219,21 +219,21 @@ function Index() {
       </section>
 
       {/* Products Section 2 */}
-      <section className="mx-auto max-w-7xl px-4 pb-16">
-        <div className="mb-6 flex items-end justify-between">
-          <div className="flex items-baseline gap-6">
+      <section className="mx-auto max-w-7xl px-4 py-6 md:py-12 pb-16">
+        <div className="mb-4 md:mb-6 flex items-end justify-between gap-2">
+          <div className="flex items-baseline gap-2 md:gap-6 flex-wrap">
             <button onClick={() => setTab2("bestseller")}
-              className={`text-2xl font-bold md:text-3xl transition ${tab2 === "bestseller" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Çox satılanlar
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab2 === "bestseller" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Çox satılan
             </button>
             <button onClick={() => setTab2("discount")}
-              className={`hidden text-lg transition md:inline ${tab2 === "discount" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Endirimli məhsullar
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab2 === "discount" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Endirimli
             </button>
           </div>
-          <div className="flex gap-2">
-            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></button>
-            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-5 w-5" /></button>
+          <div className="flex gap-1 md:gap-2">
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-4 md:h-5 w-4 md:w-5" /></button>
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-4 md:h-5 w-4 md:w-5" /></button>
           </div>
         </div>
 
@@ -261,46 +261,46 @@ function ProductImg({ p, className }: { p: Product; className?: string }) {
 function ProductCard({ p }: { p: Product }) {
   return (
     <Link to="/mehsul/$slug" params={{ slug: String(p.id) }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
+      className="group relative flex flex-col overflow-hidden rounded-xl md:rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
       {p.discount > 0 && (
-        <div className="absolute right-3 top-3 z-10 grid h-12 w-12 place-items-center rounded-full border-2 border-[var(--accent-orange)] bg-white text-xs font-bold text-[var(--accent-orange)] shadow-md">
+        <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex h-10 w-10 md:h-12 md:w-12 place-items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white text-xs font-bold text-[var(--accent-orange)] shadow-md">
           −{p.discount}%
         </div>
       )}
-      <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
+      <div className="absolute left-2 top-2 md:left-3 md:top-3 z-10 hidden md:flex flex-col gap-2">
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
       </div>
       <div className="aspect-square overflow-hidden bg-secondary/30">
         <ProductImg p={p} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold">{p.name}</h3>
-        <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex flex-1 flex-col p-3 md:p-4">
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-xs md:text-sm font-semibold">{p.name}</h3>
+        <div className="mt-2 flex flex-wrap gap-1.5 md:gap-2">
           {p.stock > 0 ? (
-            <span className="inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
+            <span className="inline-block rounded-md border border-[var(--brand)] px-1.5 md:px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
               Stokda var
             </span>
           ) : (
-            <span className="inline-block rounded-md border border-red-300 px-2 py-0.5 text-xs font-semibold text-red-600">
+            <span className="inline-block rounded-md border border-red-300 px-1.5 md:px-2 py-0.5 text-xs font-semibold text-red-600">
               Stokda yoxdur
             </span>
           )}
           {p.discount > 0 && (
-            <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">
+            <span className="hidden md:inline-block rounded-md bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">
               Faizsiz təklif
             </span>
           )}
         </div>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-black">{p.price} ₼</span>
-          {p.old_price && <span className="text-sm text-muted-foreground line-through">{p.old_price} ₼</span>}
+        <div className="mt-2 md:mt-3 flex items-baseline gap-2">
+          <span className="text-xl md:text-2xl font-black">{p.price} ₼</span>
+          {p.old_price && <span className="text-xs md:text-sm text-muted-foreground line-through">{p.old_price} ₼</span>}
         </div>
         <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">
-          Faizsiz 12 ay · aylıq {Math.round(p.price / 12)} ₼
+          Faizsiz 12 ay
         </div>
         {p.stock > 0 && (
-          <button className="mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2.5 text-center font-semibold text-white transition hover:opacity-90">
+          <button className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">
             Səbətə əlavə et
           </button>
         )}

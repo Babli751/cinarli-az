@@ -306,10 +306,10 @@ export function MobileBottomNav() {
 export function SiteFooter() {
   return (
     <footer className="bg-[#18181a] text-white pb-20 lg:pb-0">
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5">
           {/* Col 1: Logo + QR */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="sm:col-span-1">
             <div className="mb-6 rounded-xl bg-white p-3 w-fit">
               <img src={logoChinarli} alt="Chinarli Mebel" className="h-28 w-auto" />
             </div>
@@ -347,7 +347,7 @@ export function SiteFooter() {
           </div>
 
           {/* Col 4: Əlaqə (Contact) */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="sm:col-span-1">
             <h3 className="mb-4 font-semibold text-white text-lg">Əlaqə</h3>
 
             {/* Phone */}
