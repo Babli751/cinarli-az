@@ -19,7 +19,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [tab, setTab] = useState<"popular" | "new" | "sale">("popular");
+  const [tab1, setTab1] = useState<"popular" | "new">("popular");
+  const [tab2, setTab2] = useState<"bestseller" | "discount">("bestseller");
   const [products, setProducts] = useState<Product[]>([]);
   const [mostSold, setMostSold] = useState<Product[]>([]);
   const [featured, setFeatured] = useState<Product | null | undefined>(undefined);
@@ -30,10 +31,12 @@ function Index() {
     api.getFeaturedProduct().then(setFeatured).catch(() => setFeatured(null));
   }, []);
 
-  const tabList = tab === "popular"
+  const list1 = tab1 === "popular"
     ? products.slice(0, 12)
-    : tab === "new"
-    ? [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 12)
+    : [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 12);
+
+  const list2 = tab2 === "bestseller"
+    ? mostSold.slice(0, 12)
     : [...products].filter(p => p.discount > 0).sort((a, b) => b.discount - a.discount).slice(0, 12);
 
   return (
@@ -43,8 +46,9 @@ function Index() {
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
         <div className="relative col-span-2 overflow-hidden rounded-2xl bg-neutral-900 text-white">
-          <img src={heroLiving} alt="Modern living room" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover opacity-90" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <img src={heroLiving} alt="Modern living room" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover opacity-75 saturate-150" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
           <div className="relative z-10 flex h-full min-h-[420px] flex-col justify-end p-8 md:p-12">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">Mövsüm kampaniyası</p>
             <h1 className="mt-3 font-black leading-[0.9] tracking-tight">
@@ -64,39 +68,63 @@ function Index() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="flex items-center gap-2 bg-[var(--accent-orange)]/10 px-4 py-2 text-sm">
-            <span className="text-[var(--accent-orange)]">★</span>
-            <span className="font-semibold">Həftənin teklifi</span>
+          <div className="flex items-center justify-between bg-[var(--accent-orange)] px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">★</span>
+              <span className="font-bold text-white">Həftənin teklifi</span>
+            </div>
+            <div className="text-xs font-semibold text-white/90">Bu hafta bitir</div>
           </div>
           {featured === undefined ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Yüklənir...</div>
           ) : featured ? (
             <Link to="/mehsul/$slug" params={{ slug: String(featured.id) }} className="block group">
-              <div className="relative bg-secondary/30 p-4">
+              <div className="relative bg-secondary/30 p-6">
                 {featured.discount > 0 && (
-                  <div className="absolute right-4 top-4 z-10 grid h-12 w-12 place-items-center rounded-full bg-[var(--accent-orange)] text-xs font-black text-white shadow-md">
-                    −{featured.discount}%
+                  <div className="absolute right-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow-md">
+                    <div className="text-lg font-black text-[var(--accent-orange)]">−{featured.discount}%</div>
                   </div>
                 )}
-                <ProductImg p={featured} className="mx-auto h-44 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
+                <ProductImg p={featured} className="mx-auto h-56 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
               </div>
-              <div className="p-5">
-                <h3 className="text-lg font-bold leading-snug line-clamp-2">{featured.name}</h3>
-                <span className="mt-1 inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs text-[var(--brand)]">
-                  {featured.stock > 0 ? "Stokda var" : "Stokda yoxdur"}
-                </span>
-                <div className="mt-3 flex items-baseline gap-2">
-                  {featured.old_price && <div className="text-sm text-muted-foreground line-through">{featured.old_price} ₼</div>}
-                  <div className="text-3xl font-black">{featured.price} ₼</div>
+              <div className="p-6">
+                <h3 className="text-lg font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {featured.stock > 0 ? (
+                    <span className="inline-block rounded-md border border-[var(--brand)] px-2.5 py-1 text-xs font-semibold text-[var(--brand)]">
+                      Stokda var
+                    </span>
+                  ) : (
+                    <span className="inline-block rounded-md border border-red-300 px-2.5 py-1 text-xs font-semibold text-red-600">
+                      Stokda yoxdur
+                    </span>
+                  )}
+                  {featured.discount > 0 && (
+                    <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--accent-orange)]">
+                      Faizsiz təklif
+                    </span>
+                  )}
                 </div>
-                <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">Faizsiz 24 ay · aylıq {Math.round(featured.price / 24)} ₼</div>
-                <div className="mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-3 text-center font-semibold text-white group-hover:opacity-90 transition-opacity">
-                  Məhsula bax →
+                <div className="mt-4 flex items-baseline gap-2">
+                  {featured.old_price && <div className="text-sm font-semibold text-muted-foreground line-through">{featured.old_price} ₼</div>}
+                  <div className="text-4xl font-black text-foreground">{featured.price} ₼</div>
                 </div>
+                <div className="mt-3 rounded-lg bg-secondary/50 p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Faizsiz aylıq ödəniş</div>
+                  <div className="text-sm font-bold text-foreground">24 ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round(featured.price / 24)} ₼</span></div>
+                </div>
+                {featured.stock > 0 && (
+                  <button className="mt-5 w-full rounded-lg bg-[var(--accent-orange)] py-3 text-center font-bold text-white transition hover:opacity-90">
+                    Bir kliklə al
+                  </button>
+                )}
               </div>
             </Link>
           ) : (
-            <div className="p-8 text-center text-muted-foreground text-sm">Admin paneldən həftənin teklifini seçin ★</div>
+            <div className="p-12 text-center">
+              <p className="text-muted-foreground text-sm font-medium">Admin paneldən həftənin teklifini seçin</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">Məhsulu öz seçin və "featured" işarəsi qoyun ★</p>
+            </div>
           )}
         </div>
       </section>
@@ -142,51 +170,63 @@ function Index() {
         </div>
       </section>
 
-      {/* Products — tab bölməsi */}
-      <section className="mx-auto max-w-7xl px-4 pb-10">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex flex-wrap items-baseline gap-2 md:gap-6">
-            {(["popular", "new", "sale"] as const).map((t) => {
-              const labels = { popular: "Populyar", new: "Yeni gələnlər", sale: "Endirimlər" };
-              return (
-                <button key={t} onClick={() => setTab(t)}
-                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition md:text-base ${tab === t ? "bg-[var(--brand)] text-white" : "bg-secondary text-muted-foreground hover:text-foreground"}`}>
-                  {labels[t]}
-                </button>
-              );
-            })}
+      {/* Products Section 1 */}
+      <section className="mx-auto max-w-7xl px-4 py-6 md:py-12">
+        <div className="mb-4 md:mb-6 flex items-end justify-between gap-2">
+          <div className="flex items-baseline gap-2 md:gap-6 flex-wrap">
+            <button onClick={() => setTab1("popular")}
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab1 === "popular" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Populyar
+            </button>
+            <button onClick={() => setTab1("new")}
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab1 === "new" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Yeni
+            </button>
           </div>
-          <div className="flex gap-2">
-            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-5 w-5" /></button>
-            <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-5 w-5" /></button>
+          <div className="flex gap-1 md:gap-2">
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-4 md:h-5 w-4 md:w-5" /></button>
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-4 md:h-5 w-4 md:w-5" /></button>
           </div>
         </div>
 
-        {tabList.length === 0 ? (
-          <div className="py-16 text-center text-muted-foreground">
-            {tab === "sale" ? "Endirimli məhsul yoxdur" : "Admin paneldən məhsul əlavə edin"}
-          </div>
+        {list1.length === 0 ? (
+          <div className="py-16 text-center text-muted-foreground">Admin paneldən məhsul əlavə edin</div>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {tabList.map((p) => <ProductCard key={p.id} p={p} />)}
+            {list1.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
         )}
       </section>
 
-      {/* Ən çox satılan */}
-      {mostSold.some(p => p.most_sold > 0) && (
-        <section className="mx-auto max-w-7xl px-4 pb-16">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-bold md:text-3xl">Ən çox satılan</h2>
-            <Link to="/" className="flex items-center gap-1 text-sm font-semibold text-[var(--brand)] hover:underline">
-              Hamısı <ArrowRight className="h-4 w-4" />
-            </Link>
+      {/* Products Section 2 */}
+      <section className="mx-auto max-w-7xl px-4 py-6 md:py-12 pb-16">
+        <div className="mb-4 md:mb-6 flex items-end justify-between gap-2">
+          <div className="flex items-baseline gap-2 md:gap-6 flex-wrap">
+            <button onClick={() => setTab2("bestseller")}
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab2 === "bestseller" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Çox satılan
+            </button>
+            <button onClick={() => setTab2("discount")}
+              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${tab2 === "discount" ? "text-foreground" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
+              Endirimli
+            </button>
           </div>
+          <div className="flex gap-1 md:gap-2">
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronLeft className="h-4 md:h-5 w-4 md:w-5" /></button>
+            <button className="grid h-8 md:h-10 w-8 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary"><ChevronRight className="h-4 md:h-5 w-4 md:w-5" /></button>
+          </div>
+        </div>
+
+        {list2.length === 0 ? (
+          <div className="py-16 text-center text-muted-foreground">
+            {tab2 === "discount" ? "Endirimli məhsul yoxdur" : "Admin paneldən məhsul əlavə edin"}
+          </div>
+        ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {mostSold.map((p) => <ProductCard key={p.id} p={p} />)}
+            {list2.map((p) => <ProductCard key={p.id} p={p} />)}
           </div>
-        </section>
-      )}
+        )}
+      </section>
 
       <SiteFooter />
     </div>
@@ -204,28 +244,49 @@ function ProductImg({ p, className }: { p: Product; className?: string }) {
 function ProductCard({ p }: { p: Product }) {
   return (
     <Link to="/mehsul/$slug" params={{ slug: String(p.id) }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
+      className="group relative flex flex-col overflow-hidden rounded-xl md:rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
       {p.discount > 0 && (
-        <div className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-[var(--accent-orange)] text-xs font-bold text-white shadow-md">
+        <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex h-10 w-10 md:h-12 md:w-12 place-items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white text-xs font-bold text-[var(--accent-orange)] shadow-md">
           −{p.discount}%
         </div>
       )}
-      <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
+      <div className="absolute left-2 top-2 md:left-3 md:top-3 z-10 hidden md:flex flex-col gap-2">
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
       </div>
       <div className="aspect-square overflow-hidden bg-secondary/30">
         <ProductImg p={p} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
       </div>
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium">{p.name}</h3>
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-xl font-black">{p.price} ₼</span>
-          {p.old_price && <span className="text-sm text-muted-foreground line-through">{p.old_price} ₼</span>}
+      <div className="flex flex-1 flex-col p-3 md:p-4">
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-xs md:text-sm font-semibold">{p.name}</h3>
+        <div className="mt-2 flex flex-wrap gap-1.5 md:gap-2">
+          {p.stock > 0 ? (
+            <span className="inline-block rounded-md border border-[var(--brand)] px-1.5 md:px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
+              Stokda var
+            </span>
+          ) : (
+            <span className="inline-block rounded-md border border-red-300 px-1.5 md:px-2 py-0.5 text-xs font-semibold text-red-600">
+              Stokda yoxdur
+            </span>
+          )}
+          {p.discount > 0 && (
+            <span className="hidden md:inline-block rounded-md bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">
+              Faizsiz təklif
+            </span>
+          )}
         </div>
-        <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]">
-          <Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan
+        <div className="mt-2 md:mt-3 flex items-baseline gap-2">
+          <span className="text-xl md:text-2xl font-black">{p.price} ₼</span>
+          {p.old_price && <span className="text-xs md:text-sm text-muted-foreground line-through">{p.old_price} ₼</span>}
         </div>
+        <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">
+          Faizsiz 12 ay
+        </div>
+        {p.stock > 0 && (
+          <button className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">
+            Səbətə əlavə et
+          </button>
+        )}
       </div>
     </Link>
   );
