@@ -41,8 +41,9 @@ function Index() {
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
         <div className="relative col-span-2 overflow-hidden rounded-2xl bg-neutral-900 text-white">
-          <img src={heroLiving} alt="Modern living room" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover opacity-90" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+          <img src={heroLiving} alt="Modern living room" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover opacity-75 saturate-150" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
           <div className="relative z-10 flex h-full min-h-[420px] flex-col justify-end p-8 md:p-12">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">Mövsüm kampaniyası</p>
             <h1 className="mt-3 font-black leading-[0.9] tracking-tight">
