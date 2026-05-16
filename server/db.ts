@@ -71,6 +71,7 @@ db.exec(`
 // Migrations
 try { db.exec("ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN most_sold INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE categories ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES categories(id) ON DELETE SET NULL"); } catch {}
 
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;

@@ -79,18 +79,38 @@ app.get("/api/auth/me", authMiddleware, (c) => {
 
 // ─── CATEGORIES ─────────────────────────────────────────
 app.get("/api/categories", (c) => {
-  return c.json(db.prepare("SELECT * FROM categories ORDER BY created_at DESC").all());
+  return c.json(db.prepare("SELECT * FROM categories ORDER BY parent_id ASC, created_at DESC").all());
 });
 
+function autoIcon(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("divan") || n.includes("kunc") || n.includes("yumşaq") || n.includes("yumsaq")) return "🛋️";
+  if (n.includes("yataq") || n.includes("çarpayı") || n.includes("carpay")) return "🛏️";
+  if (n.includes("masa") || n.includes("stol")) return "🪑";
+  if (n.includes("stul") || n.includes("kreslo")) return "💺";
+  if (n.includes("şkaf") || n.includes("skaf") || n.includes("dolap")) return "🗄️";
+  if (n.includes("mətbəx") || n.includes("metbex") || n.includes("mutfaq")) return "🍳";
+  if (n.includes("uşaq") || n.includes("usaq") || n.includes("cocuk")) return "🧸";
+  if (n.includes("ofis") || n.includes("iş")) return "💼";
+  if (n.includes("hamam") || n.includes("banyo")) return "🚿";
+  if (n.includes("dekor") || n.includes("aksesuar")) return "🏺";
+  if (n.includes("işıq") || n.includes("isiq") || n.includes("lamp")) return "💡";
+  if (n.includes("xalça") || n.includes("xalca") || n.includes("hali")) return "🟫";
+  if (n.includes("bağça") || n.includes("bagca") || n.includes("bahçe")) return "🌿";
+  return "📦";
+}
+
 app.post("/api/categories", authMiddleware, adminMiddleware, async (c) => {
-  const { slug, name, icon, description } = await c.req.json();
-  const result = db.prepare("INSERT INTO categories (slug, name, icon, description) VALUES (?, ?, ?, ?)").run(slug, name, icon || "📦", description || "");
+  const { slug, name, description, parent_id } = await c.req.json();
+  const icon = autoIcon(name);
+  const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id) VALUES (?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null);
   return c.json({ id: result.lastInsertRowid });
 });
 
 app.put("/api/categories/:id", authMiddleware, adminMiddleware, async (c) => {
-  const { slug, name, icon, description } = await c.req.json();
-  db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=? WHERE id=?").run(slug, name, icon, description, c.req.param("id"));
+  const { slug, name, description, parent_id } = await c.req.json();
+  const icon = autoIcon(name);
+  db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=? WHERE id=?").run(slug, name, icon, description, parent_id || null, c.req.param("id"));
   return c.json({ ok: true });
 });
 

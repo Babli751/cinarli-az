@@ -96,8 +96,13 @@ function CatsAdmin() {
               <Field label="Slug (URL) *">
                 <input className={inp} placeholder="divanlar" value={editing.slug ?? ""} onChange={(e) => setEditing({ ...editing, slug: e.target.value.toLowerCase().replace(/\s+/g, "-") })} />
               </Field>
-              <Field label="İkon (emoji)">
-                <input className={inp} placeholder="📦" value={editing.icon ?? ""} onChange={(e) => setEditing({ ...editing, icon: e.target.value })} />
+              <Field label="Ana kateqoriya (alt kateqoriya üçün seç)">
+                <select className={inp} value={editing.parent_id ?? ""} onChange={(e) => setEditing({ ...editing, parent_id: e.target.value ? Number(e.target.value) : null })}>
+                  <option value="">— Ana kateqoriya (üst səviyyə) —</option>
+                  {items.filter(c => !c.parent_id && c.id !== editing.id).map(c => (
+                    <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                  ))}
+                </select>
               </Field>
               <Field label="Təsvir">
                 <textarea className={inp} rows={2} placeholder="Kateqoriya haqqında qısa məlumat" value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} />

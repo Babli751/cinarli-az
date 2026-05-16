@@ -223,8 +223,9 @@ export function SiteHeader() {
             className="mx-auto mt-[140px] max-h-[calc(100vh-160px)] max-w-7xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl"
           >
             <div className="grid grid-cols-[260px_1fr] max-h-[calc(100vh-160px)]">
+              {/* Sol: yalnız ana kateqoriyalar */}
               <div className="overflow-y-auto border-r border-border bg-secondary/30 py-2">
-                {categories.map((c) => (
+                {categories.filter(c => !c.parent_id).map((c) => (
                   <button
                     key={c.slug}
                     onMouseEnter={() => setActiveSlug(c.slug)}
@@ -237,10 +238,13 @@ export function SiteHeader() {
                   >
                     <span className="text-xl">{c.icon}</span>
                     <span className="flex-1">{c.name}</span>
-                    <ChevronRight className="h-4 w-4 opacity-40" />
+                    {categories.some(sub => sub.parent_id === c.id) && (
+                      <ChevronRight className="h-4 w-4 opacity-40" />
+                    )}
                   </button>
                 ))}
               </div>
+              {/* Sağ: aktiv kateqoriyanın alt kateqoriyaları */}
               <div className="overflow-y-auto p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -256,20 +260,27 @@ export function SiteHeader() {
                     Hamısına bax →
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {categories.map((c) => (
-                    <Link
-                      key={c.slug}
-                      to="/kateqoriya/$slug"
-                      params={{ slug: c.slug }}
-                      onClick={() => setCatOpen(false)}
-                      className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition hover:border-[var(--brand)] hover:shadow-md"
-                    >
-                      <span className="text-4xl">{c.icon}</span>
-                      <span className="text-xs font-medium group-hover:text-[var(--brand)]">{c.name}</span>
-                    </Link>
-                  ))}
-                </div>
+                {(() => {
+                  const subs = categories.filter(c => c.parent_id === activeCategory.id);
+                  return subs.length > 0 ? (
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                      {subs.map((c) => (
+                        <Link
+                          key={c.slug}
+                          to="/kateqoriya/$slug"
+                          params={{ slug: c.slug }}
+                          onClick={() => setCatOpen(false)}
+                          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition hover:border-[var(--brand)] hover:shadow-md"
+                        >
+                          <span className="text-4xl">{c.icon}</span>
+                          <span className="text-xs font-medium group-hover:text-[var(--brand)]">{c.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Bu kateqoriyada alt bölmə yoxdur.</p>
+                  );
+                })()}
               </div>
             </div>
           </div>

@@ -109,6 +109,7 @@ export interface Category {
   name: string;
   icon: string;
   description: string;
+  parent_id?: number | null;
   created_at?: string;
 }
 
