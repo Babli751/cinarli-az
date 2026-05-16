@@ -313,10 +313,10 @@ export function SiteFooter() {
             <div className="mb-6 rounded-xl bg-white p-3 w-fit">
               <img src={logoChinarli} alt="Chinarli Mebel" className="h-28 w-auto" />
             </div>
-            <p className="mb-4 text-sm text-gray-400">Etibarlı mebel mağazası.</p>
-            <div className="flex flex-col gap-2">
-              <p className="text-xs font-semibold text-gray-300">Mobil tətbiq</p>
-              <div className="h-20 w-20 rounded-lg bg-white/10 flex items-center justify-center text-xs text-gray-500 p-1">
+            <p className="mb-6 text-sm text-gray-400">Etibarlı mebel mağazası. 24/7 dəstək.</p>
+            <div className="flex flex-col gap-3">
+              <p className="text-xs font-semibold text-gray-300">Mobil tətbiq yüklə</p>
+              <div className="h-24 w-24 rounded-lg bg-white/10 flex items-center justify-center text-xs text-gray-500 p-1">
                 QR kodu
               </div>
             </div>
@@ -324,59 +324,62 @@ export function SiteFooter() {
 
           {/* Col 2: Şirkət */}
           <div>
-            <h4 className="mb-4 font-semibold text-white">Şirkət</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
+            <h3 className="mb-4 font-semibold text-white text-lg">Şirkət</h3>
+            <ul className="space-y-2.5 text-sm text-gray-400">
               <li><Link to="/haqqimizda" className="hover:text-[var(--brand)] transition">Haqqımızda</Link></li>
               <li><Link to="/magazalar" className="hover:text-[var(--brand)] transition">Mağazalar</Link></li>
               <li><Link to="/korporativ" className="hover:text-[var(--brand)] transition">Korporativ</Link></li>
               <li><Link to="/kampaniyalar" className="hover:text-[var(--brand)] transition">Kampaniyalar</Link></li>
+              <li><Link to="/catdirilma" className="hover:text-[var(--brand)] transition">Çatdırılma qaydaları</Link></li>
             </ul>
           </div>
 
           {/* Col 3: Müştəri üçün */}
           <div>
-            <h4 className="mb-4 font-semibold text-white">Müştəri üçün</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><Link to="/catdirilma" className="hover:text-[var(--brand)] transition">Çatdırılma</Link></li>
-              <li><Link to="/geri-qaytarma" className="hover:text-[var(--brand)] transition">Geri qaytarma</Link></li>
-              <li><Link to="/aylik-odenis" className="hover:text-[var(--brand)] transition">Aylıq ödəniş</Link></li>
-              <li><Link to="/elaqe" className="hover:text-[var(--brand)] transition">Əlaqə</Link></li>
-            </ul>
-          </div>
-
-          {/* Col 4: Məlumat */}
-          <div>
-            <h4 className="mb-4 font-semibold text-white">Məlumat</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
-              <li><a href="https://chinarli.store/blog" className="hover:text-[var(--brand)] transition">Bloqumuz</a></li>
-              <li><a href="https://chinarli.store/sosyal-mediya" className="hover:text-[var(--brand)] transition">Sosyal media</a></li>
+            <h3 className="mb-4 font-semibold text-white text-lg">Müştəri üçün</h3>
+            <ul className="space-y-2.5 text-sm text-gray-400">
+              <li><Link to="/elaqe" className="hover:text-[var(--brand)] transition">Sual-Cavab</Link></li>
+              <li><Link to="/aylik-odenis" className="hover:text-[var(--brand)] transition">Hissə-hissə ödəniş</Link></li>
               <li><Link to="/privacy" className="hover:text-[var(--brand)] transition">Məxfilik siyasəti</Link></li>
-              <li><Link to="/terms" className="hover:text-[var(--brand)] transition">İstifadə şərtləri</Link></li>
+              <li><Link to="/geri-qaytarma" className="hover:text-[var(--brand)] transition">Geri qaytarma</Link></li>
+              <li><Link to="/terms" className="hover:text-[var(--brand)] transition">İstifadə qaydaları</Link></li>
             </ul>
           </div>
 
-          {/* Col 5: Əlaqə */}
-          <div>
-            <h4 className="mb-4 font-semibold text-white">Əlaqə</h4>
-            <ul className="space-y-3 text-sm">
-              <li>
-                <a href="tel:*0171" className="flex items-center gap-2 text-[var(--brand)] font-semibold hover:text-[var(--brand)]/80 transition">
-                  📞 *0171
-                </a>
-              </li>
-              <li>
-                <a href="mailto:info@chinarlimebel.az" className="flex items-center gap-2 text-gray-400 hover:text-[var(--brand)] transition">
-                  ✉️ info@chinarlimebel.az
-                </a>
-              </li>
-              <li className="text-gray-400">
-                📍 Bakı, Azərbaycan
-              </li>
-            </ul>
-            <div className="mt-4 flex gap-2">
-              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition">f</a>
-              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition">𝕏</a>
-              <a href="#" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition">📷</a>
+          {/* Col 4: Əlaqə (Contact) */}
+          <div className="col-span-2 md:col-span-1">
+            <h3 className="mb-4 font-semibold text-white text-lg">Əlaqə</h3>
+
+            {/* Phone */}
+            <div className="mb-6">
+              <a href="tel:*0171" className="flex items-center gap-3 text-[var(--brand)] font-bold text-lg hover:opacity-80 transition">
+                📞 *0171
+              </a>
+            </div>
+
+            {/* Address */}
+            <div className="mb-6 text-sm text-gray-400">
+              <p className="mb-1">📍 Bakı, Azərbaycan</p>
+              <p className="text-xs">Etibarlı mebel mağazası</p>
+            </div>
+
+            {/* Social Media */}
+            <div className="mb-4">
+              <p className="text-xs font-semibold text-gray-300 mb-3">Bizi izləyin</p>
+              <div className="flex gap-2 flex-wrap">
+                <a href="https://www.facebook.com/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Facebook">f</a>
+                <a href="https://www.instagram.com/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Instagram">📷</a>
+                <a href="https://www.youtube.com/@chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="YouTube">▶</a>
+                <a href="https://api.whatsapp.com/send?phone=994777770171" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="WhatsApp">💬</a>
+                <a href="https://t.me/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Telegram">✈</a>
+              </div>
+            </div>
+
+            {/* Apps */}
+            <div className="flex gap-2">
+              <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-[var(--brand)] transition">Google Play</a>
+              <span className="text-gray-500">·</span>
+              <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-[var(--brand)] transition">App Store</a>
             </div>
           </div>
         </div>
@@ -384,7 +387,12 @@ export function SiteFooter() {
 
       {/* Bottom bar */}
       <div className="border-t border-white/10 py-4 text-center">
-        <p className="text-xs text-gray-500">© 2026 Chinarli Mebel. Bütün hüquqlar qorunur.</p>
+        <div className="flex items-center justify-between mx-auto max-w-7xl px-4">
+          <div className="hidden md:block">
+            <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
+          </div>
+          <p className="text-xs text-gray-500">© 2026 Chinarli Mebel. Bütün hüquqlar qorunur.</p>
+        </div>
       </div>
 
       <MobileBottomNav />
