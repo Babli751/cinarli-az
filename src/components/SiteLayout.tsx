@@ -69,34 +69,34 @@ export function SiteHeader() {
 
       {/* Header — desktop */}
       <header className="hidden border-b border-border bg-background lg:block">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2">
           <Link to="/" className="flex items-center" aria-label="Chinarli Mebel">
-            <img src={logoChinarli} alt="Chinarli Mebel" width={1536} height={1024} className="h-20 w-auto md:h-24 lg:h-28" />
+            <img src={logoChinarli} alt="Chinarli Mebel" width={1536} height={1024} className="h-14 w-auto" />
           </Link>
 
           <button
             onClick={() => setCatOpen((v) => !v)}
-            className="ml-8 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90"
+            className="ml-4 flex items-center gap-2 rounded-lg bg-[var(--brand)] px-3 py-2 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90"
           >
-            {catOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />} Kataloq
+            {catOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />} Kataloq
           </button>
 
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="search"
               placeholder="Məhsul axtar..."
-              className="w-full rounded-lg border border-border bg-secondary/50 py-3 pl-10 pr-4 outline-none focus:border-[var(--brand)]"
+              className="w-full rounded-lg border border-border bg-secondary/50 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-[var(--brand)]"
             />
           </div>
 
-          <div className="flex items-center gap-5 text-muted-foreground">
+          <div className="flex items-center gap-4 text-muted-foreground">
             <Link to="/muqayise" className="flex flex-col items-center text-xs hover:text-foreground"><Scale className="h-5 w-5" />Müqayisə</Link>
             <Link to="/beyendim" className="flex flex-col items-center text-xs hover:text-foreground"><Heart className="h-5 w-5" />Bəyəndim</Link>
             <Link to="/sebet" className="flex flex-col items-center text-xs hover:text-foreground"><ShoppingCart className="h-5 w-5" />Səbət</Link>
           </div>
 
-          <Link to="/aylik-odenis" className="flex items-center gap-2 rounded-lg border-2 border-[var(--brand)] px-4 py-3 font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/10">
+          <Link to="/aylik-odenis" className="flex items-center gap-1.5 rounded-lg border-2 border-[var(--brand)] px-3 py-2 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/10">
             💳 Aylıq ödəniş
           </Link>
         </div>
@@ -114,7 +114,7 @@ export function SiteHeader() {
           </button>
 
           <Link to="/" className="flex flex-1 items-center justify-center" aria-label="Chinarli Mebel">
-            <img src={logoChinarli} alt="Chinarli Mebel" className="h-20 w-auto sm:h-24" />
+            <img src={logoChinarli} alt="Chinarli Mebel" className="h-12 w-auto sm:h-14" />
           </Link>
 
           <button

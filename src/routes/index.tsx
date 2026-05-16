@@ -211,16 +211,35 @@ function ProductCarousel({
   isLast?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+
   const scroll = (dir: "left" | "right") => {
     if (!ref.current) return;
     const card = ref.current.querySelector("[data-card]") as HTMLElement | null;
-    const amount = card ? card.offsetWidth + 16 : 280;
+    const amount = card ? card.offsetWidth + 16 : 260;
     ref.current.scrollBy({ left: dir === "right" ? amount * 2 : -amount * 2, behavior: "smooth" });
   };
 
+  // Auto-scroll: hər 3.5s-də bir kart irəli, sona çatanda başa qayıt
+  useEffect(() => {
+    if (items.length === 0) return;
+    const el = ref.current;
+    if (!el) return;
+    const timer = setInterval(() => {
+      const card = el.querySelector("[data-card]") as HTMLElement | null;
+      const amount = card ? card.offsetWidth + 16 : 260;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 10;
+      if (atEnd) {
+        el.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        el.scrollBy({ left: amount, behavior: "smooth" });
+      }
+    }, 3500);
+    return () => clearInterval(timer);
+  }, [items]);
+
   return (
     <section className={`mx-auto max-w-7xl px-4 py-6 md:py-10 ${isLast ? "pb-16" : ""}`}>
-      <div className="mb-4 md:mb-6 flex items-center justify-between gap-2">
+      <div className="mb-4 md:mb-5 flex items-center justify-between gap-2">
         <div className="flex items-baseline gap-3 md:gap-6 flex-wrap">
           {tabs.map((t) => (
             <button key={t.key} onClick={() => onTabChange(t.key)}
@@ -231,12 +250,12 @@ function ProductCarousel({
         </div>
         <div className="flex gap-2">
           <button onClick={() => scroll("left")}
-            className="grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
-            <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
+            <ChevronLeft className="h-4 w-4" />
           </button>
           <button onClick={() => scroll("right")}
-            className="grid h-9 w-9 md:h-10 md:w-10 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
-            <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
+            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -246,11 +265,11 @@ function ProductCarousel({
       ) : (
         <div
           ref={ref}
-          className="flex gap-3 md:gap-4 overflow-x-auto scroll-smooth pb-2"
+          className="flex gap-3 overflow-x-auto scroll-smooth pb-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {items.map((p) => (
-            <div key={p.id} data-card className="w-[160px] flex-none sm:w-[200px] md:w-[220px] lg:w-[240px]">
+            <div key={p.id} data-card className="w-[155px] flex-none sm:w-[185px] md:w-[210px] lg:w-[230px]">
               <ProductCard p={p} />
             </div>
           ))}
