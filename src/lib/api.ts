@@ -53,7 +53,12 @@ export const api = {
   getProduct: (id: number) => req<Product>("GET", `/api/products/${id}`),
   getFeaturedProduct: () => req<Product | null>("GET", "/api/products/featured"),
   getMostSoldProducts: (limit = 12) => req<Product[]>("GET", `/api/products/most-sold?limit=${limit}`),
+  getPopularProducts: (limit = 12) => req<Product[]>("GET", `/api/products/popular?limit=${limit}`),
+  setMostSold: (id: number, most_sold: boolean) => req<{ ok: boolean }>("PUT", `/api/products/${id}/most-sold`, { most_sold }, true),
+  setPopular: (id: number, is_popular: boolean) => req<{ ok: boolean }>("PUT", `/api/products/${id}/popular`, { is_popular }, true),
   setFeatured: (id: number, is_featured: boolean) => req<{ ok: boolean }>("PUT", `/api/products/${id}/featured`, { is_featured }, true),
+  getFeaturedSettings: () => req<FeaturedSettings>("GET", "/api/featured-settings", undefined, true),
+  updateFeaturedSettings: (data: Partial<FeaturedSettings>) => req<{ ok: boolean }>("PUT", "/api/featured-settings", data, true),
   createProduct: (data: Partial<Product>) => req<{ id: number }>("POST", "/api/products", data, true),
   updateProduct: (id: number, data: Partial<Product>) => req<{ ok: boolean }>("PUT", `/api/products/${id}`, data, true),
   deleteProduct: (id: number) => req<{ ok: boolean }>("DELETE", `/api/products/${id}`, undefined, true),
@@ -70,9 +75,38 @@ export const api = {
   updateOrderStatus: (id: number, status: string) => req<{ ok: boolean }>("PUT", `/api/orders/${id}/status`, { status }, true),
   deleteOrder: (id: number) => req<{ ok: boolean }>("DELETE", `/api/orders/${id}`, undefined, true),
 
+  // Profile
+  updateProfile: (data: { full_name?: string; password?: string; new_password?: string }) =>
+    req<{ user: User }>("PUT", "/api/auth/profile", data, true),
+
+  // My orders
+  getMyOrders: () => req<Order[]>("GET", "/api/me/orders", undefined, true),
+
+  // Wishlist
+  getWishlist: () => req<Product[]>("GET", "/api/me/wishlist", undefined, true),
+  addToWishlist: (product_id: number) => req<{ ok: boolean }>("POST", "/api/me/wishlist", { product_id }, true),
+  removeFromWishlist: (product_id: number) => req<{ ok: boolean }>("DELETE", `/api/me/wishlist/${product_id}`, undefined, true),
+
+  // Compare
+  getCompare: () => req<Product[]>("GET", "/api/me/compare", undefined, true),
+  addToCompare: (product_id: number) => req<{ ok: boolean }>("POST", "/api/me/compare", { product_id }, true),
+  removeFromCompare: (product_id: number) => req<{ ok: boolean }>("DELETE", `/api/me/compare/${product_id}`, undefined, true),
+
+  // Addresses
+  getAddresses: () => req<Address[]>("GET", "/api/me/addresses", undefined, true),
+  createAddress: (data: Partial<Address>) => req<{ id: number }>("POST", "/api/me/addresses", data, true),
+  updateAddress: (id: number, data: Partial<Address>) => req<{ ok: boolean }>("PUT", `/api/me/addresses/${id}`, data, true),
+  deleteAddress: (id: number) => req<{ ok: boolean }>("DELETE", `/api/me/addresses/${id}`, undefined, true),
+
   // Users
   getUsers: () => req<User[]>("GET", "/api/users", undefined, true),
   updateUserRole: (id: number, role: string) => req<{ ok: boolean }>("PUT", `/api/users/${id}/role`, { role }, true),
+
+  // Stores
+  getStores: () => req<Store[]>("GET", "/api/stores"),
+  createStore: (data: Partial<Store>) => req<{ id: number }>("POST", "/api/stores", data, true),
+  updateStore: (id: number, data: Partial<Store>) => req<{ ok: boolean }>("PUT", `/api/stores/${id}`, data, true),
+  deleteStore: (id: number) => req<{ ok: boolean }>("DELETE", `/api/stores/${id}`, undefined, true),
 
   // Stats
   getStats: () => req<Stats>("GET", "/api/stats", undefined, true),
@@ -125,6 +159,7 @@ export interface Product {
   is_active: number;
   is_featured: number;
   most_sold: number;
+  is_popular: number;
   description: string;
   created_at?: string;
 }
@@ -150,6 +185,35 @@ export interface Order {
   status: string;
   items: string;
   notes: string;
+  created_at?: string;
+}
+
+export interface Store {
+  id: number;
+  city: string;
+  name: string;
+  address: string;
+  phone: string;
+  hours: string;
+  created_at?: string;
+}
+
+export interface FeaturedSettings {
+  id: number;
+  product_id: number | null;
+  until: string | null;
+  note: string;
+  discount: number;
+  product?: Partial<Product>;
+}
+
+export interface Address {
+  id: number;
+  user_id: number;
+  title: string;
+  address: string;
+  city: string;
+  is_default: number;
   created_at?: string;
 }
 

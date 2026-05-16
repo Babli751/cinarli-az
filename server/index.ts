@@ -74,7 +74,117 @@ app.post("/api/auth/register", async (c) => {
 });
 
 app.get("/api/auth/me", authMiddleware, (c) => {
-  return c.json({ user: c.get("user") });
+  const u = c.get("user");
+  const row = db.prepare("SELECT id, email, full_name, role, created_at FROM users WHERE id=?").get(u.id) as any;
+  return c.json({ user: row });
+});
+
+app.put("/api/auth/profile", authMiddleware, async (c) => {
+  const u = c.get("user");
+  const b = await c.req.json();
+  if (b.full_name !== undefined) {
+    db.prepare("UPDATE users SET full_name=? WHERE id=?").run(b.full_name, u.id);
+  }
+  if (b.password && b.new_password) {
+    const row = db.prepare("SELECT password FROM users WHERE id=?").get(u.id) as any;
+    if (!bcrypt.compareSync(b.password, row.password))
+      return c.json({ error: "Mövcud şifrə yanlışdır" }, 400);
+    db.prepare("UPDATE users SET password=? WHERE id=?").run(bcrypt.hashSync(b.new_password, 10), u.id);
+  }
+  const updated = db.prepare("SELECT id, email, full_name, role FROM users WHERE id=?").get(u.id) as any;
+  return c.json({ user: updated });
+});
+
+// ─── MY ORDERS ──────────────────────────────────────────
+app.get("/api/me/orders", authMiddleware, (c) => {
+  const u = c.get("user");
+  return c.json(db.prepare("SELECT * FROM orders WHERE user_id=? ORDER BY created_at DESC").all(u.id));
+});
+
+// ─── WISHLIST ───────────────────────────────────────────
+app.get("/api/me/wishlist", authMiddleware, (c) => {
+  const u = c.get("user");
+  const rows = db.prepare(`
+    SELECT p.*, w.id as wishlist_id FROM wishlists w
+    JOIN products p ON p.id = w.product_id
+    WHERE w.user_id=? ORDER BY w.created_at DESC
+  `).all(u.id);
+  return c.json(rows);
+});
+
+app.post("/api/me/wishlist", authMiddleware, async (c) => {
+  const u = c.get("user");
+  const { product_id } = await c.req.json();
+  try {
+    db.prepare("INSERT INTO wishlists (user_id, product_id) VALUES (?,?)").run(u.id, product_id);
+  } catch { }
+  return c.json({ ok: true });
+});
+
+app.delete("/api/me/wishlist/:product_id", authMiddleware, (c) => {
+  const u = c.get("user");
+  db.prepare("DELETE FROM wishlists WHERE user_id=? AND product_id=?").run(u.id, c.req.param("product_id"));
+  return c.json({ ok: true });
+});
+
+// ─── COMPARE ────────────────────────────────────────────
+app.get("/api/me/compare", authMiddleware, (c) => {
+  const u = c.get("user");
+  const rows = db.prepare(`
+    SELECT p.* FROM compares cp
+    JOIN products p ON p.id = cp.product_id
+    WHERE cp.user_id=? ORDER BY cp.created_at DESC
+  `).all(u.id);
+  return c.json(rows);
+});
+
+app.post("/api/me/compare", authMiddleware, async (c) => {
+  const u = c.get("user");
+  const { product_id } = await c.req.json();
+  const count = (db.prepare("SELECT COUNT(*) as c FROM compares WHERE user_id=?").get(u.id) as any).c;
+  if (count >= 4) return c.json({ error: "Maksimum 4 məhsul müqayisə edilə bilər" }, 400);
+  try {
+    db.prepare("INSERT INTO compares (user_id, product_id) VALUES (?,?)").run(u.id, product_id);
+  } catch { }
+  return c.json({ ok: true });
+});
+
+app.delete("/api/me/compare/:product_id", authMiddleware, (c) => {
+  const u = c.get("user");
+  db.prepare("DELETE FROM compares WHERE user_id=? AND product_id=?").run(u.id, c.req.param("product_id"));
+  return c.json({ ok: true });
+});
+
+// ─── USER ADDRESSES ─────────────────────────────────────
+app.get("/api/me/addresses", authMiddleware, (c) => {
+  const u = c.get("user");
+  return c.json(db.prepare("SELECT * FROM user_addresses WHERE user_id=? ORDER BY is_default DESC, created_at DESC").all(u.id));
+});
+
+app.post("/api/me/addresses", authMiddleware, async (c) => {
+  const u = c.get("user");
+  const b = await c.req.json();
+  if (b.is_default) db.prepare("UPDATE user_addresses SET is_default=0 WHERE user_id=?").run(u.id);
+  const result = db.prepare("INSERT INTO user_addresses (user_id, title, address, city, is_default) VALUES (?,?,?,?,?)").run(
+    u.id, b.title || "", b.address, b.city || "", b.is_default ? 1 : 0
+  );
+  return c.json({ id: result.lastInsertRowid });
+});
+
+app.put("/api/me/addresses/:id", authMiddleware, async (c) => {
+  const u = c.get("user");
+  const b = await c.req.json();
+  if (b.is_default) db.prepare("UPDATE user_addresses SET is_default=0 WHERE user_id=?").run(u.id);
+  db.prepare("UPDATE user_addresses SET title=?, address=?, city=?, is_default=? WHERE id=? AND user_id=?").run(
+    b.title || "", b.address, b.city || "", b.is_default ? 1 : 0, c.req.param("id"), u.id
+  );
+  return c.json({ ok: true });
+});
+
+app.delete("/api/me/addresses/:id", authMiddleware, (c) => {
+  const u = c.get("user");
+  db.prepare("DELETE FROM user_addresses WHERE id=? AND user_id=?").run(c.req.param("id"), u.id);
+  return c.json({ ok: true });
 });
 
 // ─── CATEGORIES ─────────────────────────────────────────
@@ -83,20 +193,28 @@ app.get("/api/categories", (c) => {
 });
 
 function autoIcon(name: string): string {
-  const n = name.toLowerCase();
-  if (n.includes("divan") || n.includes("kunc") || n.includes("yumşaq") || n.includes("yumsaq")) return "🛋️";
-  if (n.includes("yataq") || n.includes("çarpayı") || n.includes("carpay")) return "🛏️";
-  if (n.includes("masa") || n.includes("stol")) return "🪑";
-  if (n.includes("stul") || n.includes("kreslo")) return "💺";
-  if (n.includes("şkaf") || n.includes("skaf") || n.includes("dolap")) return "🗄️";
-  if (n.includes("mətbəx") || n.includes("metbex") || n.includes("mutfaq")) return "🍳";
-  if (n.includes("uşaq") || n.includes("usaq") || n.includes("cocuk")) return "🧸";
-  if (n.includes("ofis") || n.includes("iş")) return "💼";
-  if (n.includes("hamam") || n.includes("banyo")) return "🚿";
-  if (n.includes("dekor") || n.includes("aksesuar")) return "🏺";
-  if (n.includes("işıq") || n.includes("isiq") || n.includes("lamp")) return "💡";
-  if (n.includes("xalça") || n.includes("xalca") || n.includes("hali")) return "🟫";
-  if (n.includes("bağça") || n.includes("bagca") || n.includes("bahçe")) return "🌿";
+  const n = name.toLowerCase()
+    .replace(/ə/g, "e").replace(/ö/g, "o").replace(/ü/g, "u")
+    .replace(/ı/g, "i").replace(/ğ/g, "g").replace(/ş/g, "s").replace(/ç/g, "c");
+  if (n.includes("divan") || n.includes("kunc") || n.includes("kose") || n.includes("yumsaq") || n.includes("yums")) return "🛋️";
+  if (n.includes("yataq") || n.includes("carpay") || n.includes("dosat") || n.includes("baza")) return "🛏️";
+  if (n.includes("metbex") || n.includes("metbex") || n.includes("mutfaq") || n.includes("asxana")) return "🍳";
+  if (n.includes("masa") || n.includes("stol") || n.includes("sehpa") || n.includes("cofre")) return "🪵";
+  if (n.includes("stul") || n.includes("kreslo") || n.includes("oturacaq")) return "💺";
+  if (n.includes("skaf") || n.includes("dolap") || n.includes("sifaretci") || n.includes("komod") || n.includes("sandiq")) return "🗄️";
+  if (n.includes("usaq") || n.includes("cocuq") || n.includes("kids") || n.includes("bebek")) return "🧸";
+  if (n.includes("ofis") || n.includes("is otagi") || n.includes("kabinet") || n.includes("is yeri")) return "💼";
+  if (n.includes("hamam") || n.includes("banyo") || n.includes("tualet")) return "🚿";
+  if (n.includes("dekor") || n.includes("aksesuar") || n.includes("beze") || n.includes("panel")) return "🏺";
+  if (n.includes("isiq") || n.includes("lamp") || n.includes("avize") || n.includes("candel")) return "💡";
+  if (n.includes("xalca") || n.includes("hali") || n.includes("kilim") || n.includes("palaz")) return "🟫";
+  if (n.includes("bagca") || n.includes("bahce") || n.includes("terras") || n.includes("garden")) return "🌿";
+  if (n.includes("perde") || n.includes("pardo") || n.includes("cortain")) return "🪟";
+  if (n.includes("yastiq") || n.includes("yorgan") || n.includes("doset")) return "🛌";
+  if (n.includes("raf") || n.includes("kitab") || n.includes("kitabxana")) return "📚";
+  if (n.includes("ayna") || n.includes("guzu") || n.includes("sergi")) return "🪞";
+  if (n.includes("balkon") || n.includes("veranda")) return "🏠";
+  if (n.includes("kicik") || n.includes("mini") || n.includes("kompakt")) return "📦";
   return "📦";
 }
 
@@ -131,19 +249,34 @@ app.get("/api/products", (c) => {
 });
 
 app.get("/api/products/featured", (c) => {
-  const p = db.prepare("SELECT * FROM products WHERE is_featured=1 AND is_active=1 LIMIT 1").get();
+  const fs = db.prepare("SELECT * FROM featured_settings WHERE id=1").get() as any;
+  const p = fs?.product_id
+    ? db.prepare("SELECT * FROM products WHERE id=? AND is_active=1").get(fs.product_id)
+    : db.prepare("SELECT * FROM products WHERE is_featured=1 AND is_active=1 LIMIT 1").get();
+  return p ? c.json(Object.assign({}, p, { _until: fs?.until || null, _note: fs?.note || "", _discount: fs?.discount || 0 })) : c.json(null);
   if (!p) return c.json(null);
   return c.json(p);
 });
 
 app.get("/api/products/most-sold", (c) => {
   const limit = Number(c.req.query("limit") || 12);
-  return c.json(db.prepare("SELECT * FROM products WHERE is_active=1 ORDER BY most_sold DESC, created_at DESC LIMIT ?").all(limit));
+  return c.json(db.prepare("SELECT * FROM products WHERE is_active=1 AND most_sold=1 ORDER BY created_at DESC LIMIT ?").all(limit));
 });
 
 app.put("/api/products/:id/most-sold", authMiddleware, adminMiddleware, async (c) => {
   const { most_sold } = await c.req.json();
-  db.prepare("UPDATE products SET most_sold=? WHERE id=?").run(most_sold || 0, c.req.param("id"));
+  db.prepare("UPDATE products SET most_sold=? WHERE id=?").run(most_sold ? 1 : 0, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+app.get("/api/products/popular", (c) => {
+  const limit = Number(c.req.query("limit") || 12);
+  return c.json(db.prepare("SELECT * FROM products WHERE is_active=1 AND is_popular=1 ORDER BY created_at DESC LIMIT ?").all(limit));
+});
+
+app.put("/api/products/:id/popular", authMiddleware, adminMiddleware, async (c) => {
+  const { is_popular } = await c.req.json();
+  db.prepare("UPDATE products SET is_popular=? WHERE id=?").run(is_popular ? 1 : 0, c.req.param("id"));
   return c.json({ ok: true });
 });
 
@@ -171,6 +304,28 @@ app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
 
 app.delete("/api/products/:id", authMiddleware, adminMiddleware, (c) => {
   db.prepare("DELETE FROM products WHERE id=?").run(c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+app.get("/api/featured-settings", authMiddleware, adminMiddleware, (c) => {
+  const fs = db.prepare("SELECT * FROM featured_settings WHERE id=1").get() as any;
+  const product = fs?.product_id
+    ? db.prepare("SELECT id, name, price, old_price, discount, image, stock FROM products WHERE id=?").get(fs.product_id)
+    : null;
+  return c.json({ ...(fs || {}), product });
+});
+
+app.put("/api/featured-settings", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  db.prepare("UPDATE featured_settings SET product_id=?, until=?, note=?, discount=? WHERE id=1").run(
+    b.product_id || null, b.until || null, b.note || "", b.discount || 0
+  );
+  if (b.product_id) {
+    db.prepare("UPDATE products SET is_featured=0").run();
+    db.prepare("UPDATE products SET is_featured=1 WHERE id=?").run(b.product_id);
+  } else {
+    db.prepare("UPDATE products SET is_featured=0").run();
+  }
   return c.json({ ok: true });
 });
 
@@ -266,6 +421,32 @@ app.post("/api/upload", authMiddleware, adminMiddleware, async (c) => {
       resolve(c.json({ url }) as any);
     });
   });
+});
+
+// ─── STORES ─────────────────────────────────────────────
+app.get("/api/stores", (c) => {
+  return c.json(db.prepare("SELECT * FROM stores ORDER BY city ASC, created_at ASC").all());
+});
+
+app.post("/api/stores", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  const result = db.prepare("INSERT INTO stores (city, name, address, phone, hours) VALUES (?, ?, ?, ?, ?)").run(
+    b.city || "", b.name, b.address || "", b.phone || "*0171", b.hours || "10:00 — 22:00"
+  );
+  return c.json({ id: result.lastInsertRowid });
+});
+
+app.put("/api/stores/:id", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  db.prepare("UPDATE stores SET city=?, name=?, address=?, phone=?, hours=? WHERE id=?").run(
+    b.city || "", b.name, b.address || "", b.phone || "*0171", b.hours || "10:00 — 22:00", c.req.param("id")
+  );
+  return c.json({ ok: true });
+});
+
+app.delete("/api/stores/:id", authMiddleware, adminMiddleware, (c) => {
+  db.prepare("DELETE FROM stores WHERE id=?").run(c.req.param("id"));
+  return c.json({ ok: true });
 });
 
 // ─── STATS ──────────────────────────────────────────────

@@ -48,11 +48,6 @@ export function SiteHeader() {
             <Link to="/kampaniyalar" className="hover:text-foreground">Kampaniyalar</Link>
             <Link to="/magazalar" className="hover:text-foreground">Mağazalar</Link>
             <Link to="/korporativ" className="hover:text-foreground">Korporativ</Link>
-            <span className="font-bold tracking-wider text-foreground/80">EMBAWOOD</span>
-            <span className="rounded border border-border bg-background px-2 py-0.5 text-xs font-bold">IKEA</span>
-            <span className="font-serif text-base italic text-foreground/80">Natuzzi</span>
-            <Link to="/outlet" className="hover:text-foreground">Outlet</Link>
-            <Link to="/kateqoriya/$slug" params={{ slug: "divanlar" }} className="rounded-md border border-[var(--accent-orange)] px-2 py-0.5 font-medium text-[var(--accent-orange)]">Künc divanlar</Link>
           </div>
           <div className="flex items-center gap-4">
             <span className="font-bold text-[var(--brand)]">*0171</span>
@@ -333,12 +328,6 @@ export function SiteFooter() {
               <img src={logoChinarli} alt="Chinarli Mebel" className="h-28 w-auto" />
             </div>
             <p className="mb-6 text-sm text-gray-400">Etibarlı mebel mağazası. 24/7 dəstək.</p>
-            <div className="flex flex-col gap-3">
-              <p className="text-xs font-semibold text-gray-300">Mobil tətbiq yüklə</p>
-              <div className="h-24 w-24 rounded-lg bg-white/10 flex items-center justify-center text-xs text-gray-500 p-1">
-                QR kodu
-              </div>
-            </div>
           </div>
 
           {/* Col 2: Şirkət */}
@@ -404,15 +393,6 @@ export function SiteFooter() {
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="border-t border-white/10 py-4 text-center">
-        <div className="flex items-center justify-between mx-auto max-w-7xl px-4">
-          <div className="hidden md:block">
-            <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
-          </div>
-          <p className="text-xs text-gray-500">© 2026 Chinarli Mebel. Bütün hüquqlar qorunur.</p>
-        </div>
-      </div>
 
       <MobileBottomNav />
     </footer>

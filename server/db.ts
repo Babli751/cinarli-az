@@ -71,7 +71,50 @@ db.exec(`
 // Migrations
 try { db.exec("ALTER TABLE products ADD COLUMN is_featured INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN most_sold INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN is_popular INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE categories ADD COLUMN parent_id INTEGER DEFAULT NULL REFERENCES categories(id) ON DELETE SET NULL"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS stores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  city TEXT NOT NULL DEFAULT '',
+  name TEXT NOT NULL,
+  address TEXT DEFAULT '',
+  phone TEXT DEFAULT '*0171',
+  hours TEXT DEFAULT '10:00 — 22:00',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN user_id INTEGER DEFAULT NULL REFERENCES users(id) ON DELETE SET NULL"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS featured_settings (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
+  until TEXT DEFAULT NULL,
+  note TEXT DEFAULT '',
+  discount INTEGER DEFAULT 0
+)`); } catch {}
+try { db.exec("INSERT OR IGNORE INTO featured_settings (id) VALUES (1)"); } catch {}
+try { db.exec("ALTER TABLE featured_settings ADD COLUMN discount INTEGER DEFAULT 0"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS wishlists (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, product_id)
+)`); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS compares (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, product_id)
+)`); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS user_addresses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL DEFAULT '',
+  address TEXT NOT NULL,
+  city TEXT DEFAULT '',
+  is_default INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
 
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;

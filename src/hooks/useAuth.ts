@@ -42,6 +42,7 @@ export function useAuth() {
 
   return {
     user,
+    setUser,
     session: user ? { user } : null,
     isAdmin: user?.role === "admin",
     loading,

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, Search, ImageIcon, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, ImageIcon, TrendingUp, Flame } from "lucide-react";
 
 export const Route = createFileRoute("/admin/mehsullar")({
   component: ProductsAdmin,
@@ -69,17 +69,25 @@ function ProductsAdmin() {
     }
   };
 
-  const toggleFeatured = async (p: Product) => {
+  const togglePopular = async (p: Product) => {
     try {
-      await api.setFeatured(p.id, !p.is_featured);
-      toast.success(p.is_featured ? "Həftənin teklifi silindi" : `"${p.name}" həftənin teklifi oldu`);
+      await api.setPopular(p.id, !p.is_popular);
       load();
     } catch (e: any) {
       toast.error(e.message);
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const toggleMostSold = async (p: Product) => {
+    try {
+      await api.setMostSold(p.id, !p.most_sold);
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
@@ -132,15 +140,16 @@ function ProductsAdmin() {
               <th className="px-4 py-3">Qiymət</th>
               <th className="px-4 py-3">Stok</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Teklif</th>
+              <th className="px-4 py-3 text-center" title="Populyar">Populyar</th>
+              <th className="px-4 py-3 text-center" title="Çox satılan">Çox satılan</th>
               <th className="px-4 py-3 w-24"></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">Yüklənir...</td></tr>
+              <tr><td colSpan={9} className="p-10 text-center text-muted-foreground">Yüklənir...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8} className="p-10 text-center text-muted-foreground">Məhsul tapılmadı</td></tr>
+              <tr><td colSpan={9} className="p-10 text-center text-muted-foreground">Məhsul tapılmadı</td></tr>
             ) : filtered.map((p) => (
               <tr key={p.id} className="border-t border-border hover:bg-secondary/20 transition-colors">
                 <td className="px-4 py-3">
@@ -168,10 +177,16 @@ function ProductsAdmin() {
                     {p.is_active ? "Aktiv" : "Passiv"}
                   </button>
                 </td>
-                <td className="px-4 py-3">
-                  <button onClick={() => toggleFeatured(p)} title={p.is_featured ? "Həftənin teklifi — klik edib sil" : "Həftənin teklifi et"}
-                    className={`rounded-full p-1.5 transition-colors ${p.is_featured ? "text-yellow-500 bg-yellow-50 hover:bg-yellow-100" : "text-muted-foreground hover:text-yellow-500 hover:bg-yellow-50"}`}>
-                    <Star className={`h-4 w-4 ${p.is_featured ? "fill-yellow-400" : ""}`} />
+                <td className="px-4 py-3 text-center">
+                  <button onClick={() => togglePopular(p)} title={p.is_popular ? "Populyardan çıxar" : "Populyar et"}
+                    className={`rounded-full p-1.5 transition-colors ${p.is_popular ? "bg-blue-100 text-blue-600 hover:bg-blue-200" : "text-muted-foreground hover:text-blue-500 hover:bg-blue-50"}`}>
+                    <TrendingUp className={`h-4 w-4 ${p.is_popular ? "stroke-[2.5]" : ""}`} />
+                  </button>
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <button onClick={() => toggleMostSold(p)} title={p.most_sold ? "Çox satılandan çıxar" : "Çox satılan et"}
+                    className={`rounded-full p-1.5 transition-colors ${p.most_sold ? "bg-orange-100 text-orange-600 hover:bg-orange-200" : "text-muted-foreground hover:text-orange-500 hover:bg-orange-50"}`}>
+                    <Flame className={`h-4 w-4 ${p.most_sold ? "fill-orange-400" : ""}`} />
                   </button>
                 </td>
                 <td className="px-4 py-3">

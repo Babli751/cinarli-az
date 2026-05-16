@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
-import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+import AutoScroll from "embla-carousel-auto-scroll";
 import { api, getImageUrl, type Product } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
@@ -22,22 +24,24 @@ function Index() {
   const [tab1, setTab1] = useState<"popular" | "new">("popular");
   const [tab2, setTab2] = useState<"bestseller" | "discount">("bestseller");
   const [products, setProducts] = useState<Product[]>([]);
+  const [popular, setPopular] = useState<Product[]>([]);
   const [mostSold, setMostSold] = useState<Product[]>([]);
-  const [featured, setFeatured] = useState<Product | null | undefined>(undefined);
+  const [featured, setFeatured] = useState<(Product & { _until?: string | null; _note?: string; _discount?: number }) | null | undefined>(undefined);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setProducts).catch(() => {});
-    api.getMostSoldProducts(12).then(setMostSold).catch(() => {});
+    api.getPopularProducts(24).then(setPopular).catch(() => {});
+    api.getMostSoldProducts(24).then(setMostSold).catch(() => {});
     api.getFeaturedProduct().then(setFeatured).catch(() => setFeatured(null));
   }, []);
 
   const list1 = tab1 === "popular"
-    ? products.slice(0, 12)
-    : [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 12);
+    ? popular
+    : [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 24);
 
   const list2 = tab2 === "bestseller"
-    ? mostSold.slice(0, 12)
-    : [...products].filter(p => p.discount > 0).sort((a, b) => b.discount - a.discount).slice(0, 12);
+    ? mostSold
+    : [...products].filter(p => p.discount > 0).sort((a, b) => b.discount - a.discount).slice(0, 24);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -73,52 +77,82 @@ function Index() {
               <span className="text-xl">★</span>
               <span className="font-bold text-white">Həftənin teklifi</span>
             </div>
-            <div className="text-xs font-semibold text-white/90">Bu hafta bitir</div>
+            <FeaturedCountdown until={featured?._until} />
           </div>
           {featured === undefined ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Yüklənir...</div>
           ) : featured ? (
             <Link to="/mehsul/$slug" params={{ slug: String(featured.id) }} className="block group">
-              <div className="relative bg-secondary/30 p-6">
-                {featured.discount > 0 && (
-                  <div className="absolute right-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow-md">
-                    <div className="text-lg font-black text-[var(--accent-orange)]">−{featured.discount}%</div>
-                  </div>
-                )}
-                <ProductImg p={featured} className="mx-auto h-56 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
-              </div>
-              <div className="p-6">
-                <h3 className="text-lg font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {featured.stock > 0 ? (
-                    <span className="inline-block rounded-md border border-[var(--brand)] px-2.5 py-1 text-xs font-semibold text-[var(--brand)]">
-                      Stokda var
-                    </span>
-                  ) : (
-                    <span className="inline-block rounded-md border border-red-300 px-2.5 py-1 text-xs font-semibold text-red-600">
-                      Stokda yoxdur
-                    </span>
-                  )}
-                  {featured.discount > 0 && (
-                    <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--accent-orange)]">
-                      Faizsiz təklif
-                    </span>
-                  )}
-                </div>
-                <div className="mt-4 flex items-baseline gap-2">
-                  {featured.old_price && <div className="text-sm font-semibold text-muted-foreground line-through">{featured.old_price} ₼</div>}
-                  <div className="text-4xl font-black text-foreground">{featured.price} ₼</div>
-                </div>
-                <div className="mt-3 rounded-lg bg-secondary/50 p-3">
-                  <div className="text-xs text-muted-foreground mb-1">Faizsiz aylıq ödəniş</div>
-                  <div className="text-sm font-bold text-foreground">24 ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round(featured.price / 24)} ₼</span></div>
-                </div>
-                {featured.stock > 0 && (
-                  <button className="mt-5 w-full rounded-lg bg-[var(--accent-orange)] py-3 text-center font-bold text-white transition hover:opacity-90">
-                    Bir kliklə al
-                  </button>
-                )}
-              </div>
+              {(() => {
+                const activeDiscount = featured._discount || featured.discount || 0;
+                const discountedPrice = activeDiscount > 0
+                  ? Math.round(featured.price * (1 - activeDiscount / 100) * 100) / 100
+                  : null;
+                const showOriginal = discountedPrice !== null;
+                return (
+                  <>
+                    <div className="relative bg-secondary/30 p-6">
+                      {activeDiscount > 0 && (
+                        <div className="absolute right-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow-md">
+                          <div className="text-lg font-black text-[var(--accent-orange)]">−{activeDiscount}%</div>
+                        </div>
+                      )}
+                      <ProductImg p={featured} className="mx-auto h-56 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
+                    </div>
+                    <div className="p-6">
+                      <h3 className="text-lg font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {featured.stock > 0 ? (
+                          <span className="inline-block rounded-md border border-[var(--brand)] px-2.5 py-1 text-xs font-semibold text-[var(--brand)]">
+                            Stokda var · {featured.stock} ədəd
+                          </span>
+                        ) : (
+                          <span className="inline-block rounded-md border border-red-300 px-2.5 py-1 text-xs font-semibold text-red-600">
+                            Stokda yoxdur
+                          </span>
+                        )}
+                        {activeDiscount > 0 && (
+                          <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--accent-orange)]">
+                            −{activeDiscount}% endirim
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-4 flex items-baseline gap-2">
+                        {showOriginal ? (
+                          <>
+                            <div className="text-sm font-semibold text-muted-foreground line-through">{featured.price} ₼</div>
+                            <div className="text-4xl font-black text-[var(--accent-orange)]">{discountedPrice} ₼</div>
+                          </>
+                        ) : (
+                          <>
+                            {featured.old_price && <div className="text-sm font-semibold text-muted-foreground line-through">{featured.old_price} ₼</div>}
+                            <div className="text-4xl font-black text-foreground">{featured.price} ₼</div>
+                          </>
+                        )}
+                      </div>
+                      <div className="mt-3 rounded-lg bg-secondary/50 p-3">
+                        <div className="text-xs text-muted-foreground mb-1">Faizsiz aylıq ödəniş</div>
+                        <div className="text-sm font-bold text-foreground">24 ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round((discountedPrice ?? featured.price) / 24)} ₼</span></div>
+                      </div>
+                      <div className="mt-5 flex gap-2">
+                        <button
+                          onClick={(e) => e.preventDefault()}
+                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--accent-orange)] py-3 font-bold text-white transition hover:opacity-90"
+                        >
+                          <ShoppingCart className="h-4 w-4" /> Bir kliklə al
+                        </button>
+                        <button
+                          onClick={(e) => e.preventDefault()}
+                          className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-lg bg-[var(--brand)] text-white transition hover:opacity-90"
+                          title="Səbətə əlavə et"
+                        >
+                          <ShoppingCart className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </Link>
           ) : (
             <div className="p-12 text-center">
@@ -210,32 +244,21 @@ function ProductCarousel({
   onTabChange: (t: string) => void;
   isLast?: boolean;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const tripled = [...items, ...items, ...items];
 
-  const scroll = (dir: "left" | "right") => {
-    if (!ref.current) return;
-    const card = ref.current.querySelector("[data-card]") as HTMLElement | null;
-    const amount = card ? card.offsetWidth + 16 : 260;
-    ref.current.scrollBy({ left: dir === "right" ? amount * 2 : -amount * 2, behavior: "smooth" });
-  };
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, align: "start", dragFree: false }
+  );
 
-  // Auto-scroll: hər 3.5s-də bir kart irəli, sona çatanda başa qayıt
   useEffect(() => {
-    if (items.length === 0) return;
-    const el = ref.current;
-    if (!el) return;
-    const timer = setInterval(() => {
-      const card = el.querySelector("[data-card]") as HTMLElement | null;
-      const amount = card ? card.offsetWidth + 16 : 260;
-      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 10;
-      if (atEnd) {
-        el.scrollTo({ left: 0, behavior: "instant" as ScrollBehavior });
-      } else {
-        el.scrollBy({ left: amount, behavior: "smooth" });
-      }
-    }, 3500);
-    return () => clearInterval(timer);
-  }, [items]);
+    if (!emblaApi) return;
+    const id = setInterval(() => emblaApi.scrollNext(), 3000);
+    return () => clearInterval(id);
+  }, [emblaApi]);
+
+
+  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
   return (
     <section className={`mx-auto max-w-7xl px-4 py-6 md:py-10 ${isLast ? "pb-16" : ""}`}>
@@ -249,11 +272,11 @@ function ProductCarousel({
           ))}
         </div>
         <div className="flex gap-2">
-          <button onClick={() => scroll("left")}
+          <button onClick={scrollPrev}
             className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={() => scroll("right")}
+          <button onClick={scrollNext}
             className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -263,19 +286,46 @@ function ProductCarousel({
       {items.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">{emptyText}</div>
       ) : (
-        <div
-          ref={ref}
-          className="flex gap-3 overflow-x-auto scroll-smooth pb-2"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {items.map((p) => (
-            <div key={p.id} data-card className="w-[155px] flex-none sm:w-[185px] md:w-[210px] lg:w-[230px]">
-              <ProductCard p={p} />
-            </div>
-          ))}
+        <div ref={emblaRef} className="overflow-hidden">
+          <div className="flex gap-3">
+            {tripled.map((p, i) => (
+              <div key={`${p.id}-${i}`} className="w-[155px] flex-none sm:w-[185px] md:w-[210px] lg:w-[230px]">
+                <ProductCard p={p} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </section>
+  );
+}
+
+function FeaturedCountdown({ until }: { until?: string | null }) {
+  const calc = () => {
+    if (!until) return null;
+    const d = new Date(until).getTime() - Date.now();
+    if (d <= 0) return null;
+    return {
+      days: Math.floor(d / 86400000),
+      hours: Math.floor((d % 86400000) / 3600000),
+      minutes: Math.floor((d % 3600000) / 60000),
+      seconds: Math.floor((d % 60000) / 1000),
+    };
+  };
+  const [t, setT] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+  }, [until]);
+  if (!t) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <div className="flex items-center gap-1 text-white text-sm font-black">
+      {t.days > 0 && <><span>{pad(t.days)}</span><span className="text-white/60 text-xs font-normal">Gün</span><span className="opacity-60">:</span></>}
+      <span>{pad(t.hours)}</span><span className="opacity-60">:</span>
+      <span>{pad(t.minutes)}</span><span className="opacity-60">:</span>
+      <span>{pad(t.seconds)}</span>
+    </div>
   );
 }
 
