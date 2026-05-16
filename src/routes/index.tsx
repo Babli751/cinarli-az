@@ -68,39 +68,63 @@ function Index() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="flex items-center gap-2 bg-[var(--accent-orange)]/10 px-4 py-2 text-sm">
-            <span className="text-[var(--accent-orange)]">★</span>
-            <span className="font-semibold">Həftənin teklifi</span>
+          <div className="flex items-center justify-between bg-[var(--accent-orange)] px-5 py-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">★</span>
+              <span className="font-bold text-white">Həftənin teklifi</span>
+            </div>
+            <div className="text-xs font-semibold text-white/90">Bu hafta bitir</div>
           </div>
           {featured === undefined ? (
             <div className="p-8 text-center text-muted-foreground text-sm">Yüklənir...</div>
           ) : featured ? (
             <Link to="/mehsul/$slug" params={{ slug: String(featured.id) }} className="block group">
-              <div className="relative bg-secondary/30 p-4">
+              <div className="relative bg-secondary/30 p-6">
                 {featured.discount > 0 && (
-                  <div className="absolute right-4 top-4 z-10 grid h-12 w-12 place-items-center rounded-full bg-[var(--accent-orange)] text-xs font-black text-white shadow-md">
-                    −{featured.discount}%
+                  <div className="absolute right-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow-md">
+                    <div className="text-lg font-black text-[var(--accent-orange)]">−{featured.discount}%</div>
                   </div>
                 )}
-                <ProductImg p={featured} className="mx-auto h-44 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
+                <ProductImg p={featured} className="mx-auto h-56 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
               </div>
-              <div className="p-5">
-                <h3 className="text-lg font-bold leading-snug line-clamp-2">{featured.name}</h3>
-                <span className="mt-1 inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs text-[var(--brand)]">
-                  {featured.stock > 0 ? "Stokda var" : "Stokda yoxdur"}
-                </span>
-                <div className="mt-3 flex items-baseline gap-2">
-                  {featured.old_price && <div className="text-sm text-muted-foreground line-through">{featured.old_price} ₼</div>}
-                  <div className="text-3xl font-black">{featured.price} ₼</div>
+              <div className="p-6">
+                <h3 className="text-lg font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {featured.stock > 0 ? (
+                    <span className="inline-block rounded-md border border-[var(--brand)] px-2.5 py-1 text-xs font-semibold text-[var(--brand)]">
+                      Stokda var
+                    </span>
+                  ) : (
+                    <span className="inline-block rounded-md border border-red-300 px-2.5 py-1 text-xs font-semibold text-red-600">
+                      Stokda yoxdur
+                    </span>
+                  )}
+                  {featured.discount > 0 && (
+                    <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--accent-orange)]">
+                      Faizsiz təklif
+                    </span>
+                  )}
                 </div>
-                <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">Faizsiz 24 ay · aylıq {Math.round(featured.price / 24)} ₼</div>
-                <div className="mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-3 text-center font-semibold text-white group-hover:opacity-90 transition-opacity">
-                  Məhsula bax →
+                <div className="mt-4 flex items-baseline gap-2">
+                  {featured.old_price && <div className="text-sm font-semibold text-muted-foreground line-through">{featured.old_price} ₼</div>}
+                  <div className="text-4xl font-black text-foreground">{featured.price} ₼</div>
                 </div>
+                <div className="mt-3 rounded-lg bg-secondary/50 p-3">
+                  <div className="text-xs text-muted-foreground mb-1">Faizsiz aylıq ödəniş</div>
+                  <div className="text-sm font-bold text-foreground">24 ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round(featured.price / 24)} ₼</span></div>
+                </div>
+                {featured.stock > 0 && (
+                  <button className="mt-5 w-full rounded-lg bg-[var(--accent-orange)] py-3 text-center font-bold text-white transition hover:opacity-90">
+                    Bir kliklə al
+                  </button>
+                )}
               </div>
             </Link>
           ) : (
-            <div className="p-8 text-center text-muted-foreground text-sm">Admin paneldən həftənin teklifini seçin ★</div>
+            <div className="p-12 text-center">
+              <p className="text-muted-foreground text-sm font-medium">Admin paneldən həftənin teklifini seçin</p>
+              <p className="mt-1 text-xs text-muted-foreground/60">Məhsulu öz seçin və "featured" işarəsi qoyun ★</p>
+            </div>
           )}
         </div>
       </section>
