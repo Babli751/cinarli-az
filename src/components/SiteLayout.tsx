@@ -71,7 +71,7 @@ export function SiteHeader() {
       <header className="hidden border-b border-border bg-background lg:block">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2">
           <Link to="/" className="flex items-center" aria-label="Chinarli Mebel">
-            <img src={logoChinarli} alt="Chinarli Mebel" width={1536} height={1024} className="h-14 w-auto" />
+            <img src={logoChinarli} alt="Chinarli Mebel" width={1536} height={1024} className="h-20 w-auto md:h-24 lg:h-28" />
           </Link>
 
           <button
@@ -114,7 +114,7 @@ export function SiteHeader() {
           </button>
 
           <Link to="/" className="flex flex-1 items-center justify-center" aria-label="Chinarli Mebel">
-            <img src={logoChinarli} alt="Chinarli Mebel" className="h-12 w-auto sm:h-14" />
+            <img src={logoChinarli} alt="Chinarli Mebel" className="h-20 w-auto sm:h-24" />
           </Link>
 
           <button

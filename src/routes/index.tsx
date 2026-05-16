@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronRight } from "lucide-react";
 import { api, getImageUrl, type Product } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
@@ -248,16 +248,10 @@ function ProductCarousel({
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => scroll("left")}
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button onClick={() => scroll("right")}
-            className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
+        <button onClick={() => scroll("right")}
+          className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
+          <ChevronRight className="h-4 w-4" />
+        </button>
       </div>
 
       {items.length === 0 ? (
