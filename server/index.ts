@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 const { sign, verify } = jwt;
 import bcrypt from "bcryptjs";
 import { db } from "./db.ts";
-import { serveStatic } from "@hono/node-server/serve-static";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -20,7 +19,18 @@ type Vars = { user: { id: number; email: string; role: string; full_name: string
 const app = new Hono<{ Variables: Vars }>();
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"] }));
-app.use("/uploads/*", serveStatic({ root: path.join(__dirname, "../server") }));
+app.get("/uploads/:filename", async (c) => {
+  const filename = c.req.param("filename");
+  const filePath = path.join(__dirname, "uploads", filename);
+  if (!fs.existsSync(filePath)) return c.notFound();
+  const ext = path.extname(filename).toLowerCase();
+  const mime: Record<string, string> = {
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png",
+    ".gif": "image/gif", ".webp": "image/webp", ".svg": "image/svg+xml",
+  };
+  const data = fs.readFileSync(filePath);
+  return new Response(data, { headers: { "Content-Type": mime[ext] || "application/octet-stream", "Cache-Control": "public, max-age=31536000" } });
+});
 
 async function authMiddleware(c: Context<{ Variables: Vars }>, next: Next) {
   const header = c.req.header("Authorization");
