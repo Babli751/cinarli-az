@@ -170,7 +170,7 @@ function Index() {
             </button>
             <button onClick={() => setTab("new")}
               className={`hidden text-lg transition md:inline ${tab === "new" ? "text-foreground font-bold text-2xl md:text-3xl" : "text-muted-foreground/50 hover:text-muted-foreground"}`}>
-              Endirimlər
+              Çox satılanlar
             </button>
           </div>
           <div className="flex gap-2">
@@ -205,7 +205,7 @@ function ProductCard({ p }: { p: Product }) {
     <Link to="/mehsul/$slug" params={{ slug: String(p.id) }}
       className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
       {p.discount > 0 && (
-        <div className="absolute right-3 top-3 z-10 grid h-11 w-11 place-items-center rounded-full bg-[var(--accent-orange)] text-xs font-bold text-white shadow-md">
+        <div className="absolute right-3 top-3 z-10 grid h-12 w-12 place-items-center rounded-full border-2 border-[var(--accent-orange)] bg-white text-xs font-bold text-[var(--accent-orange)] shadow-md">
           −{p.discount}%
         </div>
       )}
@@ -217,14 +217,35 @@ function ProductCard({ p }: { p: Product }) {
         <ProductImg p={p} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium">{p.name}</h3>
+        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-semibold">{p.name}</h3>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {p.stock > 0 ? (
+            <span className="inline-block rounded-md border border-[var(--brand)] px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
+              Stokda var
+            </span>
+          ) : (
+            <span className="inline-block rounded-md border border-red-300 px-2 py-0.5 text-xs font-semibold text-red-600">
+              Stokda yoxdur
+            </span>
+          )}
+          {p.discount > 0 && (
+            <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">
+              Faizsiz təklif
+            </span>
+          )}
+        </div>
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-xl font-black">{p.price} ₼</span>
+          <span className="text-2xl font-black">{p.price} ₼</span>
           {p.old_price && <span className="text-sm text-muted-foreground line-through">{p.old_price} ₼</span>}
         </div>
-        <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]">
-          <Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan
+        <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">
+          Faizsiz 12 ay · aylıq {Math.round(p.price / 12)} ₼
         </div>
+        {p.stock > 0 && (
+          <button className="mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2.5 text-center font-semibold text-white transition hover:opacity-90">
+            Səbətə əlavə et
+          </button>
+        )}
       </div>
     </Link>
   );
