@@ -358,8 +358,7 @@ export function SiteFooter() {
 
             {/* Address */}
             <div className="mb-6 text-sm text-gray-400">
-              <p className="mb-1">📍 Bakı, Azərbaycan</p>
-              <p className="text-xs">Etibarlı mebel mağazası</p>
+              <p className="mb-1">📍 İmişli şəhəri, N.Nərimanov küçəsi, Bazarın arxası</p>
             </div>
 
             {/* Social Media */}
