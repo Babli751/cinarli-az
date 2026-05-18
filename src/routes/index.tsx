@@ -56,39 +56,40 @@ function Index() {
       <SiteHeader />
 
       {/* Hero */}
-      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-6 lg:grid-cols-3">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-3 px-4 py-4 lg:grid-cols-3 lg:py-5">
         <div className="relative col-span-2 overflow-hidden rounded-2xl bg-neutral-900 text-white">
           <img src={heroLiving} alt="Modern living room" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover opacity-75 saturate-150" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
-          <div className="relative z-10 flex h-full min-h-[420px] flex-col justify-end p-8 md:p-12">
+          <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-end p-6 md:min-h-[360px] md:p-10">
             <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">Mövsüm kampaniyası</p>
-            <h1 className="mt-3 font-black leading-[0.9] tracking-tight">
-              <span className="block text-5xl md:text-7xl">Çınarlı</span>
-              <span className="mt-2 block text-emerald-300 text-3xl md:text-5xl italic font-light">Keyfiyyətli mebel</span>
+            <h1 className="mt-2 font-black leading-[0.9] tracking-tight">
+              <span className="block text-4xl md:text-6xl">Çınarlı</span>
+              <span className="mt-1 block text-emerald-300 text-2xl md:text-4xl italic font-light">Keyfiyyətli mebel</span>
             </h1>
-            <p className="mt-4 max-w-md text-sm text-white/80 md:text-base">Premium mebel kolleksiyasını əldə edin.</p>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Link to="/kampaniyalar" className="inline-flex items-center gap-2 rounded-lg bg-white px-7 py-3 font-bold text-neutral-900 shadow-lg hover:bg-white/90">
-                Kampaniyalar <ArrowRight className="h-4 w-4" />
+            <p className="mt-3 max-w-md text-sm text-white/80">Premium mebel kolleksiyasını əldə edin.</p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Link to="/kampaniyalar" className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-neutral-900 shadow-lg hover:bg-white/90">
+                Kampaniyalar <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <Link to="/yeni" className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-7 py-3 font-semibold text-white backdrop-blur hover:bg-white/10">
+              <Link to="/yeni" className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/10">
                 Yeni kolleksiya
               </Link>
             </div>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between bg-[var(--accent-orange)] px-5 py-3">
+        {/* Featured — compact irshad.az style */}
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm flex flex-col">
+          <div className="flex items-center justify-between bg-[var(--accent-orange)] px-4 py-2.5">
             <div className="flex items-center gap-2">
-              <span className="text-xl">★</span>
-              <span className="font-bold text-white">Həftənin teklifi</span>
+              <span className="text-base">★</span>
+              <span className="text-sm font-bold text-white">Həftənin teklifi</span>
               {featuredList && featuredList.length > 1 && (
-                <div className="flex items-center gap-1 ml-2">
+                <div className="flex items-center gap-1 ml-1">
                   {featuredList.map((_, i) => (
                     <button key={i} onClick={() => setFeaturedIdx(i)}
-                      className={`h-1.5 rounded-full transition-all ${i === featuredIdx ? "w-4 bg-white" : "w-1.5 bg-white/50"}`} />
+                      className={`h-1.5 rounded-full transition-all ${i === featuredIdx ? "w-3 bg-white" : "w-1.5 bg-white/50"}`} />
                   ))}
                 </div>
               )}
@@ -96,9 +97,9 @@ function Index() {
             <FeaturedCountdown until={featured?._until} />
           </div>
           {featured === undefined ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Yüklənir...</div>
+            <div className="flex-1 p-6 text-center text-muted-foreground text-sm flex items-center justify-center">Yüklənir...</div>
           ) : featured ? (
-            <Link to="/mehsul/$slug" params={{ slug: String(featured.id) }} className="block group">
+            <Link to="/mehsul/$slug" params={{ slug: String(featured.id) }} className="flex flex-col flex-1 group">
               {(() => {
                 const activeDiscount = featured._discount || featured.discount || 0;
                 const discountedPrice = activeDiscount > 0
@@ -107,62 +108,55 @@ function Index() {
                 const showOriginal = discountedPrice !== null;
                 return (
                   <>
-                    <div className="relative bg-secondary/30 p-6">
+                    <div className="relative bg-secondary/20 px-4 pt-3 pb-2">
                       {activeDiscount > 0 && (
-                        <div className="absolute right-4 top-4 z-10 flex h-14 w-14 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow-md">
-                          <div className="text-lg font-black text-[var(--accent-orange)]">−{activeDiscount}%</div>
+                        <div className="absolute right-3 top-3 z-10 flex h-11 w-11 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow">
+                          <div className="text-sm font-black text-[var(--accent-orange)]">−{activeDiscount}%</div>
                         </div>
                       )}
-                      <ProductImg p={featured} className="mx-auto h-56 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
+                      <ProductImg p={featured} className="mx-auto h-40 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
                     </div>
-                    <div className="p-6">
-                      <h3 className="text-lg font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="px-4 py-3 flex flex-col flex-1">
+                      <h3 className="text-sm font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {featured.stock > 0 ? (
-                          <span className="inline-block rounded-md border border-[var(--brand)] px-2.5 py-1 text-xs font-semibold text-[var(--brand)]">
+                          <span className="rounded border border-[var(--brand)] px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
                             Stokda var · {featured.stock} ədəd
                           </span>
                         ) : (
-                          <span className="inline-block rounded-md border border-red-300 px-2.5 py-1 text-xs font-semibold text-red-600">
-                            Stokda yoxdur
-                          </span>
+                          <span className="rounded border border-red-300 px-2 py-0.5 text-xs font-semibold text-red-600">Stokda yoxdur</span>
                         )}
                         {activeDiscount > 0 && (
-                          <span className="inline-block rounded-md bg-[var(--accent-orange)]/10 px-2.5 py-1 text-xs font-semibold text-[var(--accent-orange)]">
-                            −{activeDiscount}% endirim
-                          </span>
+                          <span className="rounded bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">−{activeDiscount}% endirim</span>
                         )}
                       </div>
-                      <div className="mt-4 flex items-baseline gap-2">
+                      <div className="mt-2 flex items-baseline gap-2">
                         {showOriginal ? (
                           <>
-                            <div className="text-sm font-semibold text-muted-foreground line-through">{featured.price} ₼</div>
-                            <div className="text-4xl font-black text-[var(--accent-orange)]">{discountedPrice} ₼</div>
+                            <span className="text-xs text-muted-foreground line-through">{featured.price} ₼</span>
+                            <span className="text-2xl font-black text-[var(--accent-orange)]">{discountedPrice} ₼</span>
                           </>
                         ) : (
                           <>
-                            {featured.old_price && <div className="text-sm font-semibold text-muted-foreground line-through">{featured.old_price} ₼</div>}
-                            <div className="text-4xl font-black text-foreground">{featured.price} ₼</div>
+                            {featured.old_price && <span className="text-xs text-muted-foreground line-through">{featured.old_price} ₼</span>}
+                            <span className="text-2xl font-black">{featured.price} ₼</span>
                           </>
                         )}
                       </div>
-                      <div className="mt-3 rounded-lg bg-secondary/50 p-3">
-                        <div className="text-xs text-muted-foreground mb-1">Faizsiz aylıq ödəniş</div>
-                        <div className="text-sm font-bold text-foreground">{featured._credit_months || 24} ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round((discountedPrice ?? featured.price) / (featured._credit_months || 24))} ₼</span></div>
+                      <div className="mt-1.5 rounded-lg bg-secondary/50 px-3 py-2">
+                        <span className="text-xs text-muted-foreground">Faizsiz aylıq ödəniş · </span>
+                        <span className="text-xs font-bold text-[var(--accent-orange)]">{Math.round((discountedPrice ?? featured.price) / (featured._credit_months || 24))} ₼</span>
+                        <span className="text-xs text-muted-foreground"> / {featured._credit_months || 24} ay</span>
                       </div>
-                      <div className="mt-5 flex gap-2">
-                        <button
-                          onClick={(e) => e.preventDefault()}
-                          className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[var(--accent-orange)] py-3 font-bold text-white transition hover:opacity-90"
-                        >
+                      <div className="mt-3 flex gap-2">
+                        <button onClick={(e) => e.preventDefault()}
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--accent-orange)] py-2.5 text-sm font-bold text-white hover:opacity-90">
                           <ShoppingCart className="h-4 w-4" /> Bir kliklə al
                         </button>
-                        <button
-                          onClick={(e) => e.preventDefault()}
-                          className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-lg bg-[var(--brand)] text-white transition hover:opacity-90"
-                          title="Səbətə əlavə et"
-                        >
-                          <ShoppingCart className="h-5 w-5" />
+                        <button onClick={(e) => e.preventDefault()}
+                          className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-[var(--brand)] text-white hover:opacity-90"
+                          title="Səbətə əlavə et">
+                          <ShoppingCart className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
@@ -171,9 +165,8 @@ function Index() {
               })()}
             </Link>
           ) : (
-            <div className="p-12 text-center">
-              <p className="text-muted-foreground text-sm font-medium">Admin paneldən həftənin teklifini seçin</p>
-              <p className="mt-1 text-xs text-muted-foreground/60">Məhsulu öz seçin və "featured" işarəsi qoyun ★</p>
+            <div className="flex-1 flex items-center justify-center p-8 text-center">
+              <p className="text-muted-foreground text-sm">Admin paneldən həftənin teklifini seçin</p>
             </div>
           )}
         </div>
