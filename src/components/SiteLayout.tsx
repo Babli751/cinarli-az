@@ -169,8 +169,8 @@ export function SiteHeader() {
 
             <div className="flex-1 overflow-y-auto">
               {drillCat ? (
-                /* Sub-category view */
-                <div>
+                /* Sub-category view — irshad.az style with 2-column grid */
+                <div className="space-y-4 px-4 py-4">
                   {(() => {
                     const DrillIconComponent = getCategoryIcon(drillCat.name);
                     return (
@@ -178,32 +178,36 @@ export function SiteHeader() {
                         to="/kateqoriya/$slug"
                         params={{ slug: drillCat.slug }}
                         onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                        className="flex items-center gap-3 border-b border-border px-4 py-3.5 text-sm font-semibold text-[var(--brand)]"
+                        className="flex items-center gap-3 font-semibold text-[var(--brand)] text-base"
                       >
                         <DrillIconComponent className="h-6 w-6" />
                         Hamısına bax →
                       </Link>
                     );
                   })()}
-                  {categories.filter(s => s.parent_id === drillCat.id).map((s) => {
-                    const SubIconComponent = getCategoryIcon(s.name);
-                    return (
-                      <Link
-                        key={s.slug}
-                        to="/kateqoriya/$slug"
-                        params={{ slug: s.slug }}
-                        onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                        className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
-                      >
-                        <SubIconComponent className="h-5 w-5 flex-shrink-0" />
-                        <span className="font-medium">{s.name}</span>
-                      </Link>
-                    );
-                  })}
+                  {(() => {
+                    const subs = categories.filter(s => s.parent_id === drillCat.id);
+                    return subs.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                        {subs.map((s) => (
+                          <Link
+                            key={s.slug}
+                            to="/kateqoriya/$slug"
+                            params={{ slug: s.slug }}
+                            onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                            className="text-sm text-foreground hover:text-[var(--brand)]"
+                          >
+                            {s.name}
+                          </Link>
+                        ))}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               ) : (
-                /* Root view */
-                <div>
+                /* Root view — irshad.az style with larger icons */
+                <div className="space-y-2 px-4 py-3">
+                  <div className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">KATEQORİYALAR</div>
                   {categories.filter(c => !c.parent_id).map((c) => {
                     const hasSubs = categories.some(s => s.parent_id === c.id);
                     const IconComponent = getCategoryIcon(c.name);
@@ -211,11 +215,11 @@ export function SiteHeader() {
                       <button
                         key={c.slug}
                         onClick={() => setDrillCat(c)}
-                        className="flex w-full items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition hover:bg-secondary"
                       >
-                        <IconComponent className="h-5 w-5 flex-shrink-0" />
-                        <span className="flex-1 text-left font-medium">{c.name}</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        <IconComponent className="h-6 w-6 flex-shrink-0 text-[var(--brand)]" />
+                        <span className="flex-1">{c.name}</span>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
                       </button>
                     ) : (
                       <Link
@@ -223,10 +227,10 @@ export function SiteHeader() {
                         to="/kateqoriya/$slug"
                         params={{ slug: c.slug }}
                         onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                        className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition hover:bg-secondary"
                       >
-                        <IconComponent className="h-5 w-5 flex-shrink-0" />
-                        <span className="flex-1 font-medium">{c.name}</span>
+                        <IconComponent className="h-6 w-6 flex-shrink-0 text-[var(--brand)]" />
+                        <span className="flex-1">{c.name}</span>
                       </Link>
                     );
                   })}
@@ -253,8 +257,9 @@ export function SiteHeader() {
               )}
             </div>
 
-            <div className="border-t border-border px-4 py-3 text-sm flex-shrink-0">
+            <div className="border-t border-border/30 bg-foreground/5 px-4 py-3 text-sm flex-shrink-0">
               <a href="tel:*0171" className="font-bold text-[var(--brand)]">📞 *0171</a>
+              <div className="mt-2 text-xs text-muted-foreground">🇦🇿 Azərbaycan dili</div>
             </div>
           </div>
         </div>
@@ -311,7 +316,7 @@ export function SiteHeader() {
                 {(() => {
                   const subs = categories.filter(c => c.parent_id === activeCategory.id);
                   return subs.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-4">
                       {subs.map((c) => {
                         const IconComponent = getCategoryIcon(c.name);
                         return (
@@ -320,10 +325,10 @@ export function SiteHeader() {
                             to="/kateqoriya/$slug"
                             params={{ slug: c.slug }}
                             onClick={() => setCatOpen(false)}
-                            className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition hover:border-[var(--brand)] hover:shadow-md"
+                            className="flex items-start gap-3 rounded-lg px-3 py-3 transition hover:bg-secondary"
                           >
-                            <IconComponent className="h-10 w-10 text-[var(--brand)]" />
-                            <span className="text-xs font-medium group-hover:text-[var(--brand)]">{c.name}</span>
+                            <IconComponent className="h-6 w-6 mt-0.5 flex-shrink-0 text-[var(--brand)]" />
+                            <span className="text-sm font-medium">{c.name}</span>
                           </Link>
                         );
                       })}
