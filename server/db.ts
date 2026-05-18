@@ -130,3 +130,82 @@ if (userCount === 0) {
   );
   console.log("✅ Admin yaradıldı: admin@cinarli.az / Admin1234!");
 }
+
+// Seed categories if empty
+const catCount = (db.prepare("SELECT COUNT(*) as c FROM categories").get() as { c: number }).c;
+if (catCount === 0) {
+  const categories = [
+    { name: "Topdansatış", slug: "topdansatis", icon: "🏪", description: "Topdan satış məhsulları" },
+    { name: "Tekstil", slug: "tekstil", icon: "👕", description: "Tekstil məhsulları" },
+    { name: "Elektronika Məhsulları", slug: "elektronika-mehsullari", icon: "⚡", description: "Elektronik cihazlar" },
+    { name: "Mebel Dünyası", slug: "mebel-dunyasi", icon: "🛋️", description: "Mebel və ev dekoru" },
+  ];
+
+  for (const cat of categories) {
+    db.prepare("INSERT INTO categories (name, slug, icon, description) VALUES (?, ?, ?, ?)").run(
+      cat.name, cat.slug, cat.icon, cat.description
+    );
+  }
+
+  // Get parent IDs for adding subcategories
+  const mebel = db.prepare("SELECT id FROM categories WHERE slug = 'mebel-dunyasi'").get() as { id: number };
+  const elektronika = db.prepare("SELECT id FROM categories WHERE slug = 'elektronika-mehsullari'").get() as { id: number };
+
+  // Mebel subcategories
+  const mebelSubs = [
+    { name: "Kondisioner", slug: "kondisioner", icon: "❄️" },
+    { name: "Kombi sistemləri", slug: "kombi-sistemleri", icon: "🔧" },
+    { name: "Kombi aksesuarları", slug: "kombi-aksesuarlari", icon: "🔩" },
+    { name: "Radiatorlar", slug: "radiatorlar", icon: "🌡️" },
+    { name: "Su qızdırıcı kalonkalar", slug: "su-qizdiryci", icon: "💧" },
+  ];
+
+  for (const sub of mebelSubs) {
+    db.prepare("INSERT INTO categories (name, slug, icon, parent_id, description) VALUES (?, ?, ?, ?, ?)").run(
+      sub.name, sub.slug, sub.icon, mebel.id, ""
+    );
+  }
+
+  // Elektronika subcategories
+  const elektronikaSubs = [
+    { name: "Telefon və aksesuarları", slug: "telefon-aksesuarlari", icon: "📱" },
+    { name: "TV və Audio", slug: "tv-audio", icon: "📺" },
+    { name: "Foto texnika", slug: "foto-texnika", icon: "📷" },
+    { name: "Noutbuk, planşet və kompüter texnikası", slug: "noutbuk-planset-komputer", icon: "💻" },
+  ];
+
+  for (const sub of elektronikaSubs) {
+    db.prepare("INSERT INTO categories (name, slug, icon, parent_id, description) VALUES (?, ?, ?, ?, ?)").run(
+      sub.name, sub.slug, sub.icon, elektronika.id, ""
+    );
+  }
+
+  console.log("✅ " + (categories.length + mebelSubs.length + elektronikaSubs.length) + " kateqoriya yaradıldı!");
+}
+
+// Seed mock products if empty
+const prodCount = (db.prepare("SELECT COUNT(*) as c FROM products").get() as { c: number }).c;
+if (prodCount === 0) {
+  const mockProducts = [
+    { name: "Samsung Galaxy A15", price: 4500, category: "telefon-aksesuarlari", discount: 10 },
+    { name: "iPhone 15 Pro", price: 8999, category: "telefon-aksesuarlari", discount: 5 },
+    { name: "Samsung 55\" 4K Smart TV", price: 3999, category: "tv-audio", discount: 15 },
+    { name: "LG QLED 65\" Televizor", price: 6999, category: "tv-audio", discount: 12 },
+    { name: "Sony A6700 Kamera", price: 12999, category: "foto-texnika", discount: 8 },
+    { name: "Canon EOS R50 Kamera", price: 5999, category: "foto-texnika", discount: 0 },
+    { name: "MacBook Pro 14\"", price: 18999, category: "noutbuk-planset-komputer", discount: 5 },
+    { name: "Dell XPS 13 Laptop", price: 6999, category: "noutbuk-planset-komputer", discount: 10 },
+    { name: "iPad Air 11\"", price: 7999, category: "noutbuk-planset-komputer", discount: 5 },
+    { name: "Kondisioner 12000 BTU", price: 2999, category: "kondisioner", discount: 20 },
+    { name: "Kombi Boyler 100L", price: 4999, category: "kombi-sistemleri", discount: 15 },
+    { name: "Radiator Çelik 30cm", price: 899, category: "radiatorlar", discount: 0 },
+  ];
+
+  for (const prod of mockProducts) {
+    db.prepare(
+      "INSERT INTO products (name, price, discount, category_slug, stock, is_active, description) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).run(prod.name, prod.price, prod.discount, prod.category, 50, 1, prod.name + " - Yüksək keyfiyyət və etibarlı");
+  }
+
+  console.log("✅ " + mockProducts.length + " ərinə yaradıldı!");
+}

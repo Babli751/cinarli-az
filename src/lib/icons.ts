@@ -16,24 +16,45 @@ import {
   Music,
   BookOpen,
   Package,
+  Thermometer,
+  Droplets,
+  Settings,
+  Grid3x3,
+  Store,
 } from "lucide-react";
 
 export const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   // Technology & Electronics
   telefon: Smartphone,
   telefonveaksesuarlar: Smartphone,
+  telefonaksesuarlari: Smartphone,
   aksesuarlar: ShoppingBag,
   tv: Tv,
+  tvveaudio: Music,
+  tvvaudio: Music,
   audio: Music,
   kamera: Camera,
   foto: Camera,
   fototeknka: Camera,
   fototeknkası: Camera,
+  fotosexnika: Camera,
   komputer: Laptop,
   laptop: Laptop,
   planset: Laptop,
   notebook: Laptop,
   notbukyplansetvekomputerteknkası: Laptop,
+  notbukplansetvekomputertexnikasi: Laptop,
+
+  // HVAC & Cooling
+  kondisioner: Thermometer,
+  kombi: Settings,
+  kombisistemlleri: Settings,
+  kombisitemeri: Settings,
+  sistemleri: Settings,
+  radiatorlar: Thermometer,
+  ssuqizdiryci: Droplets,
+  suqizdiryci: Droplets,
+  kalonkalar: Droplets,
 
   // Large Home Appliances
   boyukmeisetexnikası: Zap,
@@ -45,6 +66,7 @@ export const iconMap: Record<string, React.ComponentType<{ className?: string }>
 
   // Home & Furniture
   mebel: Sofa,
+  mebeldunyasi: Sofa,
   mebeller: Sofa,
   mebellervetekinil: Sofa,
   tekstil: Home,
@@ -71,10 +93,13 @@ export const iconMap: Record<string, React.ComponentType<{ className?: string }>
   oyun: Gamepad2,
   eglence: Gamepad2,
 
-  // General
+  // General & Categories
+  topdansatis: Store,
   energiya: Zap,
   texnika: Package,
   mehsullar: Package,
+  elektronikamehsullari: Zap,
+  elektronika: Zap,
   divanlar: Sofa,
   topdag: ShoppingBag,
 };
