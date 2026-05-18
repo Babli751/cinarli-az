@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, ArrowLeft, Shield, Home, Grid3x3 } from "lucide-react";
 import { api, type Category } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { getCategoryIcon } from "@/lib/icons";
 import logoChinarli from "@/assets/logo-chinarli.png";
 
 export function SiteHeader() {
@@ -170,40 +171,49 @@ export function SiteHeader() {
               {drillCat ? (
                 /* Sub-category view */
                 <div>
-                  <Link
-                    to="/kateqoriya/$slug"
-                    params={{ slug: drillCat.slug }}
-                    onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                    className="flex items-center gap-3 border-b border-border px-4 py-3.5 text-sm font-semibold text-[var(--brand)]"
-                  >
-                    <span className="text-2xl">{drillCat.icon}</span>
-                    Hamısına bax →
-                  </Link>
-                  {categories.filter(s => s.parent_id === drillCat.id).map((s) => (
-                    <Link
-                      key={s.slug}
-                      to="/kateqoriya/$slug"
-                      params={{ slug: s.slug }}
-                      onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                      className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
-                    >
-                      <span className="text-2xl w-9 text-center">{s.icon}</span>
-                      <span className="font-medium">{s.name}</span>
-                    </Link>
-                  ))}
+                  {(() => {
+                    const DrillIconComponent = getCategoryIcon(drillCat.name);
+                    return (
+                      <Link
+                        to="/kateqoriya/$slug"
+                        params={{ slug: drillCat.slug }}
+                        onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                        className="flex items-center gap-3 border-b border-border px-4 py-3.5 text-sm font-semibold text-[var(--brand)]"
+                      >
+                        <DrillIconComponent className="h-6 w-6" />
+                        Hamısına bax →
+                      </Link>
+                    );
+                  })()}
+                  {categories.filter(s => s.parent_id === drillCat.id).map((s) => {
+                    const SubIconComponent = getCategoryIcon(s.name);
+                    return (
+                      <Link
+                        key={s.slug}
+                        to="/kateqoriya/$slug"
+                        params={{ slug: s.slug }}
+                        onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                        className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
+                      >
+                        <SubIconComponent className="h-5 w-5 flex-shrink-0" />
+                        <span className="font-medium">{s.name}</span>
+                      </Link>
+                    );
+                  })}
                 </div>
               ) : (
                 /* Root view */
                 <div>
                   {categories.filter(c => !c.parent_id).map((c) => {
                     const hasSubs = categories.some(s => s.parent_id === c.id);
+                    const IconComponent = getCategoryIcon(c.name);
                     return hasSubs ? (
                       <button
                         key={c.slug}
                         onClick={() => setDrillCat(c)}
                         className="flex w-full items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
                       >
-                        <span className="text-2xl w-9 text-center">{c.icon}</span>
+                        <IconComponent className="h-5 w-5 flex-shrink-0" />
                         <span className="flex-1 text-left font-medium">{c.name}</span>
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       </button>
@@ -215,7 +225,7 @@ export function SiteHeader() {
                         onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
                         className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
                       >
-                        <span className="text-2xl w-9 text-center">{c.icon}</span>
+                        <IconComponent className="h-5 w-5 flex-shrink-0" />
                         <span className="flex-1 font-medium">{c.name}</span>
                       </Link>
                     );
@@ -260,24 +270,27 @@ export function SiteHeader() {
             <div className="grid grid-cols-[260px_1fr] max-h-[calc(100vh-160px)]">
               {/* Sol: yalnız ana kateqoriyalar */}
               <div className="overflow-y-auto border-r border-border bg-secondary/30 py-2">
-                {categories.filter(c => !c.parent_id).map((c) => (
-                  <button
-                    key={c.slug}
-                    onMouseEnter={() => setActiveSlug(c.slug)}
-                    onClick={() => setActiveSlug(c.slug)}
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition ${
-                      activeSlug === c.slug
-                        ? "bg-background font-semibold text-[var(--brand)]"
-                        : "hover:bg-background/60"
-                    }`}
-                  >
-                    <span className="text-xl">{c.icon}</span>
-                    <span className="flex-1">{c.name}</span>
-                    {categories.some(sub => sub.parent_id === c.id) && (
-                      <ChevronRight className="h-4 w-4 opacity-40" />
-                    )}
-                  </button>
-                ))}
+                {categories.filter(c => !c.parent_id).map((c) => {
+                  const IconComponent = getCategoryIcon(c.name);
+                  return (
+                    <button
+                      key={c.slug}
+                      onMouseEnter={() => setActiveSlug(c.slug)}
+                      onClick={() => setActiveSlug(c.slug)}
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition ${
+                        activeSlug === c.slug
+                          ? "bg-background font-semibold text-[var(--brand)]"
+                          : "hover:bg-background/60"
+                      }`}
+                    >
+                      <IconComponent className="h-5 w-5 flex-shrink-0" />
+                      <span className="flex-1">{c.name}</span>
+                      {categories.some(sub => sub.parent_id === c.id) && (
+                        <ChevronRight className="h-4 w-4 opacity-40" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               {/* Sağ: aktiv kateqoriyanın alt kateqoriyaları */}
               <div className="overflow-y-auto p-6">
@@ -299,18 +312,21 @@ export function SiteHeader() {
                   const subs = categories.filter(c => c.parent_id === activeCategory.id);
                   return subs.length > 0 ? (
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                      {subs.map((c) => (
-                        <Link
-                          key={c.slug}
-                          to="/kateqoriya/$slug"
-                          params={{ slug: c.slug }}
-                          onClick={() => setCatOpen(false)}
-                          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition hover:border-[var(--brand)] hover:shadow-md"
-                        >
-                          <span className="text-4xl">{c.icon}</span>
-                          <span className="text-xs font-medium group-hover:text-[var(--brand)]">{c.name}</span>
-                        </Link>
-                      ))}
+                      {subs.map((c) => {
+                        const IconComponent = getCategoryIcon(c.name);
+                        return (
+                          <Link
+                            key={c.slug}
+                            to="/kateqoriya/$slug"
+                            params={{ slug: c.slug }}
+                            onClick={() => setCatOpen(false)}
+                            className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition hover:border-[var(--brand)] hover:shadow-md"
+                          >
+                            <IconComponent className="h-10 w-10 text-[var(--brand)]" />
+                            <span className="text-xs font-medium group-hover:text-[var(--brand)]">{c.name}</span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">Bu kateqoriyada alt bölmə yoxdur.</p>
