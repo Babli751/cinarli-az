@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { api, type Category } from "@/lib/api";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, ChevronRight, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Pencil, Trash2, X, EyeOff, ChevronUp, ChevronDown, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/admin/kateqoriyalar")({
   component: CatsAdmin,
@@ -26,10 +26,10 @@ function CatsAdmin() {
   };
   useEffect(() => { load(); }, []);
 
-  const openNew = (mode: EditMode) => {
+  const openNew = (mode: EditMode, parentId?: number) => {
     setEditMode(mode);
     setEditing({
-      parent_id: mode === "child" ? undefined : null,
+      parent_id: mode === "child" ? (parentId ?? undefined) : null,
       is_hidden: mode === "hidden" ? 1 : 0,
     });
   };
@@ -89,16 +89,67 @@ function CatsAdmin() {
     }
   };
 
-  const parents = items.filter(c => !c.parent_id && !c.is_hidden);
-  const children = items.filter(c => !!c.parent_id);
+  // Build tree: root nodes only (no parent_id, not hidden)
+  const roots = items.filter(c => !c.parent_id && !c.is_hidden);
   const hidden = items.filter(c => !!c.is_hidden);
+  const getChildren = (parentId: number) => items.filter(c => c.parent_id === parentId);
+
+  // Recursive category row renderer
+  const renderCatNode = (c: Category, depth: number) => {
+    const children = getChildren(c.id);
+    const paddingLeft = depth === 0 ? "" : depth === 1 ? "ml-6 border-l-2 border-border pl-4" : "ml-10 border-l-2 border-dashed border-border pl-4";
+    return (
+      <div key={c.id} className={depth > 0 ? paddingLeft + " mt-2" : "mt-2"}>
+        <div className={`flex items-center gap-3 rounded-xl border border-border bg-background p-3 shadow-sm hover:shadow-md transition-shadow ${depth > 0 ? "bg-secondary/30" : ""}`}>
+          {depth === 0 && (
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary flex-shrink-0">
+              <CategoryIcon slug={c.slug} className="h-6 w-6 text-foreground" />
+            </div>
+          )}
+          {depth > 0 && (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+          )}
+          <div className="flex-1 min-w-0">
+            <div className={`font-${depth === 0 ? "bold" : "semibold"} text-${depth === 0 ? "base" : "sm"} truncate`}>{c.name}</div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>/{c.slug}</span>
+              <span className="text-[var(--brand)] font-medium">{productCounts[c.slug] || 0} məhsul</span>
+              {children.length > 0 && <span>{children.length} alt bölmə</span>}
+            </div>
+          </div>
+          <div className="flex gap-1 flex-shrink-0 items-center">
+            <div className="flex flex-col gap-0.5 mr-1">
+              <button onClick={() => reorder(c.id, "up")} className="rounded p-0.5 hover:bg-secondary transition-colors"><ChevronUp className="h-3 w-3" /></button>
+              <button onClick={() => reorder(c.id, "down")} className="rounded p-0.5 hover:bg-secondary transition-colors"><ChevronDown className="h-3 w-3" /></button>
+            </div>
+            <button
+              onClick={() => openNew("child", c.id)}
+              className="rounded-lg p-1.5 hover:bg-[var(--brand)]/10 text-[var(--brand)] transition-colors"
+              title="Alt kateqoriya əlavə et"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+            <button onClick={() => openEdit(c)} className="rounded-lg p-1.5 hover:bg-secondary transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
+            <button onClick={() => remove(c.id)} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
+          </div>
+        </div>
+        {children.length > 0 && (
+          <div className={depth === 0 ? "ml-6 border-l-2 border-border pl-4 mt-1 space-y-1" : "ml-6 border-l-2 border-dashed border-border pl-4 mt-1 space-y-1"}>
+            {children.map(child => renderCatNode(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const totalCount = items.filter(c => !c.is_hidden).length;
 
   return (
     <div>
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black md:text-3xl">Kateqoriyalar</h1>
-          <p className="text-muted-foreground">{parents.length} ana, {children.length} alt, {hidden.length} gizli</p>
+          <p className="text-muted-foreground">{roots.length} ana, {totalCount - roots.length} alt, {hidden.length} gizli</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -129,25 +180,22 @@ function CatsAdmin() {
             <EyeOff className="h-3.5 w-3.5" /> Gizli Kateqoriyalar
             <span className="text-xs font-normal normal-case">(saytda görünmür, yalnız admin)</span>
           </h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {hidden.map((c) => (
-              <div key={c.id} className="rounded-2xl border border-dashed border-muted-foreground/30 bg-secondary/30 p-4 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary flex-shrink-0">
-                    <CategoryIcon slug={c.slug} className="h-7 w-7 text-foreground" />
+              <div key={c.id} className="flex items-center gap-3 rounded-xl border border-dashed border-muted-foreground/30 bg-secondary/30 p-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary flex-shrink-0">
+                  <CategoryIcon slug={c.slug} className="h-5 w-5 text-foreground" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="font-semibold text-sm truncate">{c.name}</div>
+                    <span className="flex-shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">gizli</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <div className="font-bold truncate">{c.name}</div>
-                      <span className="flex-shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">gizli</span>
-                    </div>
-                    <div className="text-xs text-muted-foreground">/{c.slug}</div>
-                    <div className="mt-0.5 text-xs text-[var(--brand)] font-medium">{productCounts[c.slug] || 0} məhsul</div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0">
-                    <button onClick={() => openEdit(c)} className="rounded-lg p-2 hover:bg-secondary transition-colors"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => remove(c.id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-4 w-4" /></button>
-                  </div>
+                  <div className="text-xs text-muted-foreground">/{c.slug} · {productCounts[c.slug] || 0} məhsul</div>
+                </div>
+                <div className="flex gap-1 flex-shrink-0">
+                  <button onClick={() => openEdit(c)} className="rounded-lg p-1.5 hover:bg-secondary transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
+                  <button onClick={() => remove(c.id)} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
               </div>
             ))}
@@ -155,85 +203,16 @@ function CatsAdmin() {
         </div>
       )}
 
-      {/* Ana kateqoriyalar */}
+      {/* Kateqoriya ağacı */}
       <div className="mt-6">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Ana Kateqoriyalar</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {parents.map((c) => {
-            const subs = items.filter(s => s.parent_id === c.id);
-            return (
-              <div key={c.id} className="rounded-2xl border border-border bg-background p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary flex-shrink-0">
-                    <CategoryIcon slug={c.slug} className="h-7 w-7 text-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold truncate">{c.name}</div>
-                    <div className="text-xs text-muted-foreground">/{c.slug}</div>
-                    <div className="mt-0.5 flex gap-2 text-xs">
-                      <span className="text-[var(--brand)] font-medium">{productCounts[c.slug] || 0} məhsul</span>
-                      {subs.length > 0 && <span className="text-muted-foreground">{subs.length} alt</span>}
-                    </div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0 items-center">
-                    <div className="flex flex-col gap-0.5 mr-1">
-                      <button onClick={() => reorder(c.id, "up")} className="rounded p-1 hover:bg-secondary transition-colors"><ChevronUp className="h-3 w-3" /></button>
-                      <button onClick={() => reorder(c.id, "down")} className="rounded p-1 hover:bg-secondary transition-colors"><ChevronDown className="h-3 w-3" /></button>
-                    </div>
-                    <button onClick={() => openEdit(c)} className="rounded-lg p-2 hover:bg-secondary transition-colors"><Pencil className="h-4 w-4" /></button>
-                    <button onClick={() => remove(c.id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                </div>
-                {subs.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
-                    {subs.map(s => (
-                      <span key={s.id} className="inline-flex items-center rounded-lg bg-secondary px-2 py-1 text-xs">
-                        {s.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {parents.length === 0 && (
-            <div className="col-span-3 py-8 text-center text-muted-foreground">Ana kateqoriya yoxdur</div>
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Kateqoriya Strukturu</h2>
+        <div className="space-y-3">
+          {roots.map(c => renderCatNode(c, 0))}
+          {roots.length === 0 && (
+            <div className="py-8 text-center text-muted-foreground">Kateqoriya yoxdur</div>
           )}
         </div>
       </div>
-
-      {/* Alt kateqoriyalar */}
-      {children.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">Alt Kateqoriyalar</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {children.map((c) => {
-              const parent = items.find(p => p.id === c.parent_id);
-              return (
-                <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{c.name}</div>
-                    {parent && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <ChevronRight className="h-3 w-3" />{parent.name}
-                      </div>
-                    )}
-                    <div className="text-xs text-[var(--brand)] font-medium">{productCounts[c.slug] || 0} məhsul</div>
-                  </div>
-                  <div className="flex gap-1 flex-shrink-0 items-center">
-                    <div className="flex flex-col gap-0.5 mr-1">
-                      <button onClick={() => reorder(c.id, "up")} className="rounded p-0.5 hover:bg-secondary transition-colors"><ChevronUp className="h-3 w-3" /></button>
-                      <button onClick={() => reorder(c.id, "down")} className="rounded p-0.5 hover:bg-secondary transition-colors"><ChevronDown className="h-3 w-3" /></button>
-                    </div>
-                    <button onClick={() => openEdit(c)} className="rounded-lg p-1.5 hover:bg-secondary transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
-                    <button onClick={() => remove(c.id)} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* Modal */}
       {editing && (
@@ -255,7 +234,7 @@ function CatsAdmin() {
                     ? "Kataloqda əsas bölmə"
                     : editMode === "hidden"
                       ? "Yalnız admin görür, saytda görünmür"
-                      : "Ana kateqoriyanın alt bölməsi"}
+                      : "Başqa kateqoriyanın alt bölməsi"}
                 </p>
               </div>
               <button onClick={() => setEditing(null)} className="rounded-lg p-1.5 hover:bg-secondary"><X className="h-5 w-5" /></button>
