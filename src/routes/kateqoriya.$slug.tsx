@@ -87,11 +87,11 @@ function CategoryPage() {
         </nav>
         <h1 className="mt-2 text-2xl font-bold md:mt-3 md:text-3xl">{cat?.name ?? slug}</h1>
 
-        {/* Category chips — horizontal scroll on mobile */}
+        {/* Category chips — only parent categories, horizontal scroll on mobile */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none md:flex-wrap md:overflow-visible">
-          {categories.map((c) => (
+          {categories.filter(c => !c.parent_id).map((c) => (
             <Link key={c.slug} to="/kateqoriya/$slug" params={{ slug: c.slug }}
-              className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm ${c.slug === slug
+              className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm ${c.slug === slug || categories.find(s => s.slug === slug)?.parent_id === c.id
                 ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
                 : "border-border bg-card hover:border-[var(--brand)] hover:text-[var(--brand)]"}`}>
               {c.name}
@@ -128,6 +128,24 @@ function CategoryPage() {
             </div>
           </div>
         )}
+
+        {/* Sub-categories grid — shown when a parent category is selected */}
+        {(() => {
+          const subs = categories.filter(c => c.parent_id === cat?.id);
+          if (subs.length === 0) return null;
+          return (
+            <div className="mt-4 md:mt-6">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+                {subs.map(s => (
+                  <Link key={s.slug} to="/kateqoriya/$slug" params={{ slug: s.slug }}
+                    className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-2 py-3 text-center transition hover:border-[var(--brand)] hover:shadow-md">
+                    <span className="text-xs font-medium leading-tight line-clamp-2">{s.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         <div className="mt-4 grid grid-cols-1 gap-4 lg:mt-8 lg:grid-cols-[260px_1fr] lg:gap-6">
           {/* Desktop sidebar */}

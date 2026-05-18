@@ -1,15 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, ArrowLeft, Shield, Home, Grid3x3 } from "lucide-react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, Shield, Home, Grid3x3 } from "lucide-react";
 import { api, type Category } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import logoChinarli from "@/assets/logo-chinarli.png";
 
 export function SiteHeader() {
   const [catOpen, setCatOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [drillCat, setDrillCat] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeSlug, setActiveSlug] = useState("");
   const { isAdmin } = useAuth();
@@ -142,7 +142,7 @@ export function SiteHeader() {
 
       {/* Mobile menu drawer — irshad.az drill-down style */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}>
+        <div className="fixed inset-0 z-50 lg:hidden" onClick={() => { setMobileMenuOpen(false); }}>
           <div className="absolute inset-0 bg-black/50" />
           <div
             onClick={(e) => e.stopPropagation()}
@@ -150,76 +150,28 @@ export function SiteHeader() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3 flex-shrink-0">
-              {drillCat ? (
-                <button
-                  onClick={() => setDrillCat(null)}
-                  className="flex items-center gap-2 font-semibold text-base"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                  {drillCat.name}
-                </button>
-              ) : (
-                <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
-              )}
-              <button onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }} className="grid h-9 w-9 place-items-center rounded-lg hover:bg-secondary" aria-label="Bağla">
+              <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
+              <button onClick={() => setMobileMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-lg hover:bg-secondary" aria-label="Bağla">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {drillCat ? (
-                /* Sub-category view */
+              {(
+                /* Root view — always show parent cats, click goes directly to page */
                 <div>
-                  <Link
-                    to="/kateqoriya/$slug"
-                    params={{ slug: drillCat.slug }}
-                    onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                    className="flex items-center gap-3 border-b border-border px-4 py-3.5 text-sm font-semibold text-[var(--brand)]"
-                  >
-                    <span className="text-2xl">{drillCat.icon}</span>
-                    Hamısına bax →
-                  </Link>
-                  {categories.filter(s => s.parent_id === drillCat.id).map((s) => (
+                  {categories.filter(c => !c.parent_id).map((c) => (
                     <Link
-                      key={s.slug}
+                      key={c.slug}
                       to="/kateqoriya/$slug"
-                      params={{ slug: s.slug }}
-                      onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                      params={{ slug: c.slug }}
+                      onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
                     >
-                      <span className="text-2xl w-9 text-center">{s.icon}</span>
-                      <span className="font-medium">{s.name}</span>
+                      <CategoryIcon slug={c.slug} className="h-7 w-7 flex-shrink-0 text-foreground" />
+                      <span className="flex-1 font-medium">{c.name}</span>
                     </Link>
                   ))}
-                </div>
-              ) : (
-                /* Root view */
-                <div>
-                  {categories.filter(c => !c.parent_id).map((c) => {
-                    const hasSubs = categories.some(s => s.parent_id === c.id);
-                    return hasSubs ? (
-                      <button
-                        key={c.slug}
-                        onClick={() => setDrillCat(c)}
-                        className="flex w-full items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
-                      >
-                        <span className="text-2xl w-9 text-center">{c.icon}</span>
-                        <span className="flex-1 text-left font-medium">{c.name}</span>
-                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                    ) : (
-                      <Link
-                        key={c.slug}
-                        to="/kateqoriya/$slug"
-                        params={{ slug: c.slug }}
-                        onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
-                        className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
-                      >
-                        <span className="text-2xl w-9 text-center">{c.icon}</span>
-                        <span className="flex-1 font-medium">{c.name}</span>
-                      </Link>
-                    );
-                  })}
                   <div className="border-t border-border mt-2 pt-2">
                     {[
                       { to: "/kampaniyalar", label: "Kampaniyalar" },
@@ -229,12 +181,12 @@ export function SiteHeader() {
                       { to: "/haqqimizda", label: "Haqqımızda" },
                       { to: "/elaqe", label: "Əlaqə" },
                     ].map((l) => (
-                      <Link key={l.to} to={l.to as any} onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }} className="block border-b border-border/50 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+                      <Link key={l.to} to={l.to as any} onClick={() => { setMobileMenuOpen(false); }} className="block border-b border-border/50 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
                         {l.label}
                       </Link>
                     ))}
                     {isAdmin && (
-                      <Link to="/admin" onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }} className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-[var(--brand)]">
+                      <Link to="/admin" onClick={() => { setMobileMenuOpen(false); }} className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-[var(--brand)]">
                         <Shield className="h-4 w-4" /> Admin panel
                       </Link>
                     )}
@@ -271,7 +223,7 @@ export function SiteHeader() {
                         : "hover:bg-background/60"
                     }`}
                   >
-                    <span className="text-xl">{c.icon}</span>
+                    <CategoryIcon slug={c.slug} className="h-6 w-6 flex-shrink-0" />
                     <span className="flex-1">{c.name}</span>
                     {categories.some(sub => sub.parent_id === c.id) && (
                       <ChevronRight className="h-4 w-4 opacity-40" />
@@ -307,7 +259,6 @@ export function SiteHeader() {
                           onClick={() => setCatOpen(false)}
                           className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center transition hover:border-[var(--brand)] hover:shadow-md"
                         >
-                          <span className="text-4xl">{c.icon}</span>
                           <span className="text-xs font-medium group-hover:text-[var(--brand)]">{c.name}</span>
                         </Link>
                       ))}

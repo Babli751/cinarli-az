@@ -3,10 +3,12 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Heart, Scale, Share2, Truck, ShieldCheck, Store,
   ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
-  ChevronLeft, ChevronRight as ChevronRightIcon, X as XIcon, Check, Copy,
+  ChevronLeft, ChevronRight as ChevronRightIcon, X as XIcon, Check,
 } from "lucide-react";
 import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
+import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/mehsul/$slug")({
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/mehsul/$slug")({
 
 function ProductPage() {
   const { slug } = Route.useParams();
+  const { user, login, register } = useAuth();
+  const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
@@ -29,6 +33,12 @@ function ProductPage() {
   const [inWishlist, setInWishlist] = useState(false);
   const [inCompare, setInCompare] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [loginModal, setLoginModal] = useState(false);
+  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [loginTab, setLoginTab] = useState<"login" | "register">("login");
+  const [registerForm, setRegisterForm] = useState({ email: "", password: "", full_name: "" });
+  const [pendingAction, setPendingAction] = useState<"wishlist" | "compare" | null>(null);
 
   useEffect(() => { setImgIdx(0); setInWishlist(false); setInCompare(false); }, [slug]);
 
@@ -74,20 +84,43 @@ function ProductPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [lightbox, prevImg, nextImg]);
 
+  const requireLogin = (action: "wishlist" | "compare") => {
+    setPendingAction(action);
+    setLoginModal(true);
+  };
+
   const toggleWishlist = async () => {
     if (!product) return;
+    if (!user) { requireLogin("wishlist"); return; }
     try {
       if (inWishlist) { await api.removeFromWishlist(product.id); setInWishlist(false); toast.success("Bəyəndiklərimdən çıxarıldı"); }
       else { await api.addToWishlist(product.id); setInWishlist(true); toast.success("Bəyəndiklərimə əlavə edildi"); }
-    } catch { toast.error("Giriş edin"); }
+    } catch (e: any) { toast.error(e.message); }
   };
 
   const toggleCompare = async () => {
     if (!product) return;
+    if (!user) { requireLogin("compare"); return; }
     try {
       if (inCompare) { await api.removeFromCompare(product.id); setInCompare(false); toast.success("Müqayisədən çıxarıldı"); }
       else { await api.addToCompare(product.id); setInCompare(true); toast.success("Müqayisəyə əlavə edildi"); }
-    } catch { toast.error("Giriş edin"); }
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  const submitLogin = async () => {
+    setLoginBusy(true);
+    try {
+      if (loginTab === "login") {
+        await login(loginForm.email, loginForm.password);
+      } else {
+        await register(registerForm.email, registerForm.password, registerForm.full_name);
+      }
+      setLoginModal(false);
+      if (pendingAction === "wishlist") toggleWishlist();
+      else if (pendingAction === "compare") toggleCompare();
+      setPendingAction(null);
+    } catch (e: any) { toast.error(e.message); }
+    finally { setLoginBusy(false); }
   };
 
   const handleShare = () => {
@@ -267,7 +300,10 @@ function ProductPage() {
                 <span className="w-10 text-center font-semibold md:w-12">{qty}</span>
                 <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
               </div>
-              <button onClick={() => toast.info("Səbət tezliklə əlavə olunacaq")}
+              <button onClick={() => {
+                  addItem({ id: product.id, name: product.name, price: product.price, image: product.image, qty });
+                  toast.success("Səbətə əlavə edildi");
+                }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
                 <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" /> Səbətə əlavə et
               </button>
@@ -415,6 +451,58 @@ function ProductPage() {
                 className="w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
                 Kredit ilə sifariş ver
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Login Modal */}
+      {loginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setLoginModal(false)}>
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="text-lg font-bold">Hesabınıza daxil olun</h2>
+              <button onClick={() => setLoginModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
+            </div>
+            <div className="flex border-b border-border">
+              <button onClick={() => setLoginTab("login")} className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${loginTab === "login" ? "border-b-2 border-[var(--brand)] text-[var(--brand)]" : "text-muted-foreground hover:text-foreground"}`}>Daxil ol</button>
+              <button onClick={() => setLoginTab("register")} className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${loginTab === "register" ? "border-b-2 border-[var(--brand)] text-[var(--brand)]" : "text-muted-foreground hover:text-foreground"}`}>Qeydiyyat</button>
+            </div>
+            <div className="p-6 space-y-3">
+              {loginTab === "login" ? (
+                <>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Email</label>
+                    <input className={minp} type="email" value={loginForm.email} onChange={e => setLoginForm({...loginForm, email: e.target.value})} placeholder="email@example.com" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Şifrə</label>
+                    <input className={minp} type="password" value={loginForm.password} onChange={e => setLoginForm({...loginForm, password: e.target.value})} placeholder="••••••••" onKeyDown={e => e.key === "Enter" && submitLogin()} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Ad Soyad</label>
+                    <input className={minp} value={registerForm.full_name} onChange={e => setRegisterForm({...registerForm, full_name: e.target.value})} placeholder="Adınız" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Email</label>
+                    <input className={minp} type="email" value={registerForm.email} onChange={e => setRegisterForm({...registerForm, email: e.target.value})} placeholder="email@example.com" />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Şifrə</label>
+                    <input className={minp} type="password" value={registerForm.password} onChange={e => setRegisterForm({...registerForm, password: e.target.value})} placeholder="••••••••" onKeyDown={e => e.key === "Enter" && submitLogin()} />
+                  </div>
+                </>
+              )}
+              <button onClick={submitLogin} disabled={loginBusy}
+                className="w-full rounded-xl bg-[var(--brand)] py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 disabled:opacity-50">
+                {loginBusy ? "..." : loginTab === "login" ? "Daxil ol" : "Qeydiyyatdan keç"}
+              </button>
+              <p className="text-center text-xs text-muted-foreground">
+                {pendingAction === "wishlist" ? "Bəyəndiklərimə əlavə etmək üçün" : pendingAction === "compare" ? "Müqayisəyə əlavə etmək üçün" : ""} giriş tələb olunur
+              </p>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { api, type Category } from "@/lib/api";
+import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, X, ChevronRight, EyeOff } from "lucide-react";
 
@@ -123,7 +124,9 @@ function CatsAdmin() {
             {hidden.map((c) => (
               <div key={c.id} className="rounded-2xl border border-dashed border-muted-foreground/30 bg-secondary/30 p-4 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-2xl flex-shrink-0">{c.icon}</div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary flex-shrink-0">
+                    <CategoryIcon slug={c.slug} className="h-7 w-7 text-foreground" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <div className="font-bold truncate">{c.name}</div>
@@ -152,7 +155,9 @@ function CatsAdmin() {
             return (
               <div key={c.id} className="rounded-2xl border border-border bg-background p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-2xl flex-shrink-0">{c.icon}</div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary flex-shrink-0">
+                    <CategoryIcon slug={c.slug} className="h-7 w-7 text-foreground" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-bold truncate">{c.name}</div>
                     <div className="text-xs text-muted-foreground">/{c.slug}</div>
@@ -169,8 +174,8 @@ function CatsAdmin() {
                 {subs.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border pt-3">
                     {subs.map(s => (
-                      <span key={s.id} className="inline-flex items-center gap-1 rounded-lg bg-secondary px-2 py-1 text-xs">
-                        {s.icon} {s.name}
+                      <span key={s.id} className="inline-flex items-center rounded-lg bg-secondary px-2 py-1 text-xs">
+                        {s.name}
                       </span>
                     ))}
                   </div>
@@ -193,7 +198,6 @@ function CatsAdmin() {
               const parent = items.find(p => p.id === c.parent_id);
               return (
                 <div key={c.id} className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-xl flex-shrink-0">{c.icon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm truncate">{c.name}</div>
                     {parent && (
