@@ -16,10 +16,11 @@ function ProductsAdmin() {
   const [search, setSearch] = useState("");
   const [filterCat, setFilterCat] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [extraImages, setExtraImages] = useState<string[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const [p, c] = await Promise.all([api.getProducts(), api.getCategories()]);
+    const [p, c] = await Promise.all([api.getProducts(), api.getCategoriesAll()]);
     setItems(p);
     setCats(c);
     setLoading(false);
@@ -36,10 +37,12 @@ function ProductsAdmin() {
     if (!editing?.name) return toast.error("Ad mütləqdir");
     if (!editing?.price && editing.price !== 0) return toast.error("Qiymət mütləqdir");
     try {
+      const mainImage = extraImages[0] || editing.image || "";
+      const payload = { ...editing, image: mainImage, images: JSON.stringify(extraImages) };
       if (editing.id) {
-        await api.updateProduct(editing.id, editing);
+        await api.updateProduct(editing.id, payload);
       } else {
-        await api.createProduct(editing);
+        await api.createProduct(payload);
       }
       toast.success("Saxlanıldı");
       setEditing(null);
@@ -88,17 +91,22 @@ function ProductsAdmin() {
   };
 
 const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const url = await api.uploadFile(file);
-      setEditing((prev) => prev ? { ...prev, image: url } : prev);
-      toast.success("Şəkil yükləndi");
+      const urls = await Promise.all(files.map(f => api.uploadFile(f)));
+      setExtraImages(prev => {
+        const updated = [...prev, ...urls];
+        setEditing(ed => ed ? { ...ed, image: ed.image || updated[0] || "" } : ed);
+        return updated;
+      });
+      toast.success(`${urls.length} şəkil yükləndi`);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -109,7 +117,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           <h1 className="text-2xl font-black md:text-3xl">Məhsullar</h1>
           <p className="text-muted-foreground">{filtered.length} / {items.length} məhsul</p>
         </div>
-        <button onClick={() => setEditing({ is_active: 1, image: "", stock: 0, price: 0, discount: 0 })}
+        <button onClick={() => { setEditing({ is_active: 1, image: "", stock: 0, price: 0, discount: 0 }); setExtraImages([]); }}
           className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">
           <Plus className="h-4 w-4" /> Yeni məhsul
         </button>
@@ -125,7 +133,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         <select value={filterCat} onChange={(e) => setFilterCat(e.target.value)}
           className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)]">
           <option value="">Bütün kateqoriyalar</option>
-          {cats.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+          {cats.map((c) => <option key={c.slug} value={c.slug}>{c.is_hidden ? "🔒 " : ""}{c.name}</option>)}
         </select>
       </div>
 
@@ -191,7 +199,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1.5">
-                    <button onClick={() => setEditing(p)} className="rounded-lg p-2 hover:bg-secondary transition-colors" title="Redaktə">
+                    <button onClick={() => { setEditing(p); try { const imgs: string[] = JSON.parse(p.images || "[]"); const all = p.image ? [p.image, ...imgs.filter(x => x !== p.image)] : imgs; setExtraImages(all); } catch { setExtraImages(p.image ? [p.image] : []); } }} className="rounded-lg p-2 hover:bg-secondary transition-colors" title="Redaktə">
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button onClick={() => remove(p.id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10 transition-colors" title="Sil">
@@ -239,22 +247,50 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               <Field label="Kateqoriya">
                 <select className={inp} value={editing.category_slug ?? ""} onChange={(e) => setEditing({ ...editing, category_slug: e.target.value || undefined })}>
                   <option value="">— Kateqoriya seçin —</option>
-                  {cats.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
+                  {cats.map((c) => <option key={c.slug} value={c.slug}>{c.is_hidden ? "🔒 " : ""}{c.name}</option>)}
                 </select>
               </Field>
-              <Field label="Şəkil URL">
-                <input className={inp} value={editing.image ?? ""} onChange={(e) => setEditing({ ...editing, image: e.target.value })} placeholder="https://... " />
+              <Field label="Şəkillər">
+                {/* Image grid */}
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {extraImages.map((img, i) => {
+                    const url = getImageUrl(img) || img;
+                    return (
+                      <div key={i} className="relative group">
+                        <img src={url} alt="" className={`h-20 w-20 rounded-xl object-cover border-2 transition-colors ${editing.image === img ? "border-[var(--brand)]" : "border-border"}`} />
+                        <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                          {editing.image !== img && (
+                            <button type="button" onClick={() => setEditing({ ...editing, image: img })}
+                              className="text-[10px] font-bold text-white bg-[var(--brand)] rounded px-1.5 py-0.5">Əsas</button>
+                          )}
+                          {editing.image === img && (
+                            <span className="text-[10px] font-bold text-white bg-[var(--brand)] rounded px-1.5 py-0.5">Əsas ✓</span>
+                          )}
+                          <button type="button" onClick={() => {
+                            const updated = extraImages.filter((_, j) => j !== i);
+                            setExtraImages(updated);
+                            if (editing.image === img) setEditing({ ...editing, image: updated[0] || "" });
+                          }} className="text-[10px] font-bold text-white bg-destructive rounded px-1.5 py-0.5">Sil</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Upload button */}
+                  <label className="flex h-20 w-20 flex-col items-center justify-center cursor-pointer rounded-xl border-2 border-dashed border-border hover:border-[var(--brand)] transition-colors">
+                    {uploading
+                      ? <span className="text-xs text-muted-foreground">...</span>
+                      : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><span className="text-xs text-muted-foreground">Əlavə et</span></>
+                    }
+                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                  </label>
+                </div>
+                {/* Manual URL input */}
+                <input className={inp} value={editing.image ?? ""} onChange={(e) => {
+                  const url = e.target.value;
+                  setEditing({ ...editing, image: url });
+                  if (url && !extraImages.includes(url)) setExtraImages(prev => [url, ...prev.filter(x => x !== editing.image)]);
+                }} placeholder="və ya URL yapışdır..." />
               </Field>
-              <Field label="və ya şəkil yüklə">
-                <label className="flex items-center gap-2 cursor-pointer rounded-xl border-2 border-dashed border-border px-4 py-3 hover:border-[var(--brand)] transition-colors">
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">{uploading ? "Yüklənir..." : "Fayl seç (maks 5MB)"}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
-                </label>
-              </Field>
-              {getImageUrl(editing.image) && (
-                <img src={getImageUrl(editing.image)!} alt="" className="h-28 w-28 rounded-xl object-cover border border-border" />
-              )}
               <label className="flex items-center gap-3 cursor-pointer">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}
                   className={`relative h-6 w-11 rounded-full transition-colors ${editing.is_active ? "bg-[var(--brand)]" : "bg-secondary"}`}>

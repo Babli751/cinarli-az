@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Heart, Scale, Share2, Truck, ShieldCheck, Store,
   ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
+  ChevronLeft, ChevronRight as ChevronRightIcon, X as XIcon, Check, Copy,
 } from "lucide-react";
 import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/mehsul/$slug")({
   component: ProductPage,
@@ -17,12 +19,26 @@ function ProductPage() {
   const [category, setCategory] = useState<Category | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [qty, setQty] = useState(1);
+  const [imgIdx, setImgIdx] = useState(0);
+  const [lightbox, setLightbox] = useState(false);
+  const [orderModal, setOrderModal] = useState(false);
+  const [creditModal, setCreditModal] = useState(false);
+  const [creditMonths, setCreditMonths] = useState(24);
+  const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "" });
+  const [orderBusy, setOrderBusy] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
+  const [inCompare, setInCompare] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => { setImgIdx(0); setInWishlist(false); setInCompare(false); }, [slug]);
 
   useEffect(() => {
     const id = Number(slug);
     if (!id) return;
     api.getProduct(id).then((p) => {
       setProduct(p);
+      api.getWishlist().then(wl => setInWishlist(wl.some(x => x.id === p.id))).catch(() => {});
+      api.getCompare().then(cp => setInCompare(cp.some(x => x.id === p.id))).catch(() => {});
       if (p.category_slug) {
         api.getCategories().then((cats) => {
           setCategory(cats.find((c) => c.slug === p.category_slug) ?? null);
@@ -34,17 +50,81 @@ function ProductPage() {
     }).catch(() => {});
   }, [slug]);
 
-  if (!product) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <SiteHeader />
-        <div className="mx-auto max-w-7xl px-4 py-20 text-center text-muted-foreground">Yüklənir...</div>
-        <SiteFooter />
-      </div>
-    );
-  }
+  const allImages: string[] = (() => {
+    if (!product) return [];
+    const extra: string[] = (() => { try { return JSON.parse(product.images || "[]"); } catch { return []; } })();
+    const main = product.image;
+    const combined = main ? [main, ...extra.filter(x => x !== main)] : extra;
+    return combined.length ? combined : [];
+  })();
+  const currentImg = allImages[imgIdx] || product?.image || "";
+  const currentUrl = getImageUrl(currentImg) || null;
 
-  const hasImg = !!getImageUrl(product.image);
+  const prevImg = useCallback(() => setImgIdx(i => (i - 1 + allImages.length) % allImages.length), [allImages.length]);
+  const nextImg = useCallback(() => setImgIdx(i => (i + 1) % allImages.length), [allImages.length]);
+
+  useEffect(() => {
+    if (!lightbox) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prevImg();
+      if (e.key === "ArrowRight") nextImg();
+      if (e.key === "Escape") setLightbox(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [lightbox, prevImg, nextImg]);
+
+  const toggleWishlist = async () => {
+    if (!product) return;
+    try {
+      if (inWishlist) { await api.removeFromWishlist(product.id); setInWishlist(false); toast.success("Bəyəndiklərimdən çıxarıldı"); }
+      else { await api.addToWishlist(product.id); setInWishlist(true); toast.success("Bəyəndiklərimə əlavə edildi"); }
+    } catch { toast.error("Giriş edin"); }
+  };
+
+  const toggleCompare = async () => {
+    if (!product) return;
+    try {
+      if (inCompare) { await api.removeFromCompare(product.id); setInCompare(false); toast.success("Müqayisədən çıxarıldı"); }
+      else { await api.addToCompare(product.id); setInCompare(true); toast.success("Müqayisəyə əlavə edildi"); }
+    } catch { toast.error("Giriş edin"); }
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true); toast.success("Link kopyalandı");
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  const submitOrder = async () => {
+    if (!product) return;
+    if (!orderForm.name || !orderForm.phone) return toast.error("Ad və telefon mütləqdir");
+    setOrderBusy(true);
+    try {
+      await api.createOrder({
+        customer_name: orderForm.name,
+        phone: orderForm.phone,
+        address: orderForm.address,
+        total: product.price * qty,
+        items: JSON.stringify([{ id: product.id, name: product.name, qty, price: product.price }]),
+        notes: `Bir kliklə al — ${product.name} x${qty}`,
+        status: "pending",
+      });
+      toast.success("Sifarişiniz qəbul edildi! Tezliklə əlaqə saxlayacağıq.");
+      setOrderModal(false);
+      setOrderForm({ name: "", phone: "", address: "" });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setOrderBusy(false); }
+  };
+
+  if (!product) return (
+    <div className="min-h-screen bg-background text-foreground">
+      <SiteHeader />
+      <div className="mx-auto max-w-7xl px-4 py-20 text-center text-muted-foreground">Yüklənir...</div>
+      <SiteFooter />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -65,11 +145,82 @@ function ProductPage() {
 
         <div className="grid grid-cols-1 gap-4 lg:gap-8 lg:grid-cols-2">
           {/* Image */}
-          <div className="overflow-hidden rounded-2xl border border-border bg-secondary/20 aspect-square flex items-center justify-center">
-            {hasImg
-              ? <img src={getImageUrl(product.image)!} alt={product.name} className="h-full w-full object-cover" />
-              : <span className="text-8xl">{product.image || "📦"}</span>}
+          <div className="flex flex-col gap-3">
+            {/* Main image */}
+            <div
+              className="relative overflow-hidden rounded-2xl border border-border bg-secondary/20 aspect-square flex items-center justify-center cursor-zoom-in"
+              onClick={() => currentUrl && setLightbox(true)}
+            >
+              {currentUrl
+                ? <img src={currentUrl} alt={product.name} className="h-full w-full object-cover" />
+                : <span className="text-8xl">{product.image || "📦"}</span>}
+              {allImages.length > 1 && (
+                <>
+                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow hover:bg-white transition">
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow hover:bg-white transition">
+                    <ChevronRightIcon className="h-5 w-5" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {allImages.map((_, i) => (
+                      <button key={i} onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
+                        className={`h-1.5 rounded-full transition-all ${i === imgIdx ? "w-5 bg-white" : "w-1.5 bg-white/60"}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+            {/* Thumbnails */}
+            {allImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {allImages.map((img, i) => {
+                  const url = getImageUrl(img);
+                  return (
+                    <button key={i} onClick={() => setImgIdx(i)}
+                      className={`flex-shrink-0 h-16 w-16 overflow-hidden rounded-xl border-2 transition-colors ${i === imgIdx ? "border-[var(--brand)]" : "border-border hover:border-muted-foreground"}`}>
+                      {url
+                        ? <img src={url} alt="" className="h-full w-full object-cover" />
+                        : <div className="flex h-full w-full items-center justify-center text-xl">{img || "📦"}</div>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
+
+          {/* Lightbox */}
+          {lightbox && currentUrl && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+              onClick={() => setLightbox(false)}>
+              <button onClick={() => setLightbox(false)}
+                className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                <XIcon className="h-5 w-5" />
+              </button>
+              {allImages.length > 1 && (
+                <>
+                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                    <ChevronLeft className="h-6 w-6" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                    <ChevronRightIcon className="h-6 w-6" />
+                  </button>
+                </>
+              )}
+              <img src={currentUrl} alt={product.name}
+                onClick={(e) => e.stopPropagation()}
+                className="max-h-[90vh] max-w-full rounded-xl object-contain shadow-2xl" />
+              {allImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+                  {imgIdx + 1} / {allImages.length}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Info */}
           <div className="flex flex-col">
@@ -116,29 +267,35 @@ function ProductPage() {
                 <span className="w-10 text-center font-semibold md:w-12">{qty}</span>
                 <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
               </div>
-              <button className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
+              <button onClick={() => toast.info("Səbət tezliklə əlavə olunacaq")}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
                 <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" /> Səbətə əlavə et
               </button>
             </div>
 
             <div className="mt-2 flex gap-2 md:mt-3">
-              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
+              <button onClick={() => setOrderModal(true)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[var(--accent-orange)] bg-[var(--accent-orange)]/5 py-2.5 text-xs font-semibold text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/10 md:py-3 md:text-sm md:gap-2">
                 <MousePointerClick className="h-3.5 w-3.5 md:h-4 md:w-4" /> Bir kliklə al
               </button>
-              <button className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
+              <button onClick={() => setCreditModal(true)}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
                 <CreditCard className="h-3.5 w-3.5 md:h-4 md:w-4" /> Kredit
               </button>
             </div>
 
             <div className="mt-3 flex gap-2">
-              <button className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5">
-                <Heart className="h-3.5 w-3.5 md:h-4 md:w-4" /> Saxla
+              <button onClick={toggleWishlist}
+                className={`flex flex-1 items-center justify-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium md:px-4 md:py-2.5 md:text-sm md:gap-1.5 transition-colors ${inWishlist ? "border-red-300 bg-red-50 text-red-600" : "border-border hover:bg-secondary"}`}>
+                <Heart className={`h-3.5 w-3.5 md:h-4 md:w-4 ${inWishlist ? "fill-red-500" : ""}`} /> Saxla
               </button>
-              <button className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5">
+              <button onClick={toggleCompare}
+                className={`flex flex-1 items-center justify-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium md:px-4 md:py-2.5 md:text-sm md:gap-1.5 transition-colors ${inCompare ? "border-[var(--brand)] bg-[var(--brand)]/5 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
                 <Scale className="h-3.5 w-3.5 md:h-4 md:w-4" /> Müqayisə
               </button>
-              <button className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5">
-                <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4" /> Paylaş
+              <button onClick={handleShare}
+                className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs font-medium hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5 transition-colors">
+                {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4" />} {copied ? "Kopyalandı" : "Paylaş"}
               </button>
             </div>
 
@@ -183,6 +340,87 @@ function ProductPage() {
         )}
       </div>
       <SiteFooter />
+
+      {/* Order Modal */}
+      {orderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOrderModal(false)}>
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <div>
+                <h2 className="text-lg font-bold">Bir kliklə sifariş</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">{product.name}</p>
+              </div>
+              <button onClick={() => setOrderModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Ad Soyad *</label>
+                <input className={minp} value={orderForm.name} onChange={e => setOrderForm({...orderForm, name: e.target.value})} placeholder="Adınızı yazın" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Telefon *</label>
+                <input className={minp} value={orderForm.phone} onChange={e => setOrderForm({...orderForm, phone: e.target.value})} placeholder="+994 XX XXX XX XX" type="tel" />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Ünvan</label>
+                <input className={minp} value={orderForm.address} onChange={e => setOrderForm({...orderForm, address: e.target.value})} placeholder="Çatdırılma ünvanı" />
+              </div>
+              <div className="rounded-xl bg-secondary/50 p-3 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Məhsul:</span><span className="font-semibold">{product.name}</span></div>
+                <div className="flex justify-between mt-1"><span className="text-muted-foreground">Miqdar:</span><span className="font-semibold">{qty} ədəd</span></div>
+                <div className="flex justify-between mt-1"><span className="text-muted-foreground">Cəmi:</span><span className="font-black text-[var(--brand)]">{product.price * qty} ₼</span></div>
+              </div>
+            </div>
+            <div className="flex gap-3 border-t border-border px-6 py-4">
+              <button onClick={() => setOrderModal(false)} className="flex-1 rounded-xl border border-border py-2.5 font-medium hover:bg-secondary">Ləğv et</button>
+              <button onClick={submitOrder} disabled={orderBusy}
+                className="flex-1 rounded-xl bg-[var(--accent-orange)] py-2.5 font-semibold text-white hover:opacity-90 disabled:opacity-50">
+                {orderBusy ? "..." : "Sifariş ver"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credit Modal */}
+      {creditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setCreditModal(false)}>
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+              <h2 className="text-lg font-bold">Kredit hesabla</h2>
+              <button onClick={() => setCreditModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="text-center">
+                <div className="text-3xl font-black">{product.price} ₼</div>
+                <div className="text-sm text-muted-foreground mt-1">Faizsiz kredit</div>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
+                <div className="flex flex-wrap gap-2">
+                  {[6,12,18,24,36,48,60].map(m => (
+                    <button key={m} onClick={() => setCreditMonths(m)}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${creditMonths === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                      {m} ay
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
+                <div className="text-sm text-muted-foreground">Aylıq ödəniş</div>
+                <div className="text-4xl font-black text-[var(--brand)] mt-1">{Math.round(product.price / creditMonths)} ₼</div>
+                <div className="text-xs text-muted-foreground mt-1">{creditMonths} ay × {Math.round(product.price / creditMonths)} ₼ = {product.price} ₼</div>
+              </div>
+              <button onClick={() => { setCreditModal(false); setOrderModal(true); }}
+                className="w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
+                Kredit ilə sifariş ver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+const minp = "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors";

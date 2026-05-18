@@ -92,6 +92,10 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS featured_settings (
 )`); } catch {}
 try { db.exec("INSERT OR IGNORE INTO featured_settings (id) VALUES (1)"); } catch {}
 try { db.exec("ALTER TABLE featured_settings ADD COLUMN discount INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE featured_settings ADD COLUMN product_ids TEXT DEFAULT '[]'"); } catch {}
+try { db.exec("ALTER TABLE featured_settings ADD COLUMN credit_months INTEGER DEFAULT 24"); } catch {}
+try { db.exec("ALTER TABLE categories ADD COLUMN is_hidden INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN images TEXT DEFAULT '[]'"); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS wishlists (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

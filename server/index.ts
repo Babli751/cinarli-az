@@ -189,7 +189,11 @@ app.delete("/api/me/addresses/:id", authMiddleware, (c) => {
 
 // ─── CATEGORIES ─────────────────────────────────────────
 app.get("/api/categories", (c) => {
-  return c.json(db.prepare("SELECT * FROM categories ORDER BY parent_id ASC, created_at DESC").all());
+  return c.json(db.prepare("SELECT * FROM categories WHERE is_hidden=0 ORDER BY parent_id ASC, created_at DESC").all());
+});
+
+app.get("/api/categories/all", authMiddleware, adminMiddleware, (c) => {
+  return c.json(db.prepare("SELECT * FROM categories ORDER BY is_hidden ASC, parent_id ASC, created_at DESC").all());
 });
 
 function autoIcon(name: string): string {
@@ -219,16 +223,16 @@ function autoIcon(name: string): string {
 }
 
 app.post("/api/categories", authMiddleware, adminMiddleware, async (c) => {
-  const { slug, name, description, parent_id } = await c.req.json();
+  const { slug, name, description, parent_id, is_hidden } = await c.req.json();
   const icon = autoIcon(name);
-  const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id) VALUES (?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null);
+  const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id, is_hidden) VALUES (?, ?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0);
   return c.json({ id: result.lastInsertRowid });
 });
 
 app.put("/api/categories/:id", authMiddleware, adminMiddleware, async (c) => {
-  const { slug, name, description, parent_id } = await c.req.json();
+  const { slug, name, description, parent_id, is_hidden } = await c.req.json();
   const icon = autoIcon(name);
-  db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=? WHERE id=?").run(slug, name, icon, description, parent_id || null, c.req.param("id"));
+  db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=? WHERE id=?").run(slug, name, icon, description, parent_id || null, is_hidden ? 1 : 0, c.req.param("id"));
   return c.json({ ok: true });
 });
 
@@ -250,12 +254,31 @@ app.get("/api/products", (c) => {
 
 app.get("/api/products/featured", (c) => {
   const fs = db.prepare("SELECT * FROM featured_settings WHERE id=1").get() as any;
-  const p = fs?.product_id
-    ? db.prepare("SELECT * FROM products WHERE id=? AND is_active=1").get(fs.product_id)
-    : db.prepare("SELECT * FROM products WHERE is_featured=1 AND is_active=1 LIMIT 1").get();
-  return p ? c.json(Object.assign({}, p, { _until: fs?.until || null, _note: fs?.note || "", _discount: fs?.discount || 0 })) : c.json(null);
-  if (!p) return c.json(null);
-  return c.json(p);
+  const items: { id: number; discount?: number; credit_months?: number; until?: string | null }[] = (() => {
+    try {
+      const parsed = JSON.parse(fs?.product_ids || "[]");
+      if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "object") return parsed;
+      if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "number") {
+        return parsed.map((id: number) => ({ id, discount: fs?.discount || 0, credit_months: fs?.credit_months || 24, until: fs?.until || null }));
+      }
+      return [];
+    } catch { return []; }
+  })();
+  if (items.length > 0) {
+    const ids = items.map(i => i.id);
+    const placeholders = ids.map(() => "?").join(",");
+    const rows = db.prepare(`SELECT * FROM products WHERE id IN (${placeholders}) AND is_active=1`).all(...ids) as any[];
+    return c.json(rows.map(p => {
+      const item = items.find(i => i.id === p.id) || {};
+      return Object.assign({}, p, {
+        _discount: (item as any).discount ?? 0,
+        _credit_months: (item as any).credit_months ?? 24,
+        _until: (item as any).until ?? null,
+        _note: fs?.note || "",
+      });
+    }));
+  }
+  return c.json([]);
 });
 
 app.get("/api/products/most-sold", (c) => {
@@ -288,16 +311,26 @@ app.get("/api/products/:id", (c) => {
 
 app.post("/api/products", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, image, category_slug, stock, is_active, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", b.category_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || ""
+  const images = Array.isArray(b.images) ? JSON.stringify(b.images) : "[]";
+  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, image, images, category_slug, stock, is_active, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || ""
   );
   return c.json({ id: result.lastInsertRowid });
 });
 
 app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, image=?, category_slug=?, stock=?, is_active=?, description=? WHERE id=?").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", b.category_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", c.req.param("id")
+  let images: string;
+  if (Array.isArray(b.images)) {
+    images = JSON.stringify(b.images);
+  } else if (typeof b.images === "string" && b.images.startsWith("[")) {
+    images = b.images;
+  } else {
+    const existing = db.prepare("SELECT images FROM products WHERE id=?").get(c.req.param("id")) as any;
+    images = existing?.images || "[]";
+  }
+  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, image=?, images=?, category_slug=?, stock=?, is_active=?, description=? WHERE id=?").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -309,22 +342,34 @@ app.delete("/api/products/:id", authMiddleware, adminMiddleware, (c) => {
 
 app.get("/api/featured-settings", authMiddleware, adminMiddleware, (c) => {
   const fs = db.prepare("SELECT * FROM featured_settings WHERE id=1").get() as any;
-  const product = fs?.product_id
-    ? db.prepare("SELECT id, name, price, old_price, discount, image, stock FROM products WHERE id=?").get(fs.product_id)
-    : null;
-  return c.json({ ...(fs || {}), product });
+  const items: { id: number; discount?: number; credit_months?: number; until?: string | null }[] = (() => {
+    try {
+      const parsed = JSON.parse(fs?.product_ids || "[]");
+      if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "object") return parsed;
+      if (Array.isArray(parsed) && parsed.length && typeof parsed[0] === "number")
+        return parsed.map((id: number) => ({ id }));
+      return [];
+    } catch { return []; }
+  })();
+  const ids = items.map(i => i.id);
+  const featured_products = ids.length
+    ? db.prepare(`SELECT id, name, price, old_price, discount, image, stock FROM products WHERE id IN (${ids.map(() => "?").join(",")})`).all(...ids)
+    : [];
+  return c.json({ ...(fs || {}), product_items: items, featured_products });
 });
 
 app.put("/api/featured-settings", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  db.prepare("UPDATE featured_settings SET product_id=?, until=?, note=?, discount=? WHERE id=1").run(
-    b.product_id || null, b.until || null, b.note || "", b.discount || 0
+  const items: { id: number; discount?: number; credit_months?: number; until?: string | null }[] =
+    Array.isArray(b.product_items) ? b.product_items : [];
+  const ids = items.map(i => i.id);
+  db.prepare("UPDATE featured_settings SET product_ids=?, until=?, note=?, discount=?, credit_months=? WHERE id=1").run(
+    JSON.stringify(items), b.until || null, b.note || "", 0, 24
   );
-  if (b.product_id) {
-    db.prepare("UPDATE products SET is_featured=0").run();
-    db.prepare("UPDATE products SET is_featured=1 WHERE id=?").run(b.product_id);
-  } else {
-    db.prepare("UPDATE products SET is_featured=0").run();
+  db.prepare("UPDATE products SET is_featured=0").run();
+  if (ids.length) {
+    const ph = ids.map(() => "?").join(",");
+    db.prepare(`UPDATE products SET is_featured=1 WHERE id IN (${ph})`).run(...ids);
   }
   return c.json({ ok: true });
 });

@@ -2,13 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { api, type Category } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ChevronRight, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/admin/kateqoriyalar")({
   component: CatsAdmin,
 });
 
-type EditMode = "parent" | "child";
+type EditMode = "parent" | "child" | "hidden";
 
 function CatsAdmin() {
   const [items, setItems] = useState<Category[]>([]);
@@ -17,7 +17,7 @@ function CatsAdmin() {
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
 
   const load = async () => {
-    const [cats, products] = await Promise.all([api.getCategories(), api.getProducts()]);
+    const [cats, products] = await Promise.all([api.getCategoriesAll(), api.getProducts()]);
     setItems(cats);
     const counts: Record<string, number> = {};
     products.forEach((p) => { if (p.category_slug) counts[p.category_slug] = (counts[p.category_slug] || 0) + 1; });
@@ -27,11 +27,16 @@ function CatsAdmin() {
 
   const openNew = (mode: EditMode) => {
     setEditMode(mode);
-    setEditing({ parent_id: mode === "child" ? undefined : null });
+    setEditing({
+      parent_id: mode === "child" ? undefined : null,
+      is_hidden: mode === "hidden" ? 1 : 0,
+    });
   };
 
   const openEdit = (c: Category) => {
-    setEditMode(c.parent_id ? "child" : "parent");
+    if (c.is_hidden) setEditMode("hidden");
+    else if (c.parent_id) setEditMode("child");
+    else setEditMode("parent");
     setEditing(c);
   };
 
@@ -43,7 +48,12 @@ function CatsAdmin() {
       .replace(/ə/g, "e").replace(/ö/g, "o").replace(/ü/g, "u")
       .replace(/ı/g, "i").replace(/ğ/g, "g").replace(/ş/g, "s").replace(/ç/g, "c")
       .replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const payload = { ...editing, slug };
+    const payload = {
+      ...editing,
+      slug,
+      is_hidden: editMode === "hidden" ? 1 : 0,
+      parent_id: editMode === "hidden" ? null : editing.parent_id,
+    };
     try {
       if (editing.id) {
         await api.updateCategory(editing.id, payload);
@@ -69,17 +79,18 @@ function CatsAdmin() {
     }
   };
 
-  const parents = items.filter(c => !c.parent_id);
+  const parents = items.filter(c => !c.parent_id && !c.is_hidden);
   const children = items.filter(c => !!c.parent_id);
+  const hidden = items.filter(c => !!c.is_hidden);
 
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black md:text-3xl">Kateqoriyalar</h1>
-          <p className="text-muted-foreground">{parents.length} ana, {children.length} alt kateqoriya</p>
+          <p className="text-muted-foreground">{parents.length} ana, {children.length} alt, {hidden.length} gizli</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => openNew("parent")}
             className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity text-sm"
@@ -92,8 +103,45 @@ function CatsAdmin() {
           >
             <Plus className="h-4 w-4" /> Alt kateqoriya
           </button>
+          <button
+            onClick={() => openNew("hidden")}
+            className="flex items-center gap-2 rounded-xl border-2 border-dashed border-muted-foreground/40 px-4 py-2.5 font-semibold text-muted-foreground hover:bg-secondary transition-colors text-sm"
+          >
+            <EyeOff className="h-4 w-4" /> Gizli kateqoriya
+          </button>
         </div>
       </div>
+
+      {/* Gizli kateqoriyalar */}
+      {hidden.length > 0 && (
+        <div className="mt-6">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            <EyeOff className="h-3.5 w-3.5" /> Gizli Kateqoriyalar
+            <span className="text-xs font-normal normal-case">(saytda görünmür, yalnız admin)</span>
+          </h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {hidden.map((c) => (
+              <div key={c.id} className="rounded-2xl border border-dashed border-muted-foreground/30 bg-secondary/30 p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-2xl flex-shrink-0">{c.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="font-bold truncate">{c.name}</div>
+                      <span className="flex-shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">gizli</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">/{c.slug}</div>
+                    <div className="mt-0.5 text-xs text-[var(--brand)] font-medium">{productCounts[c.slug] || 0} məhsul</div>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button onClick={() => openEdit(c)} className="rounded-lg p-2 hover:bg-secondary transition-colors"><Pencil className="h-4 w-4" /></button>
+                    <button onClick={() => remove(c.id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Ana kateqoriyalar */}
       <div className="mt-6">
@@ -173,10 +221,20 @@ function CatsAdmin() {
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <div>
                 <h2 className="text-xl font-bold">
-                  {editing.id ? "Redaktə et" : editMode === "parent" ? "Yeni ana kateqoriya" : "Yeni alt kateqoriya"}
+                  {editing.id
+                    ? "Redaktə et"
+                    : editMode === "parent"
+                      ? "Yeni ana kateqoriya"
+                      : editMode === "hidden"
+                        ? "Yeni gizli kateqoriya"
+                        : "Yeni alt kateqoriya"}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {editMode === "parent" ? "Kataloqda əsas bölmə" : "Ana kateqoriyanın alt bölməsi"}
+                  {editMode === "parent"
+                    ? "Kataloqda əsas bölmə"
+                    : editMode === "hidden"
+                      ? "Yalnız admin görür, saytda görünmür"
+                      : "Ana kateqoriyanın alt bölməsi"}
                 </p>
               </div>
               <button onClick={() => setEditing(null)} className="rounded-lg p-1.5 hover:bg-secondary"><X className="h-5 w-5" /></button>
@@ -185,21 +243,26 @@ function CatsAdmin() {
               <Field label="Ad *">
                 <input
                   className={inp}
-                  placeholder={editMode === "parent" ? "Məs: Yumşaq Mebel" : "Məs: Künc Divanlar"}
+                  placeholder={editMode === "parent" ? "Məs: Yumşaq Mebel" : editMode === "hidden" ? "Məs: Ümumi Mallar" : "Məs: Künc Divanlar"}
                   value={editing.name ?? ""}
                   onChange={(e) => setEditing({ ...editing, name: e.target.value, slug: "" })}
                 />
               </Field>
-              {editMode === "child" && (
-                <Field label="Ana kateqoriya *">
+              {editMode !== "hidden" && (
+                <Field label={editMode === "child" ? "Ana kateqoriya *" : "Ana kateqoriya (opsional)"}>
                   <select
                     className={inp}
                     value={editing.parent_id ?? ""}
-                    onChange={(e) => setEditing({ ...editing, parent_id: e.target.value ? Number(e.target.value) : undefined })}
+                    onChange={(e) => {
+                      const val = e.target.value ? Number(e.target.value) : undefined;
+                      setEditing({ ...editing, parent_id: val });
+                      if (val) setEditMode("child");
+                      else if (!editing.is_hidden) setEditMode("parent");
+                    }}
                   >
-                    <option value="">— Seçin —</option>
-                    {parents.filter(c => c.id !== editing.id).map(c => (
-                      <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                    <option value="">— Ana kateqoriya yoxdur —</option>
+                    {[...parents, ...hidden].filter(c => c.id !== editing.id).map(c => (
+                      <option key={c.id} value={c.id}>{c.is_hidden ? "🔒 " : ""}{c.icon} {c.name}</option>
                     ))}
                   </select>
                 </Field>
@@ -213,6 +276,19 @@ function CatsAdmin() {
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </Field>
+              {editMode !== "child" && editing.id && (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!editing.is_hidden}
+                    onChange={(e) => setEditing({ ...editing, is_hidden: e.target.checked ? 1 : 0 })}
+                    className="h-4 w-4 rounded"
+                  />
+                  <span className="text-sm font-medium flex items-center gap-1.5">
+                    <EyeOff className="h-4 w-4 text-muted-foreground" /> Saytda gizli saxla
+                  </span>
+                </label>
+              )}
             </div>
             <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
               <button onClick={() => setEditing(null)} className="rounded-xl border border-border px-5 py-2.5 font-medium hover:bg-secondary">Ləğv et</button>

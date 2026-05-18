@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-import AutoScroll from "embla-carousel-auto-scroll";
 import { api, getImageUrl, type Product } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
@@ -26,14 +25,23 @@ function Index() {
   const [products, setProducts] = useState<Product[]>([]);
   const [popular, setPopular] = useState<Product[]>([]);
   const [mostSold, setMostSold] = useState<Product[]>([]);
-  const [featured, setFeatured] = useState<(Product & { _until?: string | null; _note?: string; _discount?: number }) | null | undefined>(undefined);
+  const [featuredList, setFeaturedList] = useState<(Product & { _until?: string | null; _note?: string; _discount?: number; _credit_months?: number })[] | undefined>(undefined);
+  const [featuredIdx, setFeaturedIdx] = useState(0);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setProducts).catch(() => {});
     api.getPopularProducts(24).then(setPopular).catch(() => {});
     api.getMostSoldProducts(24).then(setMostSold).catch(() => {});
-    api.getFeaturedProduct().then(setFeatured).catch(() => setFeatured(null));
+    api.getFeaturedProduct().then((arr) => setFeaturedList(arr)).catch(() => setFeaturedList([]));
   }, []);
+
+  useEffect(() => {
+    if (!featuredList || featuredList.length <= 1) return;
+    const id = setInterval(() => setFeaturedIdx(i => (i + 1) % featuredList.length), 3000);
+    return () => clearInterval(id);
+  }, [featuredList]);
+
+  const featured = featuredList === undefined ? undefined : (featuredList[featuredIdx] ?? null);
 
   const list1 = tab1 === "popular"
     ? popular
@@ -76,6 +84,14 @@ function Index() {
             <div className="flex items-center gap-2">
               <span className="text-xl">★</span>
               <span className="font-bold text-white">Həftənin teklifi</span>
+              {featuredList && featuredList.length > 1 && (
+                <div className="flex items-center gap-1 ml-2">
+                  {featuredList.map((_, i) => (
+                    <button key={i} onClick={() => setFeaturedIdx(i)}
+                      className={`h-1.5 rounded-full transition-all ${i === featuredIdx ? "w-4 bg-white" : "w-1.5 bg-white/50"}`} />
+                  ))}
+                </div>
+              )}
             </div>
             <FeaturedCountdown until={featured?._until} />
           </div>
@@ -132,7 +148,7 @@ function Index() {
                       </div>
                       <div className="mt-3 rounded-lg bg-secondary/50 p-3">
                         <div className="text-xs text-muted-foreground mb-1">Faizsiz aylıq ödəniş</div>
-                        <div className="text-sm font-bold text-foreground">24 ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round((discountedPrice ?? featured.price) / 24)} ₼</span></div>
+                        <div className="text-sm font-bold text-foreground">{featured._credit_months || 24} ay · Aylıq <span className="text-[var(--accent-orange)]">{Math.round((discountedPrice ?? featured.price) / (featured._credit_months || 24))} ₼</span></div>
                       </div>
                       <div className="mt-5 flex gap-2">
                         <button

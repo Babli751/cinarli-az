@@ -39,6 +39,7 @@ export const api = {
 
   // Categories
   getCategories: () => req<Category[]>("GET", "/api/categories"),
+  getCategoriesAll: () => req<Category[]>("GET", "/api/categories/all", undefined, true),
   createCategory: (data: Partial<Category>) => req<{ id: number }>("POST", "/api/categories", data, true),
   updateCategory: (id: number, data: Partial<Category>) => req<{ ok: boolean }>("PUT", `/api/categories/${id}`, data, true),
   deleteCategory: (id: number) => req<{ ok: boolean }>("DELETE", `/api/categories/${id}`, undefined, true),
@@ -51,7 +52,7 @@ export const api = {
     return req<Product[]>("GET", `/api/products?${q}`);
   },
   getProduct: (id: number) => req<Product>("GET", `/api/products/${id}`),
-  getFeaturedProduct: () => req<Product | null>("GET", "/api/products/featured"),
+  getFeaturedProduct: () => req<(Product & { _until?: string | null; _discount?: number; _credit_months?: number; _note?: string })[]>("GET", "/api/products/featured"),
   getMostSoldProducts: (limit = 12) => req<Product[]>("GET", `/api/products/most-sold?limit=${limit}`),
   getPopularProducts: (limit = 12) => req<Product[]>("GET", `/api/products/popular?limit=${limit}`),
   setMostSold: (id: number, most_sold: boolean) => req<{ ok: boolean }>("PUT", `/api/products/${id}/most-sold`, { most_sold }, true),
@@ -144,6 +145,7 @@ export interface Category {
   icon: string;
   description: string;
   parent_id?: number | null;
+  is_hidden?: number;
   created_at?: string;
 }
 
@@ -154,6 +156,7 @@ export interface Product {
   old_price?: number;
   discount: number;
   image: string;
+  images?: string;
   category_slug?: string;
   stock: number;
   is_active: number;
@@ -198,13 +201,23 @@ export interface Store {
   created_at?: string;
 }
 
+export interface FeaturedProductItem {
+  id: number;
+  discount?: number;
+  credit_months?: number;
+  until?: string | null;
+}
+
 export interface FeaturedSettings {
   id: number;
   product_id: number | null;
+  product_ids: number[];
+  product_items: FeaturedProductItem[];
   until: string | null;
   note: string;
   discount: number;
-  product?: Partial<Product>;
+  credit_months: number;
+  featured_products?: Partial<Product>[];
 }
 
 export interface Address {

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, Shield, Home, Grid3x3 } from "lucide-react";
+import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, ArrowLeft, Shield, Home, Grid3x3 } from "lucide-react";
 import { api, type Category } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import logoChinarli from "@/assets/logo-chinarli.png";
@@ -9,6 +9,7 @@ export function SiteHeader() {
   const [catOpen, setCatOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [drillCat, setDrillCat] = useState<Category | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeSlug, setActiveSlug] = useState("");
   const { isAdmin } = useAuth();
@@ -139,72 +140,111 @@ export function SiteHeader() {
         )}
       </header>
 
-      {/* Mobile menu drawer */}
+      {/* Mobile menu drawer — irshad.az drill-down style */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" onClick={() => setMobileMenuOpen(false)}>
+        <div className="fixed inset-0 z-50 lg:hidden" onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}>
           <div className="absolute inset-0 bg-black/50" />
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-background shadow-2xl"
+            className="absolute left-0 top-0 flex h-full w-[85%] max-w-sm flex-col bg-background shadow-2xl overflow-hidden"
           >
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
-              <button onClick={() => setMobileMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-lg hover:bg-secondary" aria-label="Bağla">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border px-4 py-3 flex-shrink-0">
+              {drillCat ? (
+                <button
+                  onClick={() => setDrillCat(null)}
+                  className="flex items-center gap-2 font-semibold text-base"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  {drillCat.name}
+                </button>
+              ) : (
+                <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
+              )}
+              <button onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }} className="grid h-9 w-9 place-items-center rounded-lg hover:bg-secondary" aria-label="Bağla">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              <div className="px-4 py-3">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Kateqoriyalar</p>
-                <div className="space-y-0.5">
-                  {categories.map((c) => (
+              {drillCat ? (
+                /* Sub-category view */
+                <div>
+                  <Link
+                    to="/kateqoriya/$slug"
+                    params={{ slug: drillCat.slug }}
+                    onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                    className="flex items-center gap-3 border-b border-border px-4 py-3.5 text-sm font-semibold text-[var(--brand)]"
+                  >
+                    <span className="text-2xl">{drillCat.icon}</span>
+                    Hamısına bax →
+                  </Link>
+                  {categories.filter(s => s.parent_id === drillCat.id).map((s) => (
                     <Link
-                      key={c.slug}
+                      key={s.slug}
                       to="/kateqoriya/$slug"
-                      params={{ slug: c.slug }}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-secondary"
+                      params={{ slug: s.slug }}
+                      onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                      className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
                     >
-                      <span className="text-xl">{c.icon}</span>
-                      <span className="flex-1">{c.name}</span>
-                      <ChevronRight className="h-4 w-4 opacity-40" />
+                      <span className="text-2xl w-9 text-center">{s.icon}</span>
+                      <span className="font-medium">{s.name}</span>
                     </Link>
                   ))}
                 </div>
-              </div>
-
-              <div className="border-t border-border px-4 py-3">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Menyu</p>
-                <div className="space-y-0.5">
-                  {[
-                    { to: "/kampaniyalar", label: "Kampaniyalar" },
-                    { to: "/yeni", label: "Yeni məhsullar" },
-                    { to: "/outlet", label: "Outlet" },
-                    { to: "/aylik-odenis", label: "💳 Aylıq ödəniş" },
-                    { to: "/magazalar", label: "Mağazalar" },
-                    { to: "/korporativ", label: "Korporativ" },
-                    { to: "/catdirilma", label: "Çatdırılma" },
-                    { to: "/geri-qaytarma", label: "Geri qaytarma" },
-                    { to: "/haqqimizda", label: "Haqqımızda" },
-                    { to: "/elaqe", label: "Əlaqə" },
-                  ].map((l) => (
-                    <Link key={l.to} to={l.to as any} onClick={() => setMobileMenuOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm hover:bg-secondary">
-                      {l.label}
-                    </Link>
-                  ))}
-                  {isAdmin && (
-                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2 rounded-lg bg-[var(--brand)]/10 px-3 py-2.5 text-sm font-semibold text-[var(--brand)]">
-                      <Shield className="h-4 w-4" /> Admin panel
-                    </Link>
-                  )}
+              ) : (
+                /* Root view */
+                <div>
+                  {categories.filter(c => !c.parent_id).map((c) => {
+                    const hasSubs = categories.some(s => s.parent_id === c.id);
+                    return hasSubs ? (
+                      <button
+                        key={c.slug}
+                        onClick={() => setDrillCat(c)}
+                        className="flex w-full items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
+                      >
+                        <span className="text-2xl w-9 text-center">{c.icon}</span>
+                        <span className="flex-1 text-left font-medium">{c.name}</span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    ) : (
+                      <Link
+                        key={c.slug}
+                        to="/kateqoriya/$slug"
+                        params={{ slug: c.slug }}
+                        onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }}
+                        className="flex items-center gap-4 border-b border-border/50 px-4 py-3.5 text-sm hover:bg-secondary"
+                      >
+                        <span className="text-2xl w-9 text-center">{c.icon}</span>
+                        <span className="flex-1 font-medium">{c.name}</span>
+                      </Link>
+                    );
+                  })}
+                  <div className="border-t border-border mt-2 pt-2">
+                    {[
+                      { to: "/kampaniyalar", label: "Kampaniyalar" },
+                      { to: "/aylik-odenis", label: "💳 Aylıq ödəniş" },
+                      { to: "/magazalar", label: "Mağazalar" },
+                      { to: "/korporativ", label: "Korporativ" },
+                      { to: "/haqqimizda", label: "Haqqımızda" },
+                      { to: "/elaqe", label: "Əlaqə" },
+                    ].map((l) => (
+                      <Link key={l.to} to={l.to as any} onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }} className="block border-b border-border/50 px-4 py-3 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground">
+                        {l.label}
+                      </Link>
+                    ))}
+                    {isAdmin && (
+                      <Link to="/admin" onClick={() => { setMobileMenuOpen(false); setDrillCat(null); }} className="flex items-center gap-2 px-4 py-3 text-sm font-semibold text-[var(--brand)]">
+                        <Shield className="h-4 w-4" /> Admin panel
+                      </Link>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="border-t border-border px-4 py-3 text-sm">
+            <div className="border-t border-border px-4 py-3 text-sm flex-shrink-0">
               <a href="tel:*0171" className="font-bold text-[var(--brand)]">📞 *0171</a>
-              <p className="mt-1 text-xs text-muted-foreground">🇦🇿 Azərbaycan dili</p>
             </div>
           </div>
         </div>
