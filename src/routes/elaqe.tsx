@@ -3,14 +3,14 @@ import { PageShell } from "@/components/SiteLayout";
 import { Phone, Mail, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/elaqe")({
-  head: () => ({ meta: [{ title: "Əlaqə — MebelMart" }] }),
+  head: () => ({ meta: [{ title: "Əlaqə — Çınarlı Mebel" }] }),
   component: () => (
     <PageShell title="Əlaqə" subtitle="Bizimlə əlaqə saxlayın — 24/7 dəstək komandamız hazırdır.">
       <div className="grid gap-6 md:grid-cols-[1fr_1fr]">
         <div className="space-y-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5"><Phone className="h-6 w-6 text-[var(--brand)]" /><div><div className="text-xs text-muted-foreground">Çağrı mərkəzi</div><div className="font-bold">*0171</div></div></div>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5"><Mail className="h-6 w-6 text-[var(--brand)]" /><div><div className="text-xs text-muted-foreground">Email</div><div className="font-bold">info@mebelmart.az</div></div></div>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5"><MapPin className="h-6 w-6 text-[var(--brand)]" /><div><div className="text-xs text-muted-foreground">Mərkəzi ofis</div><div className="font-bold">Bakı, 28 May küç. 12</div></div></div>
+          <a href="tel:+994507072221" className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5 hover:border-[var(--brand)] transition-colors"><Phone className="h-6 w-6 text-[var(--brand)]" /><div><div className="text-xs text-muted-foreground">Telefon</div><div className="font-bold">+994 50 707 22 21</div></div></a>
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5"><Mail className="h-6 w-6 text-[var(--brand)]" /><div><div className="text-xs text-muted-foreground">Email</div><div className="font-bold">info@chinarli.store</div></div></div>
+          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-5"><MapPin className="h-6 w-6 text-[var(--brand)]" /><div><div className="text-xs text-muted-foreground">Ünvan</div><div className="font-bold">İmişli şəhəri, N.Nərimanov küçəsi, Bazarın arxası</div></div></div>
         </div>
         <form className="grid gap-3 rounded-2xl border border-border bg-card p-6">
           <h2 className="text-xl font-bold">Mesaj göndər</h2>

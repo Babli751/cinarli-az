@@ -56,7 +56,7 @@ function TermsPage() {
           <div className="space-y-1 mt-1">
             <div>Suallarınız üçün:</div>
             <div><strong>Email:</strong> info@chinarli.store</div>
-            <div><strong>Telefon:</strong> *0171</div>
+            <div><strong>Telefon:</strong> +994 50 707 22 21</div>
           </div>
         </Section>
       </div>

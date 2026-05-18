@@ -45,7 +45,7 @@ function StoresAdmin() {
           <h1 className="text-2xl font-black md:text-3xl">Mağazalar</h1>
           <p className="text-muted-foreground">{items.length} mağaza</p>
         </div>
-        <button onClick={() => setEditing({ phone: "*0171", hours: "10:00 — 22:00" })}
+        <button onClick={() => setEditing({ phone: "+994 50 707 22 21", hours: "10:00 — 22:00" })}
           className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">
           <Plus className="h-4 w-4" /> Yeni mağaza
         </button>
@@ -90,7 +90,7 @@ function StoresAdmin() {
                 <input className={inp} placeholder="Neftçilər pr. 123" value={editing.address ?? ""} onChange={(e) => setEditing({ ...editing, address: e.target.value })} />
               </Field>
               <Field label="Telefon">
-                <input className={inp} placeholder="*0171" value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} />
+                <input className={inp} placeholder="+994 50 707 22 21" value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} />
               </Field>
               <Field label="İş saatları">
                 <input className={inp} placeholder="10:00 — 22:00" value={editing.hours ?? ""} onChange={(e) => setEditing({ ...editing, hours: e.target.value })} />

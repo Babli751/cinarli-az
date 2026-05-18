@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { api, type Category } from "@/lib/api";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, ChevronRight, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, X, ChevronRight, EyeOff, ChevronUp, ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/admin/kateqoriyalar")({
   component: CatsAdmin,
@@ -74,6 +74,15 @@ function CatsAdmin() {
     try {
       await api.deleteCategory(id);
       toast.success("Silindi");
+      load();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  const reorder = async (id: number, direction: "up" | "down") => {
+    try {
+      await api.reorderCategory(id, direction);
       load();
     } catch (e: any) {
       toast.error(e.message);
@@ -166,7 +175,11 @@ function CatsAdmin() {
                       {subs.length > 0 && <span className="text-muted-foreground">{subs.length} alt</span>}
                     </div>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
+                  <div className="flex gap-1 flex-shrink-0 items-center">
+                    <div className="flex flex-col gap-0.5 mr-1">
+                      <button onClick={() => reorder(c.id, "up")} className="rounded p-1 hover:bg-secondary transition-colors"><ChevronUp className="h-3 w-3" /></button>
+                      <button onClick={() => reorder(c.id, "down")} className="rounded p-1 hover:bg-secondary transition-colors"><ChevronDown className="h-3 w-3" /></button>
+                    </div>
                     <button onClick={() => openEdit(c)} className="rounded-lg p-2 hover:bg-secondary transition-colors"><Pencil className="h-4 w-4" /></button>
                     <button onClick={() => remove(c.id)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-4 w-4" /></button>
                   </div>
@@ -207,7 +220,11 @@ function CatsAdmin() {
                     )}
                     <div className="text-xs text-[var(--brand)] font-medium">{productCounts[c.slug] || 0} məhsul</div>
                   </div>
-                  <div className="flex gap-1 flex-shrink-0">
+                  <div className="flex gap-1 flex-shrink-0 items-center">
+                    <div className="flex flex-col gap-0.5 mr-1">
+                      <button onClick={() => reorder(c.id, "up")} className="rounded p-0.5 hover:bg-secondary transition-colors"><ChevronUp className="h-3 w-3" /></button>
+                      <button onClick={() => reorder(c.id, "down")} className="rounded p-0.5 hover:bg-secondary transition-colors"><ChevronDown className="h-3 w-3" /></button>
+                    </div>
                     <button onClick={() => openEdit(c)} className="rounded-lg p-1.5 hover:bg-secondary transition-colors"><Pencil className="h-3.5 w-3.5" /></button>
                     <button onClick={() => remove(c.id)} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10 transition-colors"><Trash2 className="h-3.5 w-3.5" /></button>
                   </div>
@@ -265,9 +282,13 @@ function CatsAdmin() {
                     }}
                   >
                     <option value="">— Ana kateqoriya yoxdur —</option>
-                    {[...parents, ...hidden].filter(c => c.id !== editing.id).map(c => (
-                      <option key={c.id} value={c.id}>{c.is_hidden ? "🔒 " : ""}{c.icon} {c.name}</option>
-                    ))}
+                    {items.filter(c => c.id !== editing.id).map(c => {
+                      const depth = c.parent_id ? (items.find(p => p.id === c.parent_id)?.parent_id ? 2 : 1) : 0;
+                      const prefix = depth === 1 ? "  ↳ " : depth === 2 ? "    ↳↳ " : "";
+                      return (
+                        <option key={c.id} value={c.id}>{prefix}{c.is_hidden ? "🔒 " : ""}{c.name}</option>
+                      );
+                    })}
                   </select>
                 </Field>
               )}

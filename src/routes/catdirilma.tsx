@@ -3,7 +3,7 @@ import { PageShell } from "@/components/SiteLayout";
 import { Truck, Clock, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/catdirilma")({
-  head: () => ({ meta: [{ title: "Çatdırılma — MebelMart" }] }),
+  head: () => ({ meta: [{ title: "Çatdırılma — Çınarlı Mebel" }] }),
   component: () => (
     <PageShell title="Çatdırılma və quraşdırma" subtitle="Bakı və regionlara sürətli çatdırılma.">
       <div className="grid gap-4 md:grid-cols-3">

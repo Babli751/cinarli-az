@@ -27,7 +27,6 @@ function ProductPage() {
   const [lightbox, setLightbox] = useState(false);
   const [orderModal, setOrderModal] = useState(false);
   const [creditModal, setCreditModal] = useState(false);
-  const [creditMonths, setCreditMonths] = useState(24);
   const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "" });
   const [orderBusy, setOrderBusy] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
@@ -420,40 +419,11 @@ function ProductPage() {
 
       {/* Credit Modal */}
       {creditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setCreditModal(false)}>
-          <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <h2 className="text-lg font-bold">Kredit hesabla</h2>
-              <button onClick={() => setCreditModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="text-center">
-                <div className="text-3xl font-black">{product.price} ₼</div>
-                <div className="text-sm text-muted-foreground mt-1">Faizsiz kredit</div>
-              </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
-                <div className="flex flex-wrap gap-2">
-                  {[6,12,18,24,36,48,60].map(m => (
-                    <button key={m} onClick={() => setCreditMonths(m)}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${creditMonths === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                      {m} ay
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
-                <div className="text-sm text-muted-foreground">Aylıq ödəniş</div>
-                <div className="text-4xl font-black text-[var(--brand)] mt-1">{Math.round(product.price / creditMonths)} ₼</div>
-                <div className="text-xs text-muted-foreground mt-1">{creditMonths} ay × {Math.round(product.price / creditMonths)} ₼ = {product.price} ₼</div>
-              </div>
-              <button onClick={() => { setCreditModal(false); setOrderModal(true); }}
-                className="w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
-                Kredit ilə sifariş ver
-              </button>
-            </div>
-          </div>
-        </div>
+        <CreditModal
+          product={product}
+          onClose={() => setCreditModal(false)}
+          onOrder={() => { setCreditModal(false); setOrderModal(true); }}
+        />
       )}
 
       {/* Login Modal */}
@@ -507,6 +477,68 @@ function ProductPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CreditModal({ product, onClose, onOrder }: { product: Product; onClose: () => void; onOrder: () => void }) {
+  const [months, setMonths] = useState(24);
+  const [useDiscounted, setUseDiscounted] = useState(true);
+
+  const discountedPrice = product.discount > 0
+    ? Math.round(product.price * (1 - product.discount / 100))
+    : null;
+  const hasDiscount = discountedPrice !== null && discountedPrice < product.price;
+  const fullPrice = product.price;
+  const basePrice = hasDiscount ? (useDiscounted ? discountedPrice! : fullPrice) : fullPrice;
+  const monthly = Math.round(basePrice / months);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-lg font-bold">Kredit hesabla</h2>
+          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
+        </div>
+        <div className="p-6 space-y-4">
+          {hasDiscount && (
+            <div className="flex rounded-xl border border-border overflow-hidden text-sm font-semibold">
+              <button onClick={() => setUseDiscounted(true)}
+                className={`flex-1 py-2.5 transition-colors ${useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
+                Endirimli · {discountedPrice} ₼
+              </button>
+              <button onClick={() => setUseDiscounted(false)}
+                className={`flex-1 py-2.5 transition-colors ${!useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
+                Tam · {fullPrice} ₼
+              </button>
+            </div>
+          )}
+          <div className="text-center">
+            <div className="text-3xl font-black">{basePrice} ₼</div>
+            <div className="text-sm text-muted-foreground mt-1">Faizsiz kredit</div>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
+            <div className="flex flex-wrap gap-2">
+              {[6,12,18,24,36,48,60].map(m => (
+                <button key={m} onClick={() => setMonths(m)}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${months === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                  {m} ay
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
+            <div className="text-sm text-muted-foreground">Aylıq ödəniş</div>
+            <div className="text-4xl font-black text-[var(--brand)] mt-1">{monthly} ₼</div>
+            <div className="text-xs text-muted-foreground mt-1">{months} ay × {monthly} ₼ = {basePrice} ₼</div>
+          </div>
+          <button onClick={onOrder}
+            className="w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
+            Kredit ilə sifariş ver
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

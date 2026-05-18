@@ -189,11 +189,11 @@ app.delete("/api/me/addresses/:id", authMiddleware, (c) => {
 
 // ─── CATEGORIES ─────────────────────────────────────────
 app.get("/api/categories", (c) => {
-  return c.json(db.prepare("SELECT * FROM categories WHERE is_hidden=0 ORDER BY parent_id ASC, created_at DESC").all());
+  return c.json(db.prepare("SELECT * FROM categories WHERE is_hidden=0 ORDER BY position ASC, id ASC").all());
 });
 
 app.get("/api/categories/all", authMiddleware, adminMiddleware, (c) => {
-  return c.json(db.prepare("SELECT * FROM categories ORDER BY is_hidden ASC, parent_id ASC, created_at DESC").all());
+  return c.json(db.prepare("SELECT * FROM categories ORDER BY position ASC, id ASC").all());
 });
 
 function autoIcon(name: string): string {
@@ -222,10 +222,25 @@ function autoIcon(name: string): string {
   return "📦";
 }
 
+app.put("/api/categories/:id/reorder", authMiddleware, adminMiddleware, async (c) => {
+  const { direction } = await c.req.json<{ direction: "up" | "down" }>();
+  const id = Number(c.req.param("id"));
+  const current = db.prepare("SELECT * FROM categories WHERE id=?").get(id) as any;
+  if (!current) return c.json({ error: "Not found" }, 404);
+  const sibling = direction === "up"
+    ? db.prepare("SELECT * FROM categories WHERE position < ? AND (parent_id IS ? OR parent_id = ?) ORDER BY position DESC LIMIT 1").get(current.position, current.parent_id, current.parent_id) as any
+    : db.prepare("SELECT * FROM categories WHERE position > ? AND (parent_id IS ? OR parent_id = ?) ORDER BY position ASC LIMIT 1").get(current.position, current.parent_id, current.parent_id) as any;
+  if (!sibling) return c.json({ ok: true });
+  db.prepare("UPDATE categories SET position=? WHERE id=?").run(sibling.position, current.id);
+  db.prepare("UPDATE categories SET position=? WHERE id=?").run(current.position, sibling.id);
+  return c.json({ ok: true });
+});
+
 app.post("/api/categories", authMiddleware, adminMiddleware, async (c) => {
   const { slug, name, description, parent_id, is_hidden } = await c.req.json();
   const icon = autoIcon(name);
-  const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id, is_hidden) VALUES (?, ?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0);
+  const maxPos = (db.prepare("SELECT MAX(position) as m FROM categories").get() as any)?.m || 0;
+  const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id, is_hidden, position) VALUES (?, ?, ?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, maxPos + 1);
   return c.json({ id: result.lastInsertRowid });
 });
 

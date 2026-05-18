@@ -43,6 +43,7 @@ export const api = {
   createCategory: (data: Partial<Category>) => req<{ id: number }>("POST", "/api/categories", data, true),
   updateCategory: (id: number, data: Partial<Category>) => req<{ ok: boolean }>("PUT", `/api/categories/${id}`, data, true),
   deleteCategory: (id: number) => req<{ ok: boolean }>("DELETE", `/api/categories/${id}`, undefined, true),
+  reorderCategory: (id: number, direction: "up" | "down") => req<{ ok: boolean }>("PUT", `/api/categories/${id}/reorder`, { direction }, true),
 
   // Products
   getProducts: (params?: { category?: string; active?: boolean }) => {

@@ -51,7 +51,7 @@ export function SiteHeader() {
             <Link to="/korporativ" className="hover:text-foreground">Korporativ</Link>
           </div>
           <div className="flex items-center gap-4">
-            <span className="font-bold text-[var(--brand)]">*0171</span>
+            <span className="font-bold text-[var(--brand)]">+994 50 707 22 21</span>
             <span>🇦🇿 Azərbaycan dili</span>
             {isAdmin && (
               <Link to="/admin" className="flex items-center gap-1 rounded-md bg-[var(--brand)] px-2 py-0.5 font-semibold text-[var(--brand-foreground)]">
@@ -196,7 +196,7 @@ export function SiteHeader() {
             </div>
 
             <div className="border-t border-border px-4 py-3 text-sm flex-shrink-0">
-              <a href="tel:*0171" className="font-bold text-[var(--brand)]">📞 *0171</a>
+              <a href="tel:+994507072221" className="font-bold text-[var(--brand)]">📞 +994 50 707 22 21</a>
             </div>
           </div>
         </div>
@@ -351,8 +351,8 @@ export function SiteFooter() {
 
             {/* Phone */}
             <div className="mb-6">
-              <a href="tel:*0171" className="flex items-center gap-3 text-[var(--brand)] font-bold text-lg hover:opacity-80 transition">
-                📞 *0171
+              <a href="tel:+994507072221" className="flex items-center gap-3 text-[var(--brand)] font-bold text-lg hover:opacity-80 transition">
+                📞 +994 50 707 22 21
               </a>
             </div>
 
@@ -369,7 +369,7 @@ export function SiteFooter() {
                 <a href="https://www.facebook.com/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Facebook">f</a>
                 <a href="https://www.instagram.com/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Instagram">📷</a>
                 <a href="https://www.youtube.com/@chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="YouTube">▶</a>
-                <a href="https://api.whatsapp.com/send?phone=994777770171" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="WhatsApp">💬</a>
+                <a href="https://api.whatsapp.com/send?phone=994507072221" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="WhatsApp">💬</a>
                 <a href="https://t.me/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Telegram">✈</a>
               </div>
             </div>
