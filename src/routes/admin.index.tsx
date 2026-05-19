@@ -74,12 +74,10 @@ function AdminDashboard() {
               <Eye className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <div className="text-sm text-muted-foreground">Sayt baxışları (bu gün)</div>
-              <div className="flex items-end gap-3">
-                <div className="text-2xl font-black md:text-3xl">{pv?.todayViews ?? "—"}</div>
-                <div className="mb-0.5 text-sm text-muted-foreground">
-                  <span className="font-semibold text-foreground">{pv?.todayUnique ?? "—"}</span> unikal · <span className="font-semibold text-foreground">{pv?.weekViews ?? "—"}</span> həftə · <span className="font-semibold text-foreground">{pv?.totalViews ?? "—"}</span> cəmi
-                </div>
+              <div className="text-sm text-muted-foreground">Ziyarətçilər</div>
+              <div className="text-2xl font-black md:text-3xl">{pv?.todayUnique ?? "—"}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                bu gün · <span className="font-semibold text-foreground">{pv?.weekUnique ?? "—"}</span> həftə · <span className="font-semibold text-foreground">{pv?.totalUnique ?? "—"}</span> cəmi
               </div>
             </div>
           </div>
@@ -122,7 +120,7 @@ function AdminDashboard() {
                         <img src={`https://flagcdn.com/20x15/${c.country_code.toLowerCase()}.png`} alt={c.country_code} className="h-3.5 w-5 object-cover rounded-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                         {c.country}
                       </td>
-                      <td className="px-5 py-2 text-right font-bold">{c.visits}</td>
+                      <td className="px-5 py-2 text-right font-bold">{c.visitors}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -589,16 +589,18 @@ app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
     WHERE date >= ? GROUP BY date ORDER BY date ASC
   `).all(weekAgo) as { date: string; total: number }[];
 
-  // Unique visitors today (unique IPs)
+  // Unique visitors (unique IPs)
   const todayUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date=?").get(today) as any).c;
+  const weekUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date>=?").get(weekAgo) as any).c;
+  const totalUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs").get() as any).c;
 
   // Top countries (last 7 days)
   const topCountries = db.prepare(`
-    SELECT country, country_code, COUNT(*) as visits FROM visitor_logs
-    WHERE date >= ? AND country != '' GROUP BY country ORDER BY visits DESC LIMIT 8
-  `).all(weekAgo) as { country: string; country_code: string; visits: number }[];
+    SELECT country, country_code, COUNT(DISTINCT ip) as visitors FROM visitor_logs
+    WHERE date >= ? AND country != '' GROUP BY country ORDER BY visitors DESC LIMIT 8
+  `).all(weekAgo) as { country: string; country_code: string; visitors: number }[];
 
-  return c.json({ todayViews, weekViews, totalViews, topPages, daily, todayUnique, topCountries });
+  return c.json({ todayViews, weekViews, totalViews, topPages, daily, todayUnique, weekUnique, totalUnique, topCountries });
 });
 
 serve({ fetch: app.fetch, port: PORT }, () => {
