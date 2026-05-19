@@ -130,6 +130,14 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS page_views (
   count INTEGER NOT NULL DEFAULT 1,
   UNIQUE(path, date)
 )`); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS visitor_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  country TEXT DEFAULT '',
+  country_code TEXT DEFAULT '',
+  date TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
 
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;

@@ -245,6 +245,8 @@ export interface PageViewStats {
   todayViews: number;
   weekViews: number;
   totalViews: number;
+  todayUnique: number;
   topPages: { path: string; total: number }[];
   daily: { date: string; total: number }[];
+  topCountries: { country: string; country_code: string; visits: number }[];
 }

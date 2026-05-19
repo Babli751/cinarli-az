@@ -20,16 +20,45 @@ const app = new Hono<{ Variables: Vars }>();
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"] }));
 
+// IP geo cache — avoid hammering ip-api.com
+const geoCache = new Map<string, { country: string; country_code: string }>();
+
+async function getGeo(ip: string) {
+  if (geoCache.has(ip)) return geoCache.get(ip)!;
+  try {
+    const r = await fetch(`http://ip-api.com/json/${ip}?fields=country,countryCode`, { signal: AbortSignal.timeout(2000) });
+    const d = await r.json() as { country?: string; countryCode?: string };
+    const geo = { country: d.country || "", country_code: d.countryCode || "" };
+    geoCache.set(ip, geo);
+    return geo;
+  } catch {
+    return { country: "", country_code: "" };
+  }
+}
+
 // Page view tracker — frontend calls this
 app.post("/api/track", async (c) => {
   try {
-    const { path } = await c.req.json<{ path: string }>();
-    if (!path || path.startsWith("/api") || path.startsWith("/uploads")) return c.json({ ok: true });
+    const { path: reqPath } = await c.req.json<{ path: string }>();
+    if (!reqPath || reqPath.startsWith("/api") || reqPath.startsWith("/uploads")) return c.json({ ok: true });
     const date = new Date().toISOString().slice(0, 10);
+
+    // Page views count
     db.prepare(`
       INSERT INTO page_views (path, date, count) VALUES (?, ?, 1)
       ON CONFLICT(path, date) DO UPDATE SET count = count + 1
-    `).run(path, date);
+    `).run(reqPath, date);
+
+    // Visitor log with geo (fire-and-forget)
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0].trim()
+      || c.req.header("x-real-ip")
+      || "unknown";
+    if (ip !== "unknown" && ip !== "127.0.0.1" && ip !== "::1") {
+      getGeo(ip).then(geo => {
+        db.prepare("INSERT INTO visitor_logs (ip, country, country_code, date) VALUES (?, ?, ?, ?)")
+          .run(ip, geo.country, geo.country_code, date);
+      }).catch(() => {});
+    }
   } catch {}
   return c.json({ ok: true });
 });
@@ -560,7 +589,16 @@ app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
     WHERE date >= ? GROUP BY date ORDER BY date ASC
   `).all(weekAgo) as { date: string; total: number }[];
 
-  return c.json({ todayViews, weekViews, totalViews, topPages, daily });
+  // Unique visitors today (unique IPs)
+  const todayUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date=?").get(today) as any).c;
+
+  // Top countries (last 7 days)
+  const topCountries = db.prepare(`
+    SELECT country, country_code, COUNT(*) as visits FROM visitor_logs
+    WHERE date >= ? AND country != '' GROUP BY country ORDER BY visits DESC LIMIT 8
+  `).all(weekAgo) as { country: string; country_code: string; visits: number }[];
+
+  return c.json({ todayViews, weekViews, totalViews, topPages, daily, todayUnique, topCountries });
 });
 
 serve({ fetch: app.fetch, port: PORT }, () => {

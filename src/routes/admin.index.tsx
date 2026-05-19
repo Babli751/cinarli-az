@@ -74,33 +74,61 @@ function AdminDashboard() {
               <Eye className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <div className="text-sm text-muted-foreground">Sayt baxışları</div>
+              <div className="text-sm text-muted-foreground">Sayt baxışları (bu gün)</div>
               <div className="flex items-end gap-3">
                 <div className="text-2xl font-black md:text-3xl">{pv?.todayViews ?? "—"}</div>
-                <div className="mb-0.5 text-sm text-muted-foreground">bu gün · <span className="font-semibold text-foreground">{pv?.weekViews ?? "—"}</span> həftə · <span className="font-semibold text-foreground">{pv?.totalViews ?? "—"}</span> cəmi</div>
+                <div className="mb-0.5 text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">{pv?.todayUnique ?? "—"}</span> unikal · <span className="font-semibold text-foreground">{pv?.weekViews ?? "—"}</span> həftə · <span className="font-semibold text-foreground">{pv?.totalViews ?? "—"}</span> cəmi
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {pv && pv.topPages.length > 0 && (
-        <div className="mt-4 rounded-2xl border border-border bg-background shadow-sm overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-border px-6 py-4">
-            <BarChart2 className="h-4 w-4 text-muted-foreground" />
-            <h2 className="font-bold">Ən çox baxılan səhifələr (7 gün)</h2>
-          </div>
-          <table className="w-full text-sm">
-            <tbody>
-              {pv.topPages.map((p, i) => (
-                <tr key={p.path} className="border-t border-border first:border-0 hover:bg-secondary/20">
-                  <td className="px-6 py-2.5 w-8 text-muted-foreground font-mono text-xs">{i + 1}</td>
-                  <td className="px-2 py-2.5 font-medium text-[var(--brand)]">{p.path}</td>
-                  <td className="px-6 py-2.5 text-right font-bold">{p.total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {pv && (pv.topPages.length > 0 || pv.topCountries.length > 0) && (
+        <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {pv.topPages.length > 0 && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-border px-5 py-3.5">
+                <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                <h2 className="font-bold text-sm">Ən çox baxılan səhifələr (7 gün)</h2>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {pv.topPages.map((p, i) => (
+                    <tr key={p.path} className="border-t border-border first:border-0 hover:bg-secondary/20">
+                      <td className="px-5 py-2 w-7 text-muted-foreground font-mono text-xs">{i + 1}</td>
+                      <td className="px-2 py-2 font-medium text-[var(--brand)] truncate max-w-[160px]">{p.path}</td>
+                      <td className="px-5 py-2 text-right font-bold">{p.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {pv.topCountries.length > 0 && (
+            <div className="rounded-2xl border border-border bg-background shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 border-b border-border px-5 py-3.5">
+                <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                <h2 className="font-bold text-sm">Ölkələr üzrə ziyarətçilər (7 gün)</h2>
+              </div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {pv.topCountries.map((c, i) => (
+                    <tr key={c.country} className="border-t border-border first:border-0 hover:bg-secondary/20">
+                      <td className="px-5 py-2 w-7 text-muted-foreground font-mono text-xs">{i + 1}</td>
+                      <td className="px-2 py-2 font-medium flex items-center gap-2">
+                        <img src={`https://flagcdn.com/20x15/${c.country_code.toLowerCase()}.png`} alt={c.country_code} className="h-3.5 w-5 object-cover rounded-sm" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                        {c.country}
+                      </td>
+                      <td className="px-5 py-2 text-right font-bold">{c.visits}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
