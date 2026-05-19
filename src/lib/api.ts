@@ -167,6 +167,10 @@ export interface Product {
   most_sold: number;
   is_popular: number;
   description: string;
+  credit_months?: number;
+  interest_free?: number;
+  interest_rate?: number;
+  view_count?: number;
   created_at?: string;
 }
 

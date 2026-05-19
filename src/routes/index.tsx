@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-import { api, getImageUrl, type Product } from "@/lib/api";
+import { api, getImageUrl, type Product, type Campaign } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
 import bannerBedroom from "@/assets/banner-bedroom.jpg";
@@ -27,12 +27,15 @@ function Index() {
   const [mostSold, setMostSold] = useState<Product[]>([]);
   const [featuredList, setFeaturedList] = useState<(Product & { _until?: string | null; _note?: string; _discount?: number; _credit_months?: number })[] | undefined>(undefined);
   const [featuredIdx, setFeaturedIdx] = useState(0);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setProducts).catch(() => {});
     api.getPopularProducts(24).then(setPopular).catch(() => {});
     api.getMostSoldProducts(24).then(setMostSold).catch(() => {});
     api.getFeaturedProduct().then((arr) => setFeaturedList(arr)).catch(() => setFeaturedList([]));
+    api.getCampaigns().then((c) => setCampaigns(c.filter(x => x.is_active))).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -40,6 +43,12 @@ function Index() {
     const id = setInterval(() => setFeaturedIdx(i => (i + 1) % featuredList.length), 3000);
     return () => clearInterval(id);
   }, [featuredList]);
+
+  useEffect(() => {
+    if (campaigns.length <= 1) return;
+    const id = setInterval(() => setHeroIdx(i => (i + 1) % campaigns.length), 4000);
+    return () => clearInterval(id);
+  }, [campaigns]);
 
   const featured = featuredList === undefined ? undefined : (featuredList[featuredIdx] ?? null);
 
@@ -58,24 +67,48 @@ function Index() {
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-3 px-4 py-4 lg:grid-cols-3 lg:py-5">
         <div className="relative col-span-2 overflow-hidden rounded-2xl bg-neutral-900 text-white">
-          <img src={heroLiving} alt="Modern living room" width={1920} height={1080} className="absolute inset-0 h-full w-full object-cover opacity-75 saturate-150" />
+          {/* Campaign background slides */}
+          {campaigns.length > 0 ? (
+            campaigns.map((camp, i) => {
+              const url = getImageUrl(camp.image);
+              return url ? (
+                <img key={camp.id} src={url} alt={camp.title}
+                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === heroIdx ? "opacity-75" : "opacity-0"}`} />
+              ) : null;
+            })
+          ) : (
+            <img src={heroLiving} alt="Hero" className="absolute inset-0 h-full w-full object-cover opacity-75 saturate-150" />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
           <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-end p-6 md:min-h-[360px] md:p-10">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">Mövsüm kampaniyası</p>
+            <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">
+              {campaigns[heroIdx]?.title || "Mövsüm kampaniyası"}
+            </p>
             <h1 className="mt-2 font-black leading-[0.9] tracking-tight">
               <span className="block text-4xl md:text-6xl">Çınarlı</span>
               <span className="mt-1 block text-emerald-300 text-2xl md:text-4xl italic font-light">Keyfiyyətli mebel</span>
             </h1>
-            <p className="mt-3 max-w-md text-sm text-white/80">Premium mebel kolleksiyasını əldə edin.</p>
+            {campaigns[heroIdx]?.description && (
+              <p className="mt-3 max-w-md text-sm text-white/80">{campaigns[heroIdx].description}</p>
+            )}
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Link to="/kampaniyalar" className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-neutral-900 shadow-lg hover:bg-white/90">
                 Kampaniyalar <ArrowRight className="h-3.5 w-3.5" />
               </Link>
-              <Link to="/yeni" className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/10">
+              <Link to="/kateqoriya/$slug" params={{ slug: "mebel-dunyasi" }} className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/10">
                 Yeni kolleksiya
               </Link>
             </div>
+            {/* Slide dots */}
+            {campaigns.length > 1 && (
+              <div className="mt-3 flex gap-1.5">
+                {campaigns.map((_, i) => (
+                  <button key={i} onClick={() => setHeroIdx(i)}
+                    className={`h-1.5 rounded-full transition-all ${i === heroIdx ? "w-4 bg-white" : "w-1.5 bg-white/40"}`} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

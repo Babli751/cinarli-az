@@ -176,7 +176,7 @@ function CategoryPage() {
                         <span className="text-base font-black md:text-xl">{p.price} ₼</span>
                         {p.old_price && <span className="text-xs text-muted-foreground line-through md:text-sm">{p.old_price} ₼</span>}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan</div>
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {p.credit_months || 24} aya {Math.round(p.price / (p.credit_months || 24))} ₼/ay</div>
                       <button className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:mt-3 md:py-2 md:text-sm">
                         Səbətə əlavə et
                       </button>

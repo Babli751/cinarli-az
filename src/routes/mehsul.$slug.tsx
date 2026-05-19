@@ -277,10 +277,23 @@ function ProductPage() {
               </div>
             )}
 
-            <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
-              <span className="font-semibold text-[var(--brand)]">Faizsiz aylıq ödəniş:</span>{" "}
-              24 aya {Math.round(product.price / 24)} ₼ / ay
-            </div>
+            {(() => {
+              const months = product.credit_months || 24;
+              const isFree = product.interest_free !== 0;
+              const rate = product.interest_rate || 0;
+              const monthly = isFree
+                ? Math.round(product.price / months)
+                : Math.round(product.price * (1 + rate / 100) * months / months * (rate / 100) / (1 - Math.pow(1 + rate / 100, -months)));
+              const monthlySimple = isFree ? monthly : Math.round(product.price * (1 + (rate / 100) * months) / months);
+              return (
+                <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
+                  <span className="font-semibold text-[var(--brand)]">
+                    {isFree ? "Faizsiz aylıq ödəniş:" : `Aylıq ödəniş (${rate}% faiz):`}
+                  </span>{" "}
+                  {months} aya {isFree ? monthly : monthlySimple} ₼ / ay
+                </div>
+              );
+            })()}
 
             {product.description && (
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{product.description}</p>

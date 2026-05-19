@@ -291,6 +291,36 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   if (url && !extraImages.includes(url)) setExtraImages(prev => [url, ...prev.filter(x => x !== editing.image)]);
                 }} placeholder="və ya URL yapışdır..." />
               </Field>
+              {/* Credit settings */}
+              <div className="rounded-xl border border-border p-4 space-y-3">
+                <div className="text-sm font-semibold">Kredit şərtləri</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Kredit müddəti (ay)">
+                    <select className={inp} value={editing.credit_months ?? 24} onChange={(e) => setEditing({ ...editing, credit_months: Number(e.target.value) })}>
+                      <option value={6}>6 ay</option>
+                      <option value={12}>12 ay</option>
+                      <option value={18}>18 ay</option>
+                      <option value={24}>24 ay</option>
+                      <option value={36}>36 ay</option>
+                      <option value={48}>48 ay</option>
+                    </select>
+                  </Field>
+                  <Field label="Növ">
+                    <select className={inp} value={editing.interest_free ?? 1} onChange={(e) => setEditing({ ...editing, interest_free: Number(e.target.value), interest_rate: Number(e.target.value) === 1 ? 0 : editing.interest_rate })}>
+                      <option value={1}>Faizsiz</option>
+                      <option value={0}>Faizli</option>
+                    </select>
+                  </Field>
+                </div>
+                {!editing.interest_free && (
+                  <Field label="Aylıq faiz (%)">
+                    <input type="number" min="0" max="20" step="0.1" className={inp} value={editing.interest_rate ?? 0}
+                      onChange={(e) => setEditing({ ...editing, interest_rate: Number(e.target.value) })}
+                      placeholder="Məs: 2.5" />
+                  </Field>
+                )}
+              </div>
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}
                   className={`relative h-6 w-11 rounded-full transition-colors ${editing.is_active ? "bg-[var(--brand)]" : "bg-secondary"}`}>

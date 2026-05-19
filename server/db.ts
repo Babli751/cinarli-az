@@ -99,6 +99,9 @@ try { db.exec("ALTER TABLE categories ADD COLUMN position INTEGER DEFAULT 0"); }
 try { db.exec("UPDATE categories SET position = id WHERE position = 0 OR position IS NULL"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN images TEXT DEFAULT '[]'"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN view_count INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN credit_months INTEGER DEFAULT 24"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN interest_free INTEGER DEFAULT 1"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN interest_rate REAL DEFAULT 0"); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS wishlists (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
