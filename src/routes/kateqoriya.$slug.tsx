@@ -157,11 +157,16 @@ function CategoryPage() {
           <div>
             <p className="mb-3 hidden text-sm text-muted-foreground lg:block">{filtered.length} məhsul tapıldı</p>
             {filtered.length === 0 ? (
-              categories.filter(c => c.parent_id === cat?.id).length === 0 && (
-                <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
-                  {allProducts.length === 0 ? "Yüklənir..." : "Bu kateqoriyada məhsul yoxdur"}
-                </div>
-              )
+              (() => {
+                if (categories.length === 0 || allProducts.length === 0) return (
+                  <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">Yüklənir...</div>
+                );
+                const hasSubs = categories.filter(c => c.parent_id === cat?.id).length > 0;
+                if (hasSubs) return null;
+                return (
+                  <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">Bu kateqoriyada məhsul yoxdur</div>
+                );
+              })()
             ) : (
               <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
                 {filtered.map((p) => (
