@@ -156,18 +156,7 @@ function CategoryPage() {
 
           <div>
             <p className="mb-3 hidden text-sm text-muted-foreground lg:block">{filtered.length} məhsul tapıldı</p>
-            {filtered.length === 0 ? (
-              (() => {
-                if (categories.length === 0 || allProducts.length === 0) return (
-                  <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">Yüklənir...</div>
-                );
-                const hasSubs = categories.filter(c => c.parent_id === cat?.id).length > 0;
-                if (hasSubs) return null;
-                return (
-                  <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">Bu kateqoriyada məhsul yoxdur</div>
-                );
-              })()
-            ) : (
+            {filtered.length === 0 ? null : (
               <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
                 {filtered.map((p) => (
                   <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
