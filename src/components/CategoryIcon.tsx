@@ -1,3 +1,5 @@
+import type { JSX } from "react";
+
 interface Props {
   slug: string;
   className?: string;
@@ -140,6 +142,60 @@ const icons: Record<string, (cls: string) => JSX.Element> = {
       <path d="M38 26v-4" />
     </svg>
   ),
+  // Mebel Dünyası — house with furniture
+  "mebel-dunyasi": (cls) => (
+    <svg className={cls} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 22 L24 6 L42 22" />
+      <path d="M10 22v18h28V22" />
+      <rect x="18" y="28" width="12" height="12" rx="1" />
+      <line x1="14" y1="28" x2="14" y2="36" />
+      <line x1="10" y1="36" x2="14" y2="36" />
+      <line x1="34" y1="28" x2="34" y2="36" />
+      <line x1="34" y1="36" x2="38" y2="36" />
+    </svg>
+  ),
+  // Tekstil — fabric / roll
+  "tekstil": (cls) => (
+    <svg className={cls} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="8" y="12" width="32" height="24" rx="2" />
+      <path d="M8 18h32" />
+      <path d="M8 24h32" />
+      <path d="M8 30h32" />
+      <path d="M16 12v24" />
+      <path d="M32 12v24" />
+    </svg>
+  ),
+  // Cehiz — gift / trousseau box
+  "cehiz-mehsullari": (cls) => (
+    <svg className={cls} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="6" y="22" width="36" height="22" rx="2" />
+      <rect x="6" y="16" width="36" height="8" rx="1" />
+      <path d="M24 16v28" />
+      <path d="M24 16 Q18 10 14 14 Q10 18 14 20 Q18 22 24 16z" />
+      <path d="M24 16 Q30 10 34 14 Q38 18 34 20 Q30 22 24 16z" />
+    </svg>
+  ),
+  // Elektronika — TV / screen
+  "elektronika-mehsullari": (cls) => (
+    <svg className={cls} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="8" width="40" height="26" rx="3" />
+      <line x1="20" y1="34" x2="16" y2="42" />
+      <line x1="28" y1="34" x2="32" y2="42" />
+      <line x1="14" y1="42" x2="34" y2="42" />
+      <rect x="10" y="14" width="28" height="14" rx="1" />
+    </svg>
+  ),
+  // Topdansatış — boxes / wholesale
+  "topdansatis": (cls) => (
+    <svg className={cls} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="26" width="18" height="16" rx="2" />
+      <rect x="26" y="26" width="18" height="16" rx="2" />
+      <rect x="14" y="8" width="20" height="16" rx="2" />
+      <line x1="14" y1="16" x2="34" y2="16" />
+      <line x1="4" y1="34" x2="22" y2="34" />
+      <line x1="26" y1="34" x2="44" y2="34" />
+    </svg>
+  ),
   // Default — generic furniture
   default: (cls) => (
     <svg className={cls} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -156,6 +212,11 @@ const icons: Record<string, (cls: string) => JSX.Element> = {
 // Map slug keywords to icon keys
 function resolveIconKey(slug: string): string {
   const s = slug.toLowerCase();
+  if (s === "mebel-dunyasi" || s.includes("dunyas")) return "mebel-dunyasi";
+  if (s === "tekstil" || s.includes("tekstil") || s.includes("parça")) return "tekstil";
+  if (s === "cehiz-mehsullari" || s.includes("cehiz")) return "cehiz-mehsullari";
+  if (s === "elektronika-mehsullari" || s.includes("elektron")) return "elektronika-mehsullari";
+  if (s === "topdansatis" || s.includes("topdan")) return "topdansatis";
   if (s.includes("kunc") || s.includes("künc") || s.includes("corner")) return "kunc-divan";
   if (s.includes("divan") || s.includes("sofa") || s.includes("kreslo")) return "divan";
   if (s.includes("yataq") || s.includes("bed")) return "yataq";
