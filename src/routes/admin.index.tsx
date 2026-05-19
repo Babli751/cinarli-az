@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { api, type Stats, type Order } from "@/lib/api";
-import { Package, ShoppingBag, Users, TrendingUp, Clock } from "lucide-react";
+import { api, type Stats, type Order, type PageViewStats } from "@/lib/api";
+import { Package, ShoppingBag, Users, TrendingUp, Clock, Eye, BarChart2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
@@ -22,10 +22,12 @@ const STATUS_AZ: Record<string, string> = {
 function AdminDashboard() {
   const [stats, setStats] = useState<Stats>({ products: 0, orders: 0, users: 0, revenue: 0, pending: 0 });
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [pv, setPv] = useState<PageViewStats | null>(null);
 
   useEffect(() => {
     api.getStats().then(setStats).catch(() => {});
     api.getOrders().then((o) => setRecentOrders(o.slice(0, 8))).catch(() => {});
+    api.getPageViews().then(setPv).catch(() => {});
   }, []);
 
   const cards = [
@@ -54,17 +56,53 @@ function AdminDashboard() {
         ))}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-border bg-background p-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="inline-flex rounded-xl bg-green-50 p-2.5 text-green-600">
-            <TrendingUp className="h-5 w-5" />
+      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-xl bg-green-50 p-2.5 text-green-600">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-sm text-muted-foreground">Ümumi gəlir</div>
+              <div className="text-2xl font-black md:text-3xl">{stats.revenue.toFixed(2)} ₼</div>
+            </div>
           </div>
-          <div>
-            <div className="text-sm text-muted-foreground">Ümumi gəlir</div>
-            <div className="text-2xl font-black md:text-3xl">{stats.revenue.toFixed(2)} ₼</div>
+        </div>
+        <div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="inline-flex rounded-xl bg-sky-50 p-2.5 text-sky-600">
+              <Eye className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm text-muted-foreground">Sayt baxışları</div>
+              <div className="flex items-end gap-3">
+                <div className="text-2xl font-black md:text-3xl">{pv?.todayViews ?? "—"}</div>
+                <div className="mb-0.5 text-sm text-muted-foreground">bu gün · <span className="font-semibold text-foreground">{pv?.weekViews ?? "—"}</span> həftə · <span className="font-semibold text-foreground">{pv?.totalViews ?? "—"}</span> cəmi</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {pv && pv.topPages.length > 0 && (
+        <div className="mt-4 rounded-2xl border border-border bg-background shadow-sm overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-border px-6 py-4">
+            <BarChart2 className="h-4 w-4 text-muted-foreground" />
+            <h2 className="font-bold">Ən çox baxılan səhifələr (7 gün)</h2>
+          </div>
+          <table className="w-full text-sm">
+            <tbody>
+              {pv.topPages.map((p, i) => (
+                <tr key={p.path} className="border-t border-border first:border-0 hover:bg-secondary/20">
+                  <td className="px-6 py-2.5 w-8 text-muted-foreground font-mono text-xs">{i + 1}</td>
+                  <td className="px-2 py-2.5 font-medium text-[var(--brand)]">{p.path}</td>
+                  <td className="px-6 py-2.5 text-right font-bold">{p.total}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="mt-6 rounded-2xl border border-border bg-background shadow-sm overflow-x-auto">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">

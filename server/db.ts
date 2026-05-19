@@ -98,6 +98,7 @@ try { db.exec("ALTER TABLE categories ADD COLUMN is_hidden INTEGER DEFAULT 0"); 
 try { db.exec("ALTER TABLE categories ADD COLUMN position INTEGER DEFAULT 0"); } catch {}
 try { db.exec("UPDATE categories SET position = id WHERE position = 0 OR position IS NULL"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN images TEXT DEFAULT '[]'"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN view_count INTEGER DEFAULT 0"); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS wishlists (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -120,6 +121,14 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS user_addresses (
   city TEXT DEFAULT '',
   is_default INTEGER DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
+
+try { db.exec(`CREATE TABLE IF NOT EXISTS page_views (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  path TEXT NOT NULL,
+  date TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 1,
+  UNIQUE(path, date)
 )`); } catch {}
 
 // Seed admin if no users exist

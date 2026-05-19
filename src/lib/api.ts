@@ -112,6 +112,8 @@ export const api = {
 
   // Stats
   getStats: () => req<Stats>("GET", "/api/stats", undefined, true),
+  getPageViews: () => req<PageViewStats>("GET", "/api/page-views", undefined, true),
+  trackView: (path: string) => fetch(`${BASE}/api/track`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path }) }).catch(() => {}),
 
   // Upload
   uploadFile: async (file: File): Promise<string> => {
@@ -237,4 +239,12 @@ export interface Stats {
   users: number;
   revenue: number;
   pending: number;
+}
+
+export interface PageViewStats {
+  todayViews: number;
+  weekViews: number;
+  totalViews: number;
+  topPages: { path: string; total: number }[];
+  daily: { date: string; total: number }[];
 }

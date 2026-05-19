@@ -19,6 +19,20 @@ type Vars = { user: { id: number; email: string; role: string; full_name: string
 const app = new Hono<{ Variables: Vars }>();
 
 app.use("*", cors({ origin: "*", allowHeaders: ["Content-Type", "Authorization"] }));
+
+// Page view tracker — frontend calls this
+app.post("/api/track", async (c) => {
+  try {
+    const { path } = await c.req.json<{ path: string }>();
+    if (!path || path.startsWith("/api") || path.startsWith("/uploads")) return c.json({ ok: true });
+    const date = new Date().toISOString().slice(0, 10);
+    db.prepare(`
+      INSERT INTO page_views (path, date, count) VALUES (?, ?, 1)
+      ON CONFLICT(path, date) DO UPDATE SET count = count + 1
+    `).run(path, date);
+  } catch {}
+  return c.json({ ok: true });
+});
 app.get("/uploads/:filename", async (c) => {
   const filename = c.req.param("filename");
   const filePath = path.join(__dirname, "uploads", filename);
@@ -309,7 +323,14 @@ app.put("/api/products/:id/most-sold", authMiddleware, adminMiddleware, async (c
 
 app.get("/api/products/popular", (c) => {
   const limit = Number(c.req.query("limit") || 12);
-  return c.json(db.prepare("SELECT * FROM products WHERE is_active=1 AND is_popular=1 ORDER BY created_at DESC LIMIT ?").all(limit));
+  // manual is_popular OR top view_count — union, dedup, capped at limit
+  return c.json(db.prepare(`
+    SELECT * FROM products WHERE is_active=1 AND (
+      is_popular=1 OR id IN (
+        SELECT id FROM products WHERE is_active=1 ORDER BY view_count DESC LIMIT ?
+      )
+    ) ORDER BY is_popular DESC, view_count DESC LIMIT ?
+  `).all(limit, limit));
 });
 
 app.put("/api/products/:id/popular", authMiddleware, adminMiddleware, async (c) => {
@@ -319,8 +340,10 @@ app.put("/api/products/:id/popular", authMiddleware, adminMiddleware, async (c) 
 });
 
 app.get("/api/products/:id", (c) => {
-  const p = db.prepare("SELECT * FROM products WHERE id=?").get(c.req.param("id"));
+  const id = c.req.param("id");
+  const p = db.prepare("SELECT * FROM products WHERE id=?").get(id);
   if (!p) return c.json({ error: "Tapılmadı" }, 404);
+  db.prepare("UPDATE products SET view_count = COALESCE(view_count,0) + 1 WHERE id=?").run(id);
   return c.json(p);
 });
 
@@ -517,6 +540,27 @@ app.get("/api/stats", authMiddleware, adminMiddleware, (c) => {
   const revenue = (db.prepare("SELECT COALESCE(SUM(total),0) as s FROM orders WHERE status != 'cancelled'").get() as any).s;
   const pending = (db.prepare("SELECT COUNT(*) as c FROM orders WHERE status='pending'").get() as any).c;
   return c.json({ products, orders, users, revenue, pending });
+});
+
+app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+
+  const todayViews = (db.prepare("SELECT COALESCE(SUM(count),0) as s FROM page_views WHERE date=?").get(today) as any).s;
+  const weekViews = (db.prepare("SELECT COALESCE(SUM(count),0) as s FROM page_views WHERE date>=?").get(weekAgo) as any).s;
+  const totalViews = (db.prepare("SELECT COALESCE(SUM(count),0) as s FROM page_views").get() as any).s;
+
+  const topPages = db.prepare(`
+    SELECT path, SUM(count) as total FROM page_views
+    WHERE date >= ? GROUP BY path ORDER BY total DESC LIMIT 10
+  `).all(weekAgo) as { path: string; total: number }[];
+
+  const daily = db.prepare(`
+    SELECT date, SUM(count) as total FROM page_views
+    WHERE date >= ? GROUP BY date ORDER BY date ASC
+  `).all(weekAgo) as { date: string; total: number }[];
+
+  return c.json({ todayViews, weekViews, totalViews, topPages, daily });
 });
 
 serve({ fetch: app.fetch, port: PORT }, () => {
