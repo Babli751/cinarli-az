@@ -73,25 +73,14 @@ function Index() {
               const url = getImageUrl(camp.image);
               return url ? (
                 <img key={camp.id} src={url} alt={camp.title}
-                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === heroIdx ? "opacity-75" : "opacity-0"}`} />
+                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === heroIdx ? "opacity-100" : "opacity-0"}`} />
               ) : null;
             })
           ) : (
-            <img src={heroLiving} alt="Hero" className="absolute inset-0 h-full w-full object-cover opacity-75 saturate-150" />
+            <img src={heroLiving} alt="Hero" className="absolute inset-0 h-full w-full object-cover opacity-90 saturate-150" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40" />
-          <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-end p-6 md:min-h-[360px] md:p-10">
-            <p className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-300">
-              {campaigns[heroIdx]?.title || "Mövsüm kampaniyası"}
-            </p>
-            <h1 className="mt-2 font-black leading-[0.9] tracking-tight">
-              <span className="block text-4xl md:text-6xl">Çınarlı</span>
-              <span className="mt-1 block text-emerald-300 text-2xl md:text-4xl italic font-light">Keyfiyyətli mebel</span>
-            </h1>
-            {campaigns[heroIdx]?.description && (
-              <p className="mt-3 max-w-md text-sm text-white/80">{campaigns[heroIdx].description}</p>
-            )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-end p-4 md:min-h-[360px] md:p-8">
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Link to="/kampaniyalar" className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-neutral-900 shadow-lg hover:bg-white/90">
                 Kampaniyalar <ArrowRight className="h-3.5 w-3.5" />
@@ -100,7 +89,6 @@ function Index() {
                 Yeni kolleksiya
               </Link>
             </div>
-            {/* Slide dots */}
             {campaigns.length > 1 && (
               <div className="mt-3 flex gap-1.5">
                 {campaigns.map((_, i) => (
