@@ -105,7 +105,7 @@ function Index() {
           <div className="flex items-center justify-between bg-[var(--accent-orange)] px-4 py-2.5">
             <div className="flex items-center gap-2">
               <span className="text-base">★</span>
-              <span className="text-sm font-bold text-white">Həftənin teklifi</span>
+              <span className="text-sm font-bold text-white tracking-wide">HƏFTƏNİN TƏKLİFİ</span>
               {featuredList && featuredList.length > 1 && (
                 <div className="flex items-center gap-1 ml-1">
                   {featuredList.map((_, i) => (
@@ -193,31 +193,11 @@ function Index() {
         </div>
       </section>
 
-      {/* Promo banners */}
-      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 md:grid-cols-3">
-        {[
-          { t: "Yataq otağı dəstləri", d: "30%-dək endirim", img: bannerBedroom, slug: "carpayilar" },
-          { t: "Yumşaq mebel həftəsi", d: "Faizsiz 24 ay", img: bannerSoft, slug: "yumsaq-mebel" },
-          { t: "Ofis komfortu", d: "İş üçün ən yaxşısı", img: bannerOffice, slug: "ofis-mebel" },
-        ].map((b) => (
-          <Link key={b.slug} to="/kateqoriya/$slug" params={{ slug: b.slug }}
-            className="group relative h-56 overflow-hidden rounded-2xl">
-            <img src={b.img} alt={b.t} width={1024} height={768} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-5 text-white">
-              <div className="text-xs font-bold uppercase tracking-wider text-white/80">{b.d}</div>
-              <div className="mt-1 text-2xl font-black">{b.t}</div>
-              <div className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-white/90">Kəşf et <ArrowRight className="h-3.5 w-3.5" /></div>
-            </div>
-          </Link>
-        ))}
-      </section>
-
       {/* Feature strip */}
       <section className="mx-auto max-w-7xl px-4 pt-6">
         <div className="grid grid-cols-2 gap-4 rounded-2xl border border-border bg-card p-6 md:grid-cols-6">
           {[
-            { icon: Store, label: "56 mağaza" },
+            { icon: Store, label: "Ölkədaxili Xidmət" },
             { icon: Sofa, label: "40 mindən çox seçim" },
             { icon: Truck, label: "Sürətli çatdırılma" },
             { icon: ShieldCheck, label: "Rəsmi zəmanət" },
