@@ -301,11 +301,12 @@ app.delete("/api/categories/:id", authMiddleware, adminMiddleware, (c) => {
 
 // ─── PRODUCTS ───────────────────────────────────────────
 app.get("/api/products", (c) => {
-  const { category, active } = c.req.query();
+  const { category, active, brand } = c.req.query();
   let q = "SELECT * FROM products WHERE 1=1";
   const params: any[] = [];
   if (category) { q += " AND category_slug=?"; params.push(category); }
   if (active !== undefined) { q += " AND is_active=?"; params.push(active === "true" ? 1 : 0); }
+  if (brand) { q += " AND brand_slug=?"; params.push(brand); }
   q += " ORDER BY created_at DESC";
   return c.json(db.prepare(q).all(...params));
 });
@@ -379,8 +380,8 @@ app.get("/api/products/:id", (c) => {
 app.post("/api/products", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const images = Array.isArray(b.images) ? JSON.stringify(b.images) : "[]";
-  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, image, images, category_slug, stock, is_active, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || ""
+  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0
   );
   return c.json({ id: result.lastInsertRowid });
 });
@@ -396,8 +397,8 @@ app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
     const existing = db.prepare("SELECT images FROM products WHERE id=?").get(c.req.param("id")) as any;
     images = existing?.images || "[]";
   }
-  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, image=?, images=?, category_slug=?, stock=?, is_active=?, description=? WHERE id=?").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", c.req.param("id")
+  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=? WHERE id=?").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -558,6 +559,38 @@ app.put("/api/stores/:id", authMiddleware, adminMiddleware, async (c) => {
 
 app.delete("/api/stores/:id", authMiddleware, adminMiddleware, (c) => {
   db.prepare("DELETE FROM stores WHERE id=?").run(c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ─── BRANDS ─────────────────────────────────────────────
+app.get("/api/brands", (c) => {
+  return c.json(db.prepare("SELECT * FROM brands WHERE is_active=1 ORDER BY position ASC, id ASC").all());
+});
+
+app.get("/api/brands/all", authMiddleware, adminMiddleware, (c) => {
+  return c.json(db.prepare("SELECT * FROM brands ORDER BY position ASC, id ASC").all());
+});
+
+app.post("/api/brands", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  if (!b.name) return c.json({ error: "Ad mütləqdir" }, 400);
+  const slug = b.slug || b.name.toLowerCase()
+    .replace(/ə/g, "e").replace(/ö/g, "o").replace(/ü/g, "u")
+    .replace(/ı/g, "i").replace(/ğ/g, "g").replace(/ş/g, "s").replace(/ç/g, "c")
+    .replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const maxPos = (db.prepare("SELECT COALESCE(MAX(position),0) as m FROM brands").get() as any).m;
+  const r = db.prepare("INSERT INTO brands (slug, name, logo, position, is_active) VALUES (?, ?, ?, ?, ?)").run(slug, b.name, b.logo || "", maxPos + 1, b.is_active ?? 1);
+  return c.json({ id: r.lastInsertRowid });
+});
+
+app.put("/api/brands/:id", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  db.prepare("UPDATE brands SET name=?, logo=?, is_active=?, slug=? WHERE id=?").run(b.name, b.logo || "", b.is_active ?? 1, b.slug, Number(c.req.param("id")));
+  return c.json({ ok: true });
+});
+
+app.delete("/api/brands/:id", authMiddleware, adminMiddleware, (c) => {
+  db.prepare("DELETE FROM brands WHERE id=?").run(c.req.param("id"));
   return c.json({ ok: true });
 });
 

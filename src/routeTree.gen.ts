@@ -31,6 +31,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as MehsulSlugRouteImport } from './routes/mehsul.$slug'
 import { Route as KateqoriyaSlugRouteImport } from './routes/kateqoriya.$slug'
+import { Route as BrendSlugRouteImport } from './routes/brend.$slug'
 import { Route as AdminSifarislerRouteImport } from './routes/admin.sifarisler'
 import { Route as AdminMehsullarRouteImport } from './routes/admin.mehsullar'
 import { Route as AdminMagazalarRouteImport } from './routes/admin.magazalar'
@@ -38,6 +39,7 @@ import { Route as AdminKateqoriyalarRouteImport } from './routes/admin.kateqoriy
 import { Route as AdminKampaniyalarRouteImport } from './routes/admin.kampaniyalar'
 import { Route as AdminIstifadecilerRouteImport } from './routes/admin.istifadeciler'
 import { Route as AdminHefteninTeklifiRouteImport } from './routes/admin.heftenin-teklifi'
+import { Route as AdminBrendlerRouteImport } from './routes/admin.brendler'
 
 const YeniRoute = YeniRouteImport.update({
   id: '/yeni',
@@ -149,6 +151,11 @@ const KateqoriyaSlugRoute = KateqoriyaSlugRouteImport.update({
   path: '/kateqoriya/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrendSlugRoute = BrendSlugRouteImport.update({
+  id: '/brend/$slug',
+  path: '/brend/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSifarislerRoute = AdminSifarislerRouteImport.update({
   id: '/sifarisler',
   path: '/sifarisler',
@@ -184,6 +191,11 @@ const AdminHefteninTeklifiRoute = AdminHefteninTeklifiRouteImport.update({
   path: '/heftenin-teklifi',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBrendlerRoute = AdminBrendlerRouteImport.update({
+  id: '/brendler',
+  path: '/brendler',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -205,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/sebet': typeof SebetRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
+  '/admin/brendler': typeof AdminBrendlerRoute
   '/admin/heftenin-teklifi': typeof AdminHefteninTeklifiRoute
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
   '/admin/kampaniyalar': typeof AdminKampaniyalarRoute
@@ -212,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/admin/magazalar': typeof AdminMagazalarRoute
   '/admin/mehsullar': typeof AdminMehsullarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
+  '/brend/$slug': typeof BrendSlugRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
   '/mehsul/$slug': typeof MehsulSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -235,6 +249,7 @@ export interface FileRoutesByTo {
   '/sebet': typeof SebetRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
+  '/admin/brendler': typeof AdminBrendlerRoute
   '/admin/heftenin-teklifi': typeof AdminHefteninTeklifiRoute
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
   '/admin/kampaniyalar': typeof AdminKampaniyalarRoute
@@ -242,6 +257,7 @@ export interface FileRoutesByTo {
   '/admin/magazalar': typeof AdminMagazalarRoute
   '/admin/mehsullar': typeof AdminMehsullarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
+  '/brend/$slug': typeof BrendSlugRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
   '/mehsul/$slug': typeof MehsulSlugRoute
   '/admin': typeof AdminIndexRoute
@@ -267,6 +283,7 @@ export interface FileRoutesById {
   '/sebet': typeof SebetRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
+  '/admin/brendler': typeof AdminBrendlerRoute
   '/admin/heftenin-teklifi': typeof AdminHefteninTeklifiRoute
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
   '/admin/kampaniyalar': typeof AdminKampaniyalarRoute
@@ -274,6 +291,7 @@ export interface FileRoutesById {
   '/admin/magazalar': typeof AdminMagazalarRoute
   '/admin/mehsullar': typeof AdminMehsullarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
+  '/brend/$slug': typeof BrendSlugRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
   '/mehsul/$slug': typeof MehsulSlugRoute
   '/admin/': typeof AdminIndexRoute
@@ -300,6 +318,7 @@ export interface FileRouteTypes {
     | '/sebet'
     | '/terms'
     | '/yeni'
+    | '/admin/brendler'
     | '/admin/heftenin-teklifi'
     | '/admin/istifadeciler'
     | '/admin/kampaniyalar'
@@ -307,6 +326,7 @@ export interface FileRouteTypes {
     | '/admin/magazalar'
     | '/admin/mehsullar'
     | '/admin/sifarisler'
+    | '/brend/$slug'
     | '/kateqoriya/$slug'
     | '/mehsul/$slug'
     | '/admin/'
@@ -330,6 +350,7 @@ export interface FileRouteTypes {
     | '/sebet'
     | '/terms'
     | '/yeni'
+    | '/admin/brendler'
     | '/admin/heftenin-teklifi'
     | '/admin/istifadeciler'
     | '/admin/kampaniyalar'
@@ -337,6 +358,7 @@ export interface FileRouteTypes {
     | '/admin/magazalar'
     | '/admin/mehsullar'
     | '/admin/sifarisler'
+    | '/brend/$slug'
     | '/kateqoriya/$slug'
     | '/mehsul/$slug'
     | '/admin'
@@ -361,6 +383,7 @@ export interface FileRouteTypes {
     | '/sebet'
     | '/terms'
     | '/yeni'
+    | '/admin/brendler'
     | '/admin/heftenin-teklifi'
     | '/admin/istifadeciler'
     | '/admin/kampaniyalar'
@@ -368,6 +391,7 @@ export interface FileRouteTypes {
     | '/admin/magazalar'
     | '/admin/mehsullar'
     | '/admin/sifarisler'
+    | '/brend/$slug'
     | '/kateqoriya/$slug'
     | '/mehsul/$slug'
     | '/admin/'
@@ -393,6 +417,7 @@ export interface RootRouteChildren {
   SebetRoute: typeof SebetRoute
   TermsRoute: typeof TermsRoute
   YeniRoute: typeof YeniRoute
+  BrendSlugRoute: typeof BrendSlugRoute
   KateqoriyaSlugRoute: typeof KateqoriyaSlugRoute
   MehsulSlugRoute: typeof MehsulSlugRoute
 }
@@ -553,6 +578,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KateqoriyaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/brend/$slug': {
+      id: '/brend/$slug'
+      path: '/brend/$slug'
+      fullPath: '/brend/$slug'
+      preLoaderRoute: typeof BrendSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/sifarisler': {
       id: '/admin/sifarisler'
       path: '/sifarisler'
@@ -602,10 +634,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHefteninTeklifiRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/brendler': {
+      id: '/admin/brendler'
+      path: '/brendler'
+      fullPath: '/admin/brendler'
+      preLoaderRoute: typeof AdminBrendlerRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminBrendlerRoute: typeof AdminBrendlerRoute
   AdminHefteninTeklifiRoute: typeof AdminHefteninTeklifiRoute
   AdminIstifadecilerRoute: typeof AdminIstifadecilerRoute
   AdminKampaniyalarRoute: typeof AdminKampaniyalarRoute
@@ -617,6 +657,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBrendlerRoute: AdminBrendlerRoute,
   AdminHefteninTeklifiRoute: AdminHefteninTeklifiRoute,
   AdminIstifadecilerRoute: AdminIstifadecilerRoute,
   AdminKampaniyalarRoute: AdminKampaniyalarRoute,
@@ -649,6 +690,7 @@ const rootRouteChildren: RootRouteChildren = {
   SebetRoute: SebetRoute,
   TermsRoute: TermsRoute,
   YeniRoute: YeniRoute,
+  BrendSlugRoute: BrendSlugRoute,
   KateqoriyaSlugRoute: KateqoriyaSlugRoute,
   MehsulSlugRoute: MehsulSlugRoute,
 }

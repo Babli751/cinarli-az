@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
-import { api, getImageUrl, type Product, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Category, type Brand } from "@/lib/api";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, X, Search, ImageIcon, TrendingUp, Flame } from "lucide-react";
 
@@ -11,6 +11,7 @@ export const Route = createFileRoute("/admin/mehsullar")({
 function ProductsAdmin() {
   const [items, setItems] = useState<Product[]>([]);
   const [cats, setCats] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -20,9 +21,10 @@ function ProductsAdmin() {
 
   const load = async () => {
     setLoading(true);
-    const [p, c] = await Promise.all([api.getProducts(), api.getCategoriesAll()]);
+    const [p, c, b] = await Promise.all([api.getProducts(), api.getCategoriesAll(), api.getBrandsAll()]);
     setItems(p);
     setCats(c);
+    setBrands(b);
     setLoading(false);
   };
   useEffect(() => { load(); }, []);
@@ -248,6 +250,12 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 <select className={inp} value={editing.category_slug ?? ""} onChange={(e) => setEditing({ ...editing, category_slug: e.target.value || undefined })}>
                   <option value="">— Kateqoriya seçin —</option>
                   {cats.map((c) => <option key={c.slug} value={c.slug}>{c.is_hidden ? "🔒 " : ""}{c.name}</option>)}
+                </select>
+              </Field>
+              <Field label="Brend">
+                <select className={inp} value={editing.brand_slug ?? ""} onChange={(e) => setEditing({ ...editing, brand_slug: e.target.value || undefined })}>
+                  <option value="">— Brend seçin (opsional) —</option>
+                  {brands.map((b) => <option key={b.slug} value={b.slug}>{b.name}</option>)}
                 </select>
               </Field>
               <Field label="Şəkillər">

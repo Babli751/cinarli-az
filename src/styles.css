@@ -65,9 +65,9 @@
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.2 0.02 250);
-  --brand: oklch(0.72 0.19 145);
+  --brand: oklch(0.72 0.14 195);
   --brand-foreground: oklch(0.99 0 0);
-  --accent-orange: oklch(0.74 0.18 50);
+  --accent-orange: oklch(0.68 0.14 195);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-accent-orange: var(--accent-orange);
@@ -147,4 +147,16 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+  width: max-content;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
 }

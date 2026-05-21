@@ -2,12 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-import { api, getImageUrl, type Product, type Campaign } from "@/lib/api";
+import { api, getImageUrl, type Product, type Campaign, type Brand } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
-import bannerBedroom from "@/assets/banner-bedroom.jpg";
-import bannerSoft from "@/assets/banner-soft.jpg";
-import bannerOffice from "@/assets/banner-office.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,6 +26,7 @@ function Index() {
   const [featuredIdx, setFeaturedIdx] = useState(0);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [heroIdx, setHeroIdx] = useState(0);
+  const [brands, setBrands] = useState<Brand[]>([]);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setProducts).catch(() => {});
@@ -36,6 +34,7 @@ function Index() {
     api.getMostSoldProducts(24).then(setMostSold).catch(() => {});
     api.getFeaturedProduct().then((arr) => setFeaturedList(arr)).catch(() => setFeaturedList([]));
     api.getCampaigns().then((c) => setCampaigns(c.filter(x => x.is_active))).catch(() => {});
+    api.getBrands().then(setBrands).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -213,6 +212,28 @@ function Index() {
           ))}
         </div>
       </section>
+
+      {/* Brand slider */}
+      {brands.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pt-6">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card px-4 py-5">
+            <div className="flex animate-marquee gap-8 items-center">
+              {[...brands, ...brands].map((b, i) => {
+                const url = getImageUrl(b.logo);
+                return (
+                  <a key={i} href={`/brend/${b.slug}`}
+                    className="flex-shrink-0 flex h-12 w-24 items-center justify-center grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300">
+                    {url
+                      ? <img src={url} alt={b.name} className="max-h-10 max-w-full object-contain" />
+                      : <span className="text-sm font-bold text-muted-foreground">{b.name}</span>
+                    }
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Products Section 1 */}
       <ProductCarousel

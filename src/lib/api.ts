@@ -104,6 +104,13 @@ export const api = {
   getUsers: () => req<User[]>("GET", "/api/users", undefined, true),
   updateUserRole: (id: number, role: string) => req<{ ok: boolean }>("PUT", `/api/users/${id}/role`, { role }, true),
 
+  // Brands
+  getBrands: () => req<Brand[]>("GET", "/api/brands"),
+  getBrandsAll: () => req<Brand[]>("GET", "/api/brands/all", undefined, true),
+  createBrand: (data: Partial<Brand>) => req<{ id: number }>("POST", "/api/brands", data, true),
+  updateBrand: (id: number, data: Partial<Brand>) => req<{ ok: boolean }>("PUT", `/api/brands/${id}`, data, true),
+  deleteBrand: (id: number) => req<{ ok: boolean }>("DELETE", `/api/brands/${id}`, undefined, true),
+
   // Stores
   getStores: () => req<Store[]>("GET", "/api/stores"),
   createStore: (data: Partial<Store>) => req<{ id: number }>("POST", "/api/stores", data, true),
@@ -167,6 +174,7 @@ export interface Product {
   most_sold: number;
   is_popular: number;
   description: string;
+  brand_slug?: string;
   credit_months?: number;
   interest_free?: number;
   interest_rate?: number;
@@ -195,6 +203,16 @@ export interface Order {
   status: string;
   items: string;
   notes: string;
+  created_at?: string;
+}
+
+export interface Brand {
+  id: number;
+  slug: string;
+  name: string;
+  logo: string;
+  position?: number;
+  is_active?: number;
   created_at?: string;
 }
 

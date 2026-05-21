@@ -142,6 +142,17 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS visitor_logs (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 )`); } catch {}
 
+try { db.exec(`CREATE TABLE IF NOT EXISTS brands (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  slug TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  logo TEXT DEFAULT '',
+  position INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN brand_slug TEXT DEFAULT NULL REFERENCES brands(slug) ON DELETE SET NULL"); } catch {}
+
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;
 if (userCount === 0) {
