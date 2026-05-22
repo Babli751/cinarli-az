@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
-import { api, getImageUrl, type Product, type Campaign, type Brand } from "@/lib/api";
+import { api, getImageUrl, type Product, type Campaign, type Brand, type Banner } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import heroLiving from "@/assets/hero-living.jpg";
 
@@ -27,6 +27,8 @@ function Index() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [heroIdx, setHeroIdx] = useState(0);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [bannerIdx, setBannerIdx] = useState(0);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setProducts).catch(() => {});
@@ -35,6 +37,7 @@ function Index() {
     api.getFeaturedProduct().then((arr) => setFeaturedList(arr)).catch(() => setFeaturedList([]));
     api.getCampaigns().then((c) => setCampaigns(c.filter(x => x.is_active))).catch(() => {});
     api.getBrands().then(setBrands).catch(() => {});
+    api.getBanners().then(setBanners).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -48,6 +51,12 @@ function Index() {
     const id = setInterval(() => setHeroIdx(i => (i + 1) % campaigns.length), 4000);
     return () => clearInterval(id);
   }, [campaigns]);
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    const id = setInterval(() => setBannerIdx(i => (i + 1) % banners.length), 4000);
+    return () => clearInterval(id);
+  }, [banners]);
 
   const featured = featuredList === undefined ? undefined : (featuredList[featuredIdx] ?? null);
 
@@ -213,27 +222,47 @@ function Index() {
         </div>
       </section>
 
-      {/* Brand slider */}
-      {brands.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 pt-6">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card px-4 py-5">
-            <div className="flex animate-marquee gap-8 items-center">
-              {[...brands, ...brands].map((b, i) => {
-                const url = getImageUrl(b.logo);
-                return (
-                  <a key={i} href={`/brend/${b.slug}`}
-                    className="flex-shrink-0 flex h-12 w-24 items-center justify-center grayscale hover:grayscale-0 opacity-60 hover:opacity-100 transition-all duration-300">
-                    {url
-                      ? <img src={url} alt={b.name} className="max-h-10 max-w-full object-contain" />
-                      : <span className="text-sm font-bold text-muted-foreground">{b.name}</span>
-                    }
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Banner Carousel */}
+      <section className="mx-auto max-w-7xl px-4 pt-6">
+        <div className="relative overflow-hidden rounded-2xl">
+          {banners.length > 0 ? (
+            <>
+              <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${bannerIdx * 100}%)` }}>
+                {banners.map((b) => {
+                  const url = getImageUrl(b.image);
+                  return (
+                    <div key={b.id} className="w-full flex-shrink-0">
+                      {url
+                        ? <img src={url} alt="" className="w-full object-cover max-h-64 md:max-h-80 rounded-2xl" />
+                        : <div className="h-48 bg-secondary rounded-2xl" />}
+                    </div>
+                  );
+                })}
+              </div>
+              {banners.length > 1 && (
+                <>
+                  <button onClick={() => setBannerIdx(i => (i - 1 + banners.length) % banners.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full bg-white/80 shadow hover:bg-white">
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setBannerIdx(i => (i + 1) % banners.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 grid h-8 w-8 place-items-center rounded-full bg-white/80 shadow hover:bg-white">
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {banners.map((_, i) => (
+                      <button key={i} onClick={() => setBannerIdx(i)}
+                        className={`h-1.5 rounded-full transition-all ${i === bannerIdx ? "w-5 bg-white" : "w-1.5 bg-white/50"}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <AdPlaceholder />
+          )}
+        </div>
+      </section>
 
       {/* Products Section 1 */}
       <ProductCarousel
@@ -260,7 +289,52 @@ function Index() {
         isLast
       />
 
+      {/* Brand slider — footer üstündə */}
+      {brands.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 pt-6 pb-2">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card px-4 py-5">
+            <div className="flex animate-marquee gap-8 items-center">
+              {[...brands, ...brands].map((b, i) => {
+                const url = getImageUrl(b.logo);
+                return (
+                  <a key={i} href={`/brend/${b.slug}`}
+                    className="flex-shrink-0 flex h-16 w-36 items-center justify-center transition-all duration-300 hover:scale-105">
+                    {url
+                      ? <img src={url} alt={b.name} className="max-h-14 max-w-full object-contain" />
+                      : <span className="text-sm font-bold text-muted-foreground">{b.name}</span>
+                    }
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
+
       <SiteFooter />
+    </div>
+  );
+}
+
+function AdPlaceholder() {
+  const [dot, setDot] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setDot(d => (d + 1) % 3), 800);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="relative flex h-48 md:h-64 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-secondary/60 via-secondary/30 to-secondary/60">
+      <div className="absolute inset-0 opacity-10"
+        style={{ backgroundImage: "repeating-linear-gradient(45deg,currentColor 0,currentColor 1px,transparent 0,transparent 50%)", backgroundSize: "16px 16px" }} />
+      <div className="relative flex flex-col items-center gap-3 text-center px-6">
+        <div className="flex gap-2">
+          {[0,1,2].map(i => (
+            <div key={i} className={`h-2 w-2 rounded-full transition-all duration-300 ${i === dot ? "bg-[var(--brand)] scale-125" : "bg-muted-foreground/30"}`} />
+          ))}
+        </div>
+        <p className="text-base font-semibold text-muted-foreground md:text-lg">Bura reklam yerləşdirə bilərsiniz</p>
+        <p className="text-xs text-muted-foreground/60">Admin paneldən banner əlavə edin</p>
+      </div>
     </div>
   );
 }
@@ -368,13 +442,29 @@ function ProductImg({ p, className }: { p: Product; className?: string }) {
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }
 
+function calcPrice(p: Product) {
+  // new system: sale_price / extra_price
+  if (p.extra_price != null) return { activePrice: p.extra_price, originalPrice: p.price };
+  if (p.sale_price != null) return { activePrice: p.sale_price, originalPrice: p.price };
+  // legacy: old_price or discount
+  if (p.old_price && p.old_price > p.price) return { activePrice: p.price, originalPrice: p.old_price };
+  if (p.discount > 0) return { activePrice: Math.round(p.price * (1 - p.discount / 100)), originalPrice: p.price };
+  return { activePrice: p.price, originalPrice: null };
+}
+
 function ProductCard({ p }: { p: Product }) {
+  const { activePrice, originalPrice } = calcPrice(p);
+  const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
+  const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
+  const months = p.credit_months || 24;
+
   return (
     <Link to="/mehsul/$slug" params={{ slug: String(p.id) }}
       className="group relative flex flex-col overflow-hidden rounded-xl md:rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
-      {p.discount > 0 && (
-        <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex h-10 w-10 md:h-12 md:w-12 place-items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white text-xs font-bold text-[var(--accent-orange)] shadow-md">
-          −{p.discount}%
+      {discountPct > 0 && (
+        <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex flex-col items-end gap-1">
+          <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow-md">−{discountPct}%</div>
+          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow-md">−{savingAmt.toFixed(0)} ₼</div>
         </div>
       )}
       <div className="absolute left-2 top-2 md:left-3 md:top-3 z-10 hidden md:flex flex-col gap-2">
@@ -388,26 +478,22 @@ function ProductCard({ p }: { p: Product }) {
         <h3 className="line-clamp-2 min-h-[2.5rem] text-xs md:text-sm font-semibold">{p.name}</h3>
         <div className="mt-2 flex flex-wrap gap-1.5 md:gap-2">
           {p.stock > 0 ? (
-            <span className="inline-block rounded-md border border-[var(--brand)] px-1.5 md:px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
-              Stokda var
-            </span>
+            <span className="inline-block rounded-md border border-[var(--brand)] px-1.5 md:px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">Stokda var</span>
           ) : (
-            <span className="inline-block rounded-md border border-red-300 px-1.5 md:px-2 py-0.5 text-xs font-semibold text-red-600">
-              Stokda yoxdur
-            </span>
-          )}
-          {p.discount > 0 && (
-            <span className="hidden md:inline-block rounded-md bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">
-              Faizsiz təklif
-            </span>
+            <span className="inline-block rounded-md border border-red-300 px-1.5 md:px-2 py-0.5 text-xs font-semibold text-red-600">Stokda yoxdur</span>
           )}
         </div>
-        <div className="mt-2 md:mt-3 flex items-baseline gap-2">
-          <span className="text-xl md:text-2xl font-black">{p.price} ₼</span>
-          {p.old_price && <span className="text-xs md:text-sm text-muted-foreground line-through">{p.old_price} ₼</span>}
+        <div className="mt-2 md:mt-3 flex items-baseline gap-2 flex-wrap">
+          <span className="text-xl md:text-2xl font-black">{activePrice} ₼</span>
+          {originalPrice && <span className="text-xs md:text-sm text-muted-foreground line-through">{originalPrice} ₼</span>}
         </div>
-        <div className="mt-1 text-xs font-semibold text-[var(--accent-orange)]">
-          Faizsiz 12 ay
+        {savingAmt > 0 && (
+          <div className="mt-0.5 text-xs font-semibold text-[var(--accent-orange)]">
+            {savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%
+          </div>
+        )}
+        <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
+          <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} ₼/ay
         </div>
         {p.stock > 0 && (
           <button className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">

@@ -40,6 +40,7 @@ import { Route as AdminKampaniyalarRouteImport } from './routes/admin.kampaniyal
 import { Route as AdminIstifadecilerRouteImport } from './routes/admin.istifadeciler'
 import { Route as AdminHefteninTeklifiRouteImport } from './routes/admin.heftenin-teklifi'
 import { Route as AdminBrendlerRouteImport } from './routes/admin.brendler'
+import { Route as AdminBannerlerRouteImport } from './routes/admin.bannerler'
 
 const YeniRoute = YeniRouteImport.update({
   id: '/yeni',
@@ -196,6 +197,11 @@ const AdminBrendlerRoute = AdminBrendlerRouteImport.update({
   path: '/brendler',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBannerlerRoute = AdminBannerlerRouteImport.update({
+  id: '/bannerler',
+  path: '/bannerler',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/sebet': typeof SebetRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
+  '/admin/bannerler': typeof AdminBannerlerRoute
   '/admin/brendler': typeof AdminBrendlerRoute
   '/admin/heftenin-teklifi': typeof AdminHefteninTeklifiRoute
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/sebet': typeof SebetRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
+  '/admin/bannerler': typeof AdminBannerlerRoute
   '/admin/brendler': typeof AdminBrendlerRoute
   '/admin/heftenin-teklifi': typeof AdminHefteninTeklifiRoute
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/sebet': typeof SebetRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
+  '/admin/bannerler': typeof AdminBannerlerRoute
   '/admin/brendler': typeof AdminBrendlerRoute
   '/admin/heftenin-teklifi': typeof AdminHefteninTeklifiRoute
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
@@ -318,6 +327,7 @@ export interface FileRouteTypes {
     | '/sebet'
     | '/terms'
     | '/yeni'
+    | '/admin/bannerler'
     | '/admin/brendler'
     | '/admin/heftenin-teklifi'
     | '/admin/istifadeciler'
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/sebet'
     | '/terms'
     | '/yeni'
+    | '/admin/bannerler'
     | '/admin/brendler'
     | '/admin/heftenin-teklifi'
     | '/admin/istifadeciler'
@@ -383,6 +394,7 @@ export interface FileRouteTypes {
     | '/sebet'
     | '/terms'
     | '/yeni'
+    | '/admin/bannerler'
     | '/admin/brendler'
     | '/admin/heftenin-teklifi'
     | '/admin/istifadeciler'
@@ -641,10 +653,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBrendlerRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/bannerler': {
+      id: '/admin/bannerler'
+      path: '/bannerler'
+      fullPath: '/admin/bannerler'
+      preLoaderRoute: typeof AdminBannerlerRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminBannerlerRoute: typeof AdminBannerlerRoute
   AdminBrendlerRoute: typeof AdminBrendlerRoute
   AdminHefteninTeklifiRoute: typeof AdminHefteninTeklifiRoute
   AdminIstifadecilerRoute: typeof AdminIstifadecilerRoute
@@ -657,6 +677,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminBannerlerRoute: AdminBannerlerRoute,
   AdminBrendlerRoute: AdminBrendlerRoute,
   AdminHefteninTeklifiRoute: AdminHefteninTeklifiRoute,
   AdminIstifadecilerRoute: AdminIstifadecilerRoute,

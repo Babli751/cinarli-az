@@ -380,8 +380,8 @@ app.get("/api/products/:id", (c) => {
 app.post("/api/products", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const images = Array.isArray(b.images) ? JSON.stringify(b.images) : "[]";
-  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0
+  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0
   );
   return c.json({ id: result.lastInsertRowid });
 });
@@ -397,8 +397,8 @@ app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
     const existing = db.prepare("SELECT images FROM products WHERE id=?").get(c.req.param("id")) as any;
     images = existing?.images || "[]";
   }
-  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=? WHERE id=?").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, c.req.param("id")
+  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=? WHERE id=?").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -591,6 +591,36 @@ app.put("/api/brands/:id", authMiddleware, adminMiddleware, async (c) => {
 
 app.delete("/api/brands/:id", authMiddleware, adminMiddleware, (c) => {
   db.prepare("DELETE FROM brands WHERE id=?").run(c.req.param("id"));
+  return c.json({ ok: true });
+});
+
+// ─── BANNERS ────────────────────────────────────────────
+app.get("/api/banners", (c) => {
+  return c.json(db.prepare("SELECT * FROM banners WHERE is_active=1 ORDER BY position ASC").all());
+});
+
+app.get("/api/banners/all", authMiddleware, adminMiddleware, (c) => {
+  return c.json(db.prepare("SELECT * FROM banners ORDER BY position ASC").all());
+});
+
+app.post("/api/banners", authMiddleware, adminMiddleware, async (c) => {
+  const { image } = await c.req.json<{ image: string }>();
+  const pos = (db.prepare("SELECT COALESCE(MAX(position),0)+1 as p FROM banners").get() as any).p;
+  const r = db.prepare("INSERT INTO banners (image, position) VALUES (?,?)").run(image, pos);
+  return c.json(db.prepare("SELECT * FROM banners WHERE id=?").get(r.lastInsertRowid));
+});
+
+app.put("/api/banners/:id", authMiddleware, adminMiddleware, async (c) => {
+  const { image, position, is_active } = await c.req.json<{ image?: string; position?: number; is_active?: number }>();
+  const id = c.req.param("id");
+  if (image !== undefined) db.prepare("UPDATE banners SET image=? WHERE id=?").run(image, id);
+  if (position !== undefined) db.prepare("UPDATE banners SET position=? WHERE id=?").run(position, id);
+  if (is_active !== undefined) db.prepare("UPDATE banners SET is_active=? WHERE id=?").run(is_active, id);
+  return c.json(db.prepare("SELECT * FROM banners WHERE id=?").get(id));
+});
+
+app.delete("/api/banners/:id", authMiddleware, adminMiddleware, (c) => {
+  db.prepare("DELETE FROM banners WHERE id=?").run(c.req.param("id"));
   return c.json({ ok: true });
 });
 

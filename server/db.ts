@@ -152,6 +152,15 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS brands (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 )`); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN brand_slug TEXT DEFAULT NULL REFERENCES brands(slug) ON DELETE SET NULL"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN sale_price REAL DEFAULT NULL"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN extra_price REAL DEFAULT NULL"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS banners (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  image TEXT NOT NULL DEFAULT '',
+  position INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
 
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;

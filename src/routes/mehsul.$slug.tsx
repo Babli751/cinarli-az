@@ -138,8 +138,8 @@ function ProductPage() {
         customer_name: orderForm.name,
         phone: orderForm.phone,
         address: orderForm.address,
-        total: product.price * qty,
-        items: JSON.stringify([{ id: product.id, name: product.name, qty, price: product.price }]),
+        total: (product.extra_price ?? product.sale_price ?? (product.old_price && product.old_price > product.price ? product.price : product.discount > 0 ? Math.round(product.price * (1 - product.discount / 100)) : product.price)) * qty,
+        items: JSON.stringify([{ id: product.id, name: product.name, qty, price: product.extra_price ?? product.sale_price ?? (product.old_price && product.old_price > product.price ? product.price : product.discount > 0 ? Math.round(product.price * (1 - product.discount / 100)) : product.price) }]),
         notes: `Bir kliklə al — ${product.name} x${qty}`,
         status: "pending",
       });
@@ -186,6 +186,24 @@ function ProductPage() {
               {currentUrl
                 ? <img src={currentUrl} alt={product.name} className="h-full w-full object-cover" />
                 : <span className="text-8xl">{product.image || "📦"}</span>}
+              {(() => {
+                const { activePrice, originalPrice } = (() => {
+                  if (product.extra_price != null) return { activePrice: product.extra_price, originalPrice: product.price };
+                  if (product.sale_price != null) return { activePrice: product.sale_price, originalPrice: product.price };
+                  if (product.old_price && product.old_price > product.price) return { activePrice: product.price, originalPrice: product.old_price };
+                  if (product.discount > 0) return { activePrice: Math.round(product.price * (1 - product.discount / 100)), originalPrice: product.price };
+                  return { activePrice: product.price, originalPrice: null as number | null };
+                })();
+                const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
+                const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
+                if (!discountPct) return null;
+                return (
+                  <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1.5">
+                    <div className="rounded-xl bg-[var(--accent-orange)] px-3 py-1 text-sm font-bold text-white shadow-lg">−{discountPct}%</div>
+                    <div className="rounded-xl bg-[var(--accent-orange)]/90 px-3 py-1 text-xs font-semibold text-white shadow-lg">−{savingAmt.toFixed(0)} ₼</div>
+                  </div>
+                );
+              })()}
               {allImages.length > 1 && (
                 <>
                   <button onClick={(e) => { e.stopPropagation(); prevImg(); }}
@@ -263,35 +281,43 @@ function ProductPage() {
               <span className="text-xs text-muted-foreground md:text-sm">5.0</span>
             </div>
 
-            <div className="mt-3 flex items-baseline gap-2 md:mt-4 md:gap-3">
-              <span className="text-3xl font-black md:text-4xl">{product.price} ₼</span>
-              {product.old_price && <span className="text-base text-muted-foreground line-through md:text-xl">{product.old_price} ₼</span>}
-              {product.discount > 0 && (
-                <span className="rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white md:px-3 md:text-sm">−{product.discount}%</span>
-              )}
-            </div>
-
-            {product.old_price && (
-              <div className="mt-1 text-sm text-green-600 font-medium">
-                {(product.old_price - product.price).toFixed(0)} ₼ qənaət
-              </div>
-            )}
-
             {(() => {
+              const { activePrice, originalPrice } = (() => {
+                if (product.extra_price != null) return { activePrice: product.extra_price, originalPrice: product.price };
+                if (product.sale_price != null) return { activePrice: product.sale_price, originalPrice: product.price };
+                if (product.old_price && product.old_price > product.price) return { activePrice: product.price, originalPrice: product.old_price };
+                if (product.discount > 0) return { activePrice: Math.round(product.price * (1 - product.discount / 100)), originalPrice: product.price };
+                return { activePrice: product.price, originalPrice: null as number | null };
+              })();
+              const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
+              const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
               const months = product.credit_months || 24;
               const isFree = product.interest_free !== 0;
               const rate = product.interest_rate || 0;
-              const monthly = isFree
-                ? Math.round(product.price / months)
-                : Math.round(product.price * (1 + rate / 100) * months / months * (rate / 100) / (1 - Math.pow(1 + rate / 100, -months)));
-              const monthlySimple = isFree ? monthly : Math.round(product.price * (1 + (rate / 100) * months) / months);
+              const monthlyPayment = isFree
+                ? Math.round(activePrice / months)
+                : Math.round(activePrice * (1 + (rate / 100) * months) / months);
               return (
-                <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
-                  <span className="font-semibold text-[var(--brand)]">
-                    {isFree ? "Faizsiz aylıq ödəniş:" : `Aylıq ödəniş (${rate}% faiz):`}
-                  </span>{" "}
-                  {months} aya {isFree ? monthly : monthlySimple} ₼ / ay
-                </div>
+                <>
+                  <div className="mt-3 flex items-baseline gap-2 flex-wrap md:mt-4 md:gap-3">
+                    <span className="text-3xl font-black md:text-4xl">{activePrice} ₼</span>
+                    {originalPrice && <span className="text-base text-muted-foreground line-through md:text-xl">{originalPrice} ₼</span>}
+                    {discountPct > 0 && (
+                      <span className="rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white md:px-3 md:text-sm">−{discountPct}%</span>
+                    )}
+                  </div>
+                  {savingAmt > 0 && (
+                    <div className="mt-1 text-sm text-green-600 font-medium">
+                      {savingAmt.toFixed(0)} ₼ qənaət
+                    </div>
+                  )}
+                  <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
+                    <span className="font-semibold text-[var(--brand)]">
+                      {isFree ? "Faizsiz aylıq ödəniş:" : `Aylıq ödəniş (${rate}% faiz):`}
+                    </span>{" "}
+                    {months} aya {monthlyPayment} ₼ / ay
+                  </div>
+                </>
               );
             })()}
 
@@ -313,7 +339,7 @@ function ProductPage() {
                 <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
               </div>
               <button onClick={() => {
-                  addItem({ id: product.id, name: product.name, price: product.price, image: product.image, qty });
+                  addItem({ id: product.id, name: product.name, price: product.extra_price ?? product.sale_price ?? product.price, image: product.image, qty });
                   toast.success("Səbətə əlavə edildi");
                 }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
@@ -498,10 +524,15 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
   const [months, setMonths] = useState(24);
   const [useDiscounted, setUseDiscounted] = useState(true);
 
-  const discountedPrice = product.discount > 0
-    ? Math.round(product.price * (1 - product.discount / 100))
-    : null;
-  const hasDiscount = discountedPrice !== null && discountedPrice < product.price;
+  const activePrice = (() => {
+    if (product.extra_price != null) return product.extra_price;
+    if (product.sale_price != null) return product.sale_price;
+    if (product.old_price && product.old_price > product.price) return product.price;
+    if (product.discount > 0) return Math.round(product.price * (1 - product.discount / 100));
+    return product.price;
+  })();
+  const discountedPrice = activePrice < product.price ? activePrice : null;
+  const hasDiscount = discountedPrice !== null;
   const fullPrice = product.price;
   const basePrice = hasDiscount ? (useDiscounted ? discountedPrice! : fullPrice) : fullPrice;
   const monthly = Math.round(basePrice / months);
@@ -518,7 +549,7 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
             <div className="flex rounded-xl border border-border overflow-hidden text-sm font-semibold">
               <button onClick={() => setUseDiscounted(true)}
                 className={`flex-1 py-2.5 transition-colors ${useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
-                Endirimli · {discountedPrice} ₼
+                Endirimli · {activePrice} ₼
               </button>
               <button onClick={() => setUseDiscounted(false)}
                 className={`flex-1 py-2.5 transition-colors ${!useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>

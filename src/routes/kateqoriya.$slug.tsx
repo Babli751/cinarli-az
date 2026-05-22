@@ -158,10 +158,24 @@ function CategoryPage() {
             <p className="mb-3 hidden text-sm text-muted-foreground lg:block">{filtered.length} məhsul tapıldı</p>
             {filtered.length === 0 ? null : (
               <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-3">
-                {filtered.map((p) => (
+                {filtered.map((p) => {
+                  const { activePrice, originalPrice } = (() => {
+                    if (p.extra_price != null) return { activePrice: p.extra_price, originalPrice: p.price };
+                    if (p.sale_price != null) return { activePrice: p.sale_price, originalPrice: p.price };
+                    if (p.old_price && p.old_price > p.price) return { activePrice: p.price, originalPrice: p.old_price };
+                    if (p.discount > 0) return { activePrice: Math.round(p.price * (1 - p.discount / 100)), originalPrice: p.price };
+                    return { activePrice: p.price, originalPrice: null as number | null };
+                  })();
+                  const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
+                  const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
+                  const months = p.credit_months || 24;
+                  return (
                   <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
-                    {p.discount > 0 && (
-                      <div className="absolute right-2 top-2 z-10 grid h-9 w-9 place-items-center rounded-full bg-[var(--accent-orange)] text-[10px] font-bold text-white shadow-md md:right-3 md:top-3 md:h-11 md:w-11 md:text-xs">−{p.discount}%</div>
+                    {discountPct > 0 && (
+                      <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1 md:right-3 md:top-3">
+                        <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-[10px] font-bold text-white shadow-md md:text-xs">−{discountPct}%</div>
+                        <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow-md md:text-[10px]">−{savingAmt.toFixed(0)} ₼</div>
+                      </div>
                     )}
                     <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 md:left-3 md:top-3 md:gap-2">
                       <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Heart className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
@@ -172,17 +186,21 @@ function CategoryPage() {
                     </Link>
                     <div className="flex flex-1 flex-col p-3 md:p-4">
                       <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="line-clamp-2 min-h-[2.5rem] text-xs font-medium hover:text-[var(--brand)] md:text-sm">{p.name}</Link>
-                      <div className="mt-2 flex items-baseline gap-1.5">
-                        <span className="text-base font-black md:text-xl">{p.price} ₼</span>
-                        {p.old_price && <span className="text-xs text-muted-foreground line-through md:text-sm">{p.old_price} ₼</span>}
+                      <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
+                        <span className="text-base font-black md:text-xl">{activePrice} ₼</span>
+                        {originalPrice && <span className="text-xs text-muted-foreground line-through md:text-sm">{originalPrice} ₼</span>}
                       </div>
-                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {p.credit_months || 24} aya {Math.round(p.price / (p.credit_months || 24))} ₼/ay</div>
+                      {savingAmt > 0 && (
+                        <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%</div>
+                      )}
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {months} aya {Math.round(activePrice / months)} ₼/ay</div>
                       <button className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:mt-3 md:py-2 md:text-sm">
                         Səbətə əlavə et
                       </button>
                     </div>
                   </article>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

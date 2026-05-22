@@ -104,6 +104,13 @@ export const api = {
   getUsers: () => req<User[]>("GET", "/api/users", undefined, true),
   updateUserRole: (id: number, role: string) => req<{ ok: boolean }>("PUT", `/api/users/${id}/role`, { role }, true),
 
+  // Banners
+  getBanners: () => req<Banner[]>("GET", "/api/banners"),
+  getBannersAll: () => req<Banner[]>("GET", "/api/banners/all", undefined, true),
+  createBanner: (data: Partial<Banner>) => req<Banner>("POST", "/api/banners", data, true),
+  updateBanner: (id: number, data: Partial<Banner>) => req<Banner>("PUT", `/api/banners/${id}`, data, true),
+  deleteBanner: (id: number) => req<{ ok: boolean }>("DELETE", `/api/banners/${id}`, undefined, true),
+
   // Brands
   getBrands: () => req<Brand[]>("GET", "/api/brands"),
   getBrandsAll: () => req<Brand[]>("GET", "/api/brands/all", undefined, true),
@@ -164,6 +171,8 @@ export interface Product {
   name: string;
   price: number;
   old_price?: number;
+  sale_price?: number | null;
+  extra_price?: number | null;
   discount: number;
   image: string;
   images?: string;
@@ -261,6 +270,14 @@ export interface Stats {
   users: number;
   revenue: number;
   pending: number;
+}
+
+export interface Banner {
+  id: number;
+  image: string;
+  position: number;
+  is_active: number;
+  created_at: string;
 }
 
 export interface PageViewStats {

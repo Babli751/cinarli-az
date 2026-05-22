@@ -230,22 +230,38 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               <Field label="Təsvir">
                 <textarea className={inp} rows={3} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} placeholder="Məhsul haqqında..." />
               </Field>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Qiymət (₼) *">
-                  <input type="number" min="0" step="0.01" className={inp} value={editing.price ?? ""} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} />
+              {/* Qiymət strukturu */}
+              <div className="rounded-xl border border-border bg-secondary/20 p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Qiymət</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Əsas qiymət (₼) *">
+                    <input type="number" min="0" step="0.01" className={inp} value={editing.price ?? ""} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} />
+                  </Field>
+                  <Field label="Endirimli qiymət (₼)">
+                    <input type="number" min="0" step="0.01" className={inp} placeholder="Boş = endirim yox"
+                      value={editing.sale_price ?? ""}
+                      onChange={(e) => setEditing({ ...editing, sale_price: e.target.value === "" ? null : Number(e.target.value) })} />
+                  </Field>
+                </div>
+                {editing.price && editing.sale_price ? (
+                  <p className="text-xs text-green-600">
+                    Endirim: <b>-{Math.round((1 - editing.sale_price / editing.price) * 100)}%</b> · {(editing.price - editing.sale_price).toFixed(2)} ₼ ucuzlaşır
+                  </p>
+                ) : null}
+                <Field label="Əlavə endirim qiyməti (₼) — opsional">
+                  <input type="number" min="0" step="0.01" className={inp} placeholder="Admin əlavə endirim istəyəndə"
+                    value={editing.extra_price ?? ""}
+                    onChange={(e) => setEditing({ ...editing, extra_price: e.target.value === "" ? null : Number(e.target.value) })} />
                 </Field>
-                <Field label="Köhnə qiymət (₼)">
-                  <input type="number" min="0" step="0.01" className={inp} value={editing.old_price ?? ""} onChange={(e) => setEditing({ ...editing, old_price: Number(e.target.value) || undefined })} />
-                </Field>
+                {editing.price && editing.extra_price ? (
+                  <p className="text-xs text-orange-600">
+                    Əlavə endirim: <b>-{Math.round((1 - editing.extra_price / editing.price) * 100)}%</b> · {(editing.price - editing.extra_price).toFixed(2)} ₼ ucuzlaşır
+                  </p>
+                ) : null}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Endirim (%)">
-                  <input type="number" min="0" max="100" className={inp} value={editing.discount ?? 0} onChange={(e) => setEditing({ ...editing, discount: Number(e.target.value) })} />
-                </Field>
-                <Field label="Stok miqdarı">
-                  <input type="number" min="0" className={inp} value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: Number(e.target.value) })} />
-                </Field>
-              </div>
+              <Field label="Stok miqdarı">
+                <input type="number" min="0" className={inp} value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: Number(e.target.value) })} />
+              </Field>
               <Field label="Kateqoriya">
                 <select className={inp} value={editing.category_slug ?? ""} onChange={(e) => setEditing({ ...editing, category_slug: e.target.value || undefined })}>
                   <option value="">— Kateqoriya seçin —</option>
