@@ -132,8 +132,8 @@ function BrandPage() {
                           <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 shadow hover:text-[var(--brand)]"><Heart className="h-3.5 w-3.5" /></button>
                           <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 shadow hover:text-[var(--brand)]"><Scale className="h-3.5 w-3.5" /></button>
                         </div>
-                        <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-square overflow-hidden bg-secondary/30 block">
-                          {img ? <img src={img} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />
+                        <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-[4/3] overflow-hidden bg-white block">
+                          {img ? <img src={img} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />
                             : <div className="flex h-full items-center justify-center text-5xl">{p.image || "📦"}</div>}
                         </Link>
                         <div className="flex flex-1 flex-col p-3">

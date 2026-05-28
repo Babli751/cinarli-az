@@ -72,9 +72,9 @@ function WishlistPage() {
                 <Trash2 className="h-4 w-4" />
               </button>
               <Link to="/mehsul/$slug" params={{ slug: String(item.id) }}>
-                <div className="aspect-square overflow-hidden bg-secondary/30">
+                <div className="aspect-[4/3] overflow-hidden bg-white">
                   {url
-                    ? <img src={url} alt={item.name} className="h-full w-full object-cover group-hover:scale-105 transition duration-300" />
+                    ? <img src={url} alt={item.name} className="h-full w-full object-contain group-hover:scale-105 transition duration-300" />
                     : <div className="flex h-full w-full items-center justify-center text-4xl">{item.image || "📦"}</div>}
                 </div>
                 <div className="p-3">

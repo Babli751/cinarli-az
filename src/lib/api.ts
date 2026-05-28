@@ -173,6 +173,7 @@ export interface Product {
   old_price?: number;
   sale_price?: number | null;
   extra_price?: number | null;
+  components?: string;
   discount: number;
   image: string;
   images?: string;
@@ -187,6 +188,9 @@ export interface Product {
   credit_months?: number;
   interest_free?: number;
   interest_rate?: number;
+  commission_free?: number;
+  ideal_credit_months?: number;
+  in_stock?: number | null;
   view_count?: number;
   created_at?: string;
 }
@@ -290,4 +294,14 @@ export interface PageViewStats {
   topPages: { path: string; total: number }[];
   daily: { date: string; total: number }[];
   topCountries: { country: string; country_code: string; visitors: number }[];
+  azToday: number;
+  azWeek: number;
+  azTotal: number;
+  hourly: number[];
+  devices: { mobile: number; tablet: number; desktop: number };
+  monthlyRevenue: { day: string; revenue: number }[];
+  newUsersToday: number;
+  newUsersWeek: number;
+  conversionRate: number;
+  ordersWeek: number;
 }

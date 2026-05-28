@@ -53,10 +53,12 @@ app.post("/api/track", async (c) => {
     const ip = c.req.header("x-forwarded-for")?.split(",")[0].trim()
       || c.req.header("x-real-ip")
       || "unknown";
+    const ua = c.req.header("user-agent") || "";
+    const hour = new Date().getHours();
     if (ip !== "unknown" && ip !== "127.0.0.1" && ip !== "::1") {
       getGeo(ip).then(geo => {
-        db.prepare("INSERT INTO visitor_logs (ip, country, country_code, date) VALUES (?, ?, ?, ?)")
-          .run(ip, geo.country, geo.country_code, date);
+        db.prepare("INSERT INTO visitor_logs (ip, country, country_code, date, user_agent, hour) VALUES (?, ?, ?, ?, ?, ?)")
+          .run(ip, geo.country, geo.country_code, date, ua, hour);
       }).catch(() => {});
     }
   } catch {}
@@ -283,15 +285,25 @@ app.post("/api/categories", authMiddleware, adminMiddleware, async (c) => {
   const { slug, name, description, parent_id, is_hidden } = await c.req.json();
   const icon = autoIcon(name);
   const maxPos = (db.prepare("SELECT MAX(position) as m FROM categories").get() as any)?.m || 0;
-  const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id, is_hidden, position) VALUES (?, ?, ?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, maxPos + 1);
-  return c.json({ id: result.lastInsertRowid });
+  try {
+    const result = db.prepare("INSERT INTO categories (slug, name, icon, description, parent_id, is_hidden, position) VALUES (?, ?, ?, ?, ?, ?, ?)").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, maxPos + 1);
+    return c.json({ id: result.lastInsertRowid });
+  } catch (e: any) {
+    if (e.message?.includes("UNIQUE")) return c.json({ error: "Bu slug artıq mövcuddur" }, 400);
+    return c.json({ error: e.message }, 400);
+  }
 });
 
 app.put("/api/categories/:id", authMiddleware, adminMiddleware, async (c) => {
   const { slug, name, description, parent_id, is_hidden } = await c.req.json();
   const icon = autoIcon(name);
-  db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=? WHERE id=?").run(slug, name, icon, description, parent_id || null, is_hidden ? 1 : 0, c.req.param("id"));
-  return c.json({ ok: true });
+  try {
+    db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=? WHERE id=?").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, c.req.param("id"));
+    return c.json({ ok: true });
+  } catch (e: any) {
+    if (e.message?.includes("UNIQUE")) return c.json({ error: "Bu slug artıq mövcuddur" }, 400);
+    return c.json({ error: e.message }, 400);
+  }
 });
 
 app.delete("/api/categories/:id", authMiddleware, adminMiddleware, (c) => {
@@ -380,8 +392,9 @@ app.get("/api/products/:id", (c) => {
 app.post("/api/products", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const images = Array.isArray(b.images) ? JSON.stringify(b.images) : "[]";
-  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0
+  const components = Array.isArray(b.components) ? JSON.stringify(b.components) : "[]";
+  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate, components, commission_free, ideal_credit_months, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null
   );
   return c.json({ id: result.lastInsertRowid });
 });
@@ -397,8 +410,9 @@ app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
     const existing = db.prepare("SELECT images FROM products WHERE id=?").get(c.req.param("id")) as any;
     images = existing?.images || "[]";
   }
-  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=? WHERE id=?").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, c.req.param("id")
+  const components2 = Array.isArray(b.components) ? JSON.stringify(b.components) : (b.components ?? "[]");
+  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=?, components=?, commission_free=?, ideal_credit_months=?, in_stock=? WHERE id=?").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components2, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -516,9 +530,12 @@ if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: uploadsDir,
-  filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase() || ".jpg";
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({ storage, limits: { fileSize: 15 * 1024 * 1024 } });
 
 app.post("/api/upload", authMiddleware, adminMiddleware, async (c) => {
   const nodeEnv = c.env as any;
@@ -637,6 +654,7 @@ app.get("/api/stats", authMiddleware, adminMiddleware, (c) => {
 app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
   const today = new Date().toISOString().slice(0, 10);
   const weekAgo = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 10);
+  const monthAgo = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
 
   const todayViews = (db.prepare("SELECT COALESCE(SUM(count),0) as s FROM page_views WHERE date=?").get(today) as any).s;
   const weekViews = (db.prepare("SELECT COALESCE(SUM(count),0) as s FROM page_views WHERE date>=?").get(weekAgo) as any).s;
@@ -652,7 +670,7 @@ app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
     WHERE date >= ? GROUP BY date ORDER BY date ASC
   `).all(weekAgo) as { date: string; total: number }[];
 
-  // Unique visitors (unique IPs)
+  // Unique visitors
   const todayUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date=?").get(today) as any).c;
   const weekUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date>=?").get(weekAgo) as any).c;
   const totalUnique = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs").get() as any).c;
@@ -663,7 +681,59 @@ app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
     WHERE date >= ? AND country != '' GROUP BY country ORDER BY visitors DESC LIMIT 8
   `).all(weekAgo) as { country: string; country_code: string; visitors: number }[];
 
-  return c.json({ todayViews, weekViews, totalViews, topPages, daily, todayUnique, weekUnique, totalUnique, topCountries });
+  // Azerbaijan stats
+  const azToday = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date=? AND country_code='AZ'").get(today) as any).c;
+  const azWeek = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE date>=? AND country_code='AZ'").get(weekAgo) as any).c;
+  const azTotal = (db.prepare("SELECT COUNT(DISTINCT ip) as c FROM visitor_logs WHERE country_code='AZ'").get() as any).c;
+
+  // Hourly traffic today (0-23)
+  const hourlyRaw = db.prepare(`
+    SELECT hour, COUNT(DISTINCT ip) as visitors FROM visitor_logs
+    WHERE date=? GROUP BY hour ORDER BY hour ASC
+  `).all(today) as { hour: number; visitors: number }[];
+  const hourly: number[] = Array(24).fill(0);
+  for (const r of hourlyRaw) hourly[r.hour] = r.visitors;
+
+  // Device breakdown (last 7 days) — user_agent heuristic
+  const uaRows = db.prepare(`
+    SELECT user_agent FROM visitor_logs WHERE date>=? AND user_agent!=''
+  `).all(weekAgo) as { user_agent: string }[];
+  let mobile = 0, tablet = 0, desktop = 0;
+  for (const { user_agent: ua } of uaRows) {
+    const u = ua.toLowerCase();
+    if (/tablet|ipad/.test(u)) tablet++;
+    else if (/mobile|android|iphone|ipod/.test(u)) mobile++;
+    else desktop++;
+  }
+
+  // Monthly revenue (last 30 days)
+  const monthlyRevenue = db.prepare(`
+    SELECT date(created_at) as day, SUM(total) as revenue
+    FROM orders WHERE date(created_at)>=? AND status!='cancelled'
+    GROUP BY day ORDER BY day ASC
+  `).all(monthAgo) as { day: string; revenue: number }[];
+
+  // New users
+  const newUsersToday = (db.prepare("SELECT COUNT(*) as c FROM users WHERE date(created_at)=?").get(today) as any).c;
+  const newUsersWeek = (db.prepare("SELECT COUNT(*) as c FROM users WHERE date(created_at)>=?").get(weekAgo) as any).c;
+
+  // Conversion rate (orders this week / unique visitors this week)
+  const ordersWeek = (db.prepare("SELECT COUNT(*) as c FROM orders WHERE date(created_at)>=?").get(weekAgo) as any).c;
+  const conversionRate = weekUnique > 0 ? +((ordersWeek / weekUnique) * 100).toFixed(1) : 0;
+
+  return c.json({
+    todayViews, weekViews, totalViews,
+    topPages, daily,
+    todayUnique, weekUnique, totalUnique,
+    topCountries,
+    azToday, azWeek, azTotal,
+    hourly,
+    devices: { mobile, tablet, desktop },
+    monthlyRevenue,
+    newUsersToday, newUsersWeek,
+    conversionRate,
+    ordersWeek,
+  });
 });
 
 serve({ fetch: app.fetch, port: PORT }, () => {

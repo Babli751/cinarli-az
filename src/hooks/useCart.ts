@@ -6,6 +6,7 @@ export interface CartItem {
   price: number;
   image: string;
   qty: number;
+  credit_months?: number;
 }
 
 const KEY = "cinarli_cart";

@@ -5,6 +5,8 @@ import { z } from "zod";
 import { Heart, Scale, Zap, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { api, getImageUrl, type Product, type Category } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import { SpinWheelBanner } from "@/components/SpinWheel";
 
 const searchSchema = z.object({
   sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
@@ -24,18 +26,36 @@ function CategoryPage() {
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catsLoaded, setCatsLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
+  // null = all products; string = filter by that sub slug
+  const [subFilter, setSubFilter] = useState<string | null>(null);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setAllProducts).catch(() => {});
-    api.getCategories().then(setCategories).catch(() => {});
+    api.getCategories().then((cats) => { setCategories(cats); setCatsLoaded(true); }).catch(() => { setCatsLoaded(true); });
   }, []);
 
+  useEffect(() => { setSubFilter(null); }, [slug]);
+
   const cat = categories.find((c) => c.slug === slug);
+  const subCats = categories.filter((c) => cat && Number(c.parent_id) === Number(cat.id));
+  const isParent = catsLoaded && subCats.length > 0;
+  // top-level parent (no parent_id) → show subcategory grid, not products
+  const isTopLevel = catsLoaded && isParent && !cat?.parent_id;
+  const showProducts = !isTopLevel;
 
   const filtered = useMemo(() => {
-    let list = allProducts.filter((p) => p.category_slug === slug);
+    let list: Product[];
+    if (isParent) {
+      const subSlugs = subCats.map((c) => c.slug);
+      const allSlugs = [slug, ...subSlugs];
+      list = allProducts.filter((p) => allSlugs.includes(p.category_slug ?? ""));
+      if (subFilter) list = list.filter((p) => p.category_slug === subFilter);
+    } else {
+      list = allProducts.filter((p) => p.category_slug === slug);
+    }
     list = list.filter((p) => p.price >= min && p.price <= max);
     if (search.trim()) list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
     switch (sort) {
@@ -44,7 +64,7 @@ function CategoryPage() {
       case "discount": list = [...list].sort((a, b) => b.discount - a.discount); break;
     }
     return list;
-  }, [allProducts, slug, sort, min, max, search]);
+  }, [allProducts, slug, sort, min, max, search, subFilter, isParent, subCats]);
 
   const resetFilters = () => { setSearch(""); navigate({ search: { sort: "popular", min: 0, max: 99999 } }); };
 
@@ -99,14 +119,16 @@ function CategoryPage() {
           ))}
         </div>
 
-        {/* Mobile filter bar */}
-        <div className="mt-4 flex items-center justify-between lg:hidden">
-          <p className="text-sm text-muted-foreground">{filtered.length} məhsul</p>
-          <button onClick={() => setFilterOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary">
-            <SlidersHorizontal className="h-4 w-4" /> Filtrlər
-          </button>
-        </div>
+        {/* Mobile filter bar — only for non-top-level */}
+        {showProducts && (
+          <div className="mt-4 flex items-center justify-between lg:hidden">
+            <p className="text-sm text-muted-foreground">{filtered.length} məhsul</p>
+            <button onClick={() => setFilterOpen(true)}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary">
+              <SlidersHorizontal className="h-4 w-4" /> Filtrlər
+            </button>
+          </div>
+        )}
 
         {/* Mobile filter drawer */}
         {filterOpen && (
@@ -129,25 +151,76 @@ function CategoryPage() {
           </div>
         )}
 
-        {/* Sub-categories grid — shown when a parent category is selected */}
-        {(() => {
-          const subs = categories.filter(c => c.parent_id === cat?.id);
-          if (subs.length === 0) return null;
-          return (
-            <div className="mt-4 md:mt-6">
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
-                {subs.map(s => (
-                  <Link key={s.slug} to="/kateqoriya/$slug" params={{ slug: s.slug }}
-                    className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-2 py-3 text-center transition hover:border-[var(--brand)] hover:shadow-md">
-                    <span className="text-xs font-medium leading-tight line-clamp-2">{s.name}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
+        {/* Spin wheel — only on top-level */}
+        {isTopLevel && (
+          <SpinWheelBanner onLogin={() => navigate({ to: "/kabinet" })} />
+        )}
 
-        <div className="mt-4 grid grid-cols-1 gap-4 lg:mt-8 lg:grid-cols-[260px_1fr] lg:gap-6">
+        {/* Top-level parent: subcategory card grid */}
+        {isTopLevel && (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+            {subCats.map((s) => (
+              <Link
+                key={s.slug}
+                to="/kateqoriya/$slug"
+                params={{ slug: s.slug }}
+                className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-card px-3 py-5 text-center transition hover:border-[var(--brand)] hover:shadow-md active:scale-95">
+                <CategoryIcon slug={s.slug} className="h-10 w-10 text-[var(--brand)]" />
+                <span className="text-sm font-semibold leading-tight">{s.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {(() => {
+                    const childSlugs = categories.filter(c => Number(c.parent_id) === Number(s.id)).map(c => c.slug);
+                    return allProducts.filter(p => [s.slug, ...childSlugs].includes(p.category_slug ?? "")).length;
+                  })()} məhsul
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Sub-category filter chips — only for non-top-level parents */}
+        {isParent && !isTopLevel && (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <button
+              onClick={() => setSubFilter(null)}
+              className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                subFilter === null
+                  ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                  : "border-border bg-card hover:border-[var(--brand)] hover:text-[var(--brand)]"
+              }`}>
+              Hamısı
+            </button>
+            {subCats.map((s) => {
+              const hasChildren = categories.some(c => Number(c.parent_id) === Number(s.id));
+              return hasChildren ? (
+                <Link
+                  key={s.slug}
+                  to="/kateqoriya/$slug"
+                  params={{ slug: s.slug }}
+                  className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    subFilter === s.slug
+                      ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                      : "border-border bg-card hover:border-[var(--brand)] hover:text-[var(--brand)]"
+                  }`}>
+                  {s.name}
+                </Link>
+              ) : (
+                <button
+                  key={s.slug}
+                  onClick={() => setSubFilter(s.slug)}
+                  className={`flex-shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                    subFilter === s.slug
+                      ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                      : "border-border bg-card hover:border-[var(--brand)] hover:text-[var(--brand)]"
+                  }`}>
+                  {s.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {showProducts && <div className="mt-4 grid grid-cols-1 gap-4 lg:mt-8 lg:grid-cols-[260px_1fr] lg:gap-6">
           {/* Desktop sidebar */}
           <aside className="hidden rounded-2xl border border-border bg-card p-5 lg:block">
             <h3 className="mb-4 font-bold">Filtrlər</h3>
@@ -181,7 +254,7 @@ function CategoryPage() {
                       <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Heart className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                       <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Scale className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                     </div>
-                    <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-square overflow-hidden bg-secondary/30 block">
+                    <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-[4/3] overflow-hidden bg-white block">
                       <ProductImg p={p} />
                     </Link>
                     <div className="flex flex-1 flex-col p-3 md:p-4">
@@ -193,7 +266,7 @@ function CategoryPage() {
                       {savingAmt > 0 && (
                         <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%</div>
                       )}
-                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {months} aya {Math.round(activePrice / months)} ₼/ay</div>
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼/ay</div>
                       <button className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:mt-3 md:py-2 md:text-sm">
                         Səbətə əlavə et
                       </button>
@@ -204,7 +277,7 @@ function CategoryPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>}
       </div>
       <SiteFooter />
     </div>
@@ -214,7 +287,7 @@ function CategoryPage() {
 function ProductImg({ p }: { p: Product }) {
   const url = getImageUrl(p.image);
   if (url) {
-    return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+    return <img src={url} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

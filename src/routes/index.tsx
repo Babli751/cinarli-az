@@ -1,5 +1,6 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useCallback } from "react";
+import { useCart } from "@/hooks/useCart";
 import { Scale, Heart, Store, Sofa, Truck, ShieldCheck, Gift, Zap, ArrowRight, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 import { api, getImageUrl, type Product, type Campaign, type Brand, type Banner } from "@/lib/api";
@@ -17,6 +18,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const navigate = useNavigate();
+  const { addItem } = useCart();
   const [tab1, setTab1] = useState<"popular" | "new">("popular");
   const [tab2, setTab2] = useState<"bestseller" | "discount">("bestseller");
   const [products, setProducts] = useState<Product[]>([]);
@@ -60,13 +63,16 @@ function Index() {
 
   const featured = featuredList === undefined ? undefined : (featuredList[featuredIdx] ?? null);
 
-  const list1 = tab1 === "popular"
-    ? popular
-    : [...products].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 24);
+  const byNewest = (arr: Product[]) => [...arr].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
+  const list1 = tab1 === "popular"
+    ? byNewest(popular)
+    : byNewest(products).slice(0, 24);
+
+  const hasDiscount = (p: Product) => p.extra_price != null || p.sale_price != null || (p.old_price && p.old_price > p.price) || p.discount > 0;
   const list2 = tab2 === "bestseller"
-    ? mostSold
-    : [...products].filter(p => p.discount > 0).sort((a, b) => b.discount - a.discount).slice(0, 24);
+    ? byNewest(mostSold)
+    : byNewest(products).filter(hasDiscount).slice(0, 24);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -130,20 +136,20 @@ function Index() {
           ) : featured ? (
             <Link to="/mehsul/$slug" params={{ slug: String(featured.id) }} className="flex flex-col flex-1 group">
               {(() => {
-                const activeDiscount = featured._discount || featured.discount || 0;
-                const discountedPrice = activeDiscount > 0
-                  ? Math.round(featured.price * (1 - activeDiscount / 100) * 100) / 100
-                  : null;
-                const showOriginal = discountedPrice !== null;
+                const { activePrice, originalPrice } = calcPrice(featured);
+                const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
+                const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
+                const months = featured._credit_months || 24;
                 return (
                   <>
                     <div className="relative bg-secondary/20 px-4 pt-3 pb-2">
-                      {activeDiscount > 0 && (
-                        <div className="absolute right-3 top-3 z-10 flex h-11 w-11 flex-col items-center justify-center rounded-full border-2 border-[var(--accent-orange)] bg-white shadow">
-                          <div className="text-sm font-black text-[var(--accent-orange)]">−{activeDiscount}%</div>
+                      {discountPct > 0 && (
+                        <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
+                          <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow">−{discountPct}%</div>
+                          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} ₼</div>
                         </div>
                       )}
-                      <ProductImg p={featured} className="mx-auto h-40 w-full rounded-lg object-cover transition duration-300 group-hover:scale-105" />
+                      <ProductImg p={featured} className="mx-auto h-40 w-full rounded-lg object-contain transition duration-300 group-hover:scale-105" />
                     </div>
                     <div className="px-4 py-3 flex flex-col flex-1">
                       <h3 className="text-sm font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
@@ -155,34 +161,32 @@ function Index() {
                         ) : (
                           <span className="rounded border border-red-300 px-2 py-0.5 text-xs font-semibold text-red-600">Stokda yoxdur</span>
                         )}
-                        {activeDiscount > 0 && (
-                          <span className="rounded bg-[var(--accent-orange)]/10 px-2 py-0.5 text-xs font-semibold text-[var(--accent-orange)]">−{activeDiscount}% endirim</span>
-                        )}
                       </div>
-                      <div className="mt-2 flex items-baseline gap-2">
-                        {showOriginal ? (
-                          <>
-                            <span className="text-xs text-muted-foreground line-through">{featured.price} ₼</span>
-                            <span className="text-2xl font-black text-[var(--accent-orange)]">{discountedPrice} ₼</span>
-                          </>
-                        ) : (
-                          <>
-                            {featured.old_price && <span className="text-xs text-muted-foreground line-through">{featured.old_price} ₼</span>}
-                            <span className="text-2xl font-black">{featured.price} ₼</span>
-                          </>
-                        )}
+                      <div className="mt-2 flex items-baseline gap-2 flex-wrap">
+                        <span className="text-2xl font-black text-[var(--accent-orange)]">{activePrice} ₼</span>
+                        {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} ₼</span>}
                       </div>
+                      {savingAmt > 0 && (
+                        <div className="text-xs font-semibold text-green-600">{savingAmt.toFixed(0)} ₼ qənaət</div>
+                      )}
                       <div className="mt-1.5 rounded-lg bg-secondary/50 px-3 py-2">
                         <span className="text-xs text-muted-foreground">Faizsiz aylıq ödəniş · </span>
-                        <span className="text-xs font-bold text-[var(--accent-orange)]">{Math.round((discountedPrice ?? featured.price) / (featured._credit_months || 24))} ₼</span>
-                        <span className="text-xs text-muted-foreground"> / {featured._credit_months || 24} ay</span>
+                        <span className="text-xs font-bold text-[var(--accent-orange)]">{(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼</span>
+                        <span className="text-xs text-muted-foreground"> / {months} ay</span>
                       </div>
                       <div className="mt-3 flex gap-2">
-                        <button onClick={(e) => e.preventDefault()}
+                        <button onClick={(e) => {
+                          e.preventDefault();
+                          addItem({ id: featured.id!, name: featured.name, price: activePrice, image: featured.image, qty: 1 });
+                          navigate({ to: "/sebet" });
+                        }}
                           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--accent-orange)] py-2.5 text-sm font-bold text-white hover:opacity-90">
                           <ShoppingCart className="h-4 w-4" /> Bir kliklə al
                         </button>
-                        <button onClick={(e) => e.preventDefault()}
+                        <button onClick={(e) => {
+                          e.preventDefault();
+                          addItem({ id: featured.id!, name: featured.name, price: activePrice, image: featured.image, qty: 1 });
+                        }}
                           className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-[var(--brand)] text-white hover:opacity-90"
                           title="Səbətə əlavə et">
                           <ShoppingCart className="h-4 w-4" />
@@ -376,7 +380,11 @@ function ProductCarousel({
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <Link to="/mehsullar/$filter" params={{ filter: activeTab }}
+            className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary transition-colors">
+            Hamısı <ArrowRight className="h-3 w-3" />
+          </Link>
           <button onClick={scrollPrev}
             className="grid h-9 w-9 place-items-center rounded-full border border-border bg-card hover:bg-secondary transition">
             <ChevronLeft className="h-4 w-4" />
@@ -437,7 +445,7 @@ function FeaturedCountdown({ until }: { until?: string | null }) {
 function ProductImg({ p, className }: { p: Product; className?: string }) {
   const url = getImageUrl(p.image);
   if (url) {
-    return <img src={url} alt={p.name} className={className ?? "h-full w-full object-cover"} loading="lazy" />;
+    return <img src={url} alt={p.name} className={className ?? "h-full w-full object-contain"} loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }
@@ -471,13 +479,13 @@ function ProductCard({ p }: { p: Product }) {
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
       </div>
-      <div className="aspect-square overflow-hidden bg-secondary/30">
-        <ProductImg p={p} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+      <div className="aspect-[4/3] overflow-hidden bg-white">
+        <ProductImg p={p} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
       </div>
       <div className="flex flex-1 flex-col p-3 md:p-4">
         <h3 className="line-clamp-2 min-h-[2.5rem] text-xs md:text-sm font-semibold">{p.name}</h3>
         <div className="mt-2 flex flex-wrap gap-1.5 md:gap-2">
-          {p.stock > 0 ? (
+          {(p.stock > 0 || p.in_stock === 1) ? (
             <span className="inline-block rounded-md border border-[var(--brand)] px-1.5 md:px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">Stokda var</span>
           ) : (
             <span className="inline-block rounded-md border border-red-300 px-1.5 md:px-2 py-0.5 text-xs font-semibold text-red-600">Stokda yoxdur</span>
@@ -492,10 +500,16 @@ function ProductCard({ p }: { p: Product }) {
             {savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%
           </div>
         )}
-        <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
-          <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} ₼/ay
-        </div>
-        {p.stock > 0 && (
+        {(p.ideal_credit_months ?? 0) > 0 ? (
+          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
+            <Zap className="h-3 w-3" />{p.ideal_credit_months} aya kredit · {Math.ceil(activePrice * (1 + 0.176) / (p.ideal_credit_months || 12))} ₼/ay
+          </div>
+        ) : (
+          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
+            <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼/ay
+          </div>
+        )}
+        {(p.stock > 0 || p.in_stock === 1) && (
           <button className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">
             Səbətə əlavə et
           </button>

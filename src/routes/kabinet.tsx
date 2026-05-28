@@ -299,7 +299,7 @@ function BeyendiklerimTab() {
                 <Link to="/mehsul/$slug" params={{ slug: String(p.id) }}>
                   <div className="aspect-square bg-secondary overflow-hidden">
                     {img
-                      ? <img src={img} alt={p.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      ? <img src={img} alt={p.name} className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300" />
                       : <div className="flex h-full items-center justify-center text-4xl">{p.image || "📦"}</div>
                     }
                   </div>
@@ -356,7 +356,7 @@ function MuqayiseTab() {
                         </button>
                         <div className="aspect-square w-24 rounded-lg bg-secondary overflow-hidden">
                           {img
-                            ? <img src={img} alt={p.name} className="h-full w-full object-cover" />
+                            ? <img src={img} alt={p.name} className="h-full w-full object-contain" />
                             : <div className="flex h-full items-center justify-center text-3xl">{p.image || "📦"}</div>
                           }
                         </div>

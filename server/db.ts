@@ -154,6 +154,12 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS brands (
 try { db.exec("ALTER TABLE products ADD COLUMN brand_slug TEXT DEFAULT NULL REFERENCES brands(slug) ON DELETE SET NULL"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN sale_price REAL DEFAULT NULL"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN extra_price REAL DEFAULT NULL"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN components TEXT DEFAULT '[]'"); } catch {}
+try { db.exec("ALTER TABLE visitor_logs ADD COLUMN user_agent TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE visitor_logs ADD COLUMN hour INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN commission_free INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN ideal_credit_months INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN in_stock INTEGER DEFAULT NULL"); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS banners (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   image TEXT NOT NULL DEFAULT '',

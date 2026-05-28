@@ -33,6 +33,7 @@ function ProductPage() {
   const [inCompare, setInCompare] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
+  const [selectedComps, setSelectedComps] = useState<Set<number>>(new Set());
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginTab, setLoginTab] = useState<"login" | "register">("login");
@@ -140,7 +141,7 @@ function ProductPage() {
         address: orderForm.address,
         total: (product.extra_price ?? product.sale_price ?? (product.old_price && product.old_price > product.price ? product.price : product.discount > 0 ? Math.round(product.price * (1 - product.discount / 100)) : product.price)) * qty,
         items: JSON.stringify([{ id: product.id, name: product.name, qty, price: product.extra_price ?? product.sale_price ?? (product.old_price && product.old_price > product.price ? product.price : product.discount > 0 ? Math.round(product.price * (1 - product.discount / 100)) : product.price) }]),
-        notes: `Bir kliklə al — ${product.name} x${qty}`,
+        notes: `Bir kliklə al — ${product.name} x${qty}${selectedComps.size > 0 ? ` (seçilmiş hissələr: ${Array.from(selectedComps).map(i => { try { return JSON.parse(product.components || "[]")[i]?.name; } catch { return ""; } }).filter(Boolean).join(", ")})` : ""}`,
         status: "pending",
       });
       toast.success("Sifarişiniz qəbul edildi! Tezliklə əlaqə saxlayacağıq.");
@@ -157,6 +158,19 @@ function ProductPage() {
       <SiteFooter />
     </div>
   );
+
+  const activePrice = (() => {
+    if (product.extra_price != null) return product.extra_price;
+    if (product.sale_price != null) return product.sale_price;
+    if (product.old_price && product.old_price > product.price) return product.price;
+    if (product.discount > 0) return Math.round(product.price * (1 - product.discount / 100));
+    return product.price;
+  })();
+  const parsedComps: {name: string; price: number}[] = (() => {
+    try { return JSON.parse(product.components || "[]"); } catch { return []; }
+  })();
+  const selectedCompsTotal = parsedComps.reduce((s, c, i) => s + (selectedComps.has(i) ? c.price : 0), 0);
+  const cartPrice = activePrice + selectedCompsTotal;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -184,18 +198,18 @@ function ProductPage() {
               onClick={() => currentUrl && setLightbox(true)}
             >
               {currentUrl
-                ? <img src={currentUrl} alt={product.name} className="h-full w-full object-cover" />
+                ? <img src={currentUrl} alt={product.name} className="h-full w-full object-contain" />
                 : <span className="text-8xl">{product.image || "📦"}</span>}
               {(() => {
-                const { activePrice, originalPrice } = (() => {
-                  if (product.extra_price != null) return { activePrice: product.extra_price, originalPrice: product.price };
-                  if (product.sale_price != null) return { activePrice: product.sale_price, originalPrice: product.price };
-                  if (product.old_price && product.old_price > product.price) return { activePrice: product.price, originalPrice: product.old_price };
-                  if (product.discount > 0) return { activePrice: Math.round(product.price * (1 - product.discount / 100)), originalPrice: product.price };
-                  return { activePrice: product.price, originalPrice: null as number | null };
+                const origP = (() => {
+                  if (product.extra_price != null) return product.price;
+                  if (product.sale_price != null) return product.price;
+                  if (product.old_price && product.old_price > product.price) return product.old_price;
+                  if (product.discount > 0) return product.price;
+                  return null as number | null;
                 })();
-                const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
-                const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
+                const discountPct = origP ? Math.round((1 - activePrice / origP) * 100) : 0;
+                const savingAmt = origP ? (origP - activePrice) : 0;
                 if (!discountPct) return null;
                 return (
                   <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1.5">
@@ -232,7 +246,7 @@ function ProductPage() {
                     <button key={i} onClick={() => setImgIdx(i)}
                       className={`flex-shrink-0 h-16 w-16 overflow-hidden rounded-xl border-2 transition-colors ${i === imgIdx ? "border-[var(--brand)]" : "border-border hover:border-muted-foreground"}`}>
                       {url
-                        ? <img src={url} alt="" className="h-full w-full object-cover" />
+                        ? <img src={url} alt="" className="h-full w-full object-contain" />
                         : <div className="flex h-full w-full items-center justify-center text-xl">{img || "📦"}</div>}
                     </button>
                   );
@@ -282,12 +296,12 @@ function ProductPage() {
             </div>
 
             {(() => {
-              const { activePrice, originalPrice } = (() => {
-                if (product.extra_price != null) return { activePrice: product.extra_price, originalPrice: product.price };
-                if (product.sale_price != null) return { activePrice: product.sale_price, originalPrice: product.price };
-                if (product.old_price && product.old_price > product.price) return { activePrice: product.price, originalPrice: product.old_price };
-                if (product.discount > 0) return { activePrice: Math.round(product.price * (1 - product.discount / 100)), originalPrice: product.price };
-                return { activePrice: product.price, originalPrice: null as number | null };
+              const originalPrice = (() => {
+                if (product.extra_price != null) return product.price;
+                if (product.sale_price != null) return product.price;
+                if (product.old_price && product.old_price > product.price) return product.old_price;
+                if (product.discount > 0) return product.price;
+                return null as number | null;
               })();
               const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
               const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
@@ -295,8 +309,13 @@ function ProductPage() {
               const isFree = product.interest_free !== 0;
               const rate = product.interest_rate || 0;
               const monthlyPayment = isFree
-                ? Math.round(activePrice / months)
-                : Math.round(activePrice * (1 + (rate / 100) * months) / months);
+                ? Math.ceil(activePrice / months * 100) / 100
+                : (() => {
+                    const r = rate / 100 / 12;
+                    if (r === 0) return Math.ceil(activePrice / months * 100) / 100;
+                    return Math.ceil(activePrice * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1) * 100) / 100;
+                  })();
+              const totalCredit = +(monthlyPayment * months).toFixed(2);
               return (
                 <>
                   <div className="mt-3 flex items-baseline gap-2 flex-wrap md:mt-4 md:gap-3">
@@ -312,10 +331,18 @@ function ProductPage() {
                     </div>
                   )}
                   <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
-                    <span className="font-semibold text-[var(--brand)]">
-                      {isFree ? "Faizsiz aylıq ödəniş:" : `Aylıq ödəniş (${rate}% faiz):`}
-                    </span>{" "}
-                    {months} aya {monthlyPayment} ₼ / ay
+                    <div>
+                      <span className="font-semibold text-[var(--brand)]">
+                        {isFree ? "Faizsiz aylıq ödəniş:" : `Aylıq ödəniş (${rate}% illik faiz):`}
+                      </span>{" "}
+                      <span className="font-bold">{months} aya {monthlyPayment.toFixed(2)} ₼ / ay</span>
+                    </div>
+                    <div className="mt-0.5 text-muted-foreground">
+                      Cəmi: <span className="font-semibold text-foreground">{totalCredit.toFixed(2)} ₼</span>
+                      {!isFree && totalCredit > activePrice && (
+                        <span> (+{totalCredit - activePrice} ₼ faiz)</span>
+                      )}
+                    </div>
                   </div>
                 </>
               );
@@ -325,9 +352,52 @@ function ProductPage() {
               <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{product.description}</p>
             )}
 
+            {(() => {
+              const comps = parsedComps;
+              if (comps.length === 0) return null;
+              return (
+                <div className="mt-4 rounded-2xl border border-border bg-secondary/20 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-border bg-secondary/40 flex items-center justify-between">
+                    <p className="text-sm font-bold">Dəst tərkibi</p>
+                    <span className="text-xs text-muted-foreground">İstədiyinizi seçin</span>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {comps.map((c, i) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedComps.has(i)}
+                          onChange={() => setSelectedComps(prev => {
+                            const next = new Set(prev);
+                            if (next.has(i)) next.delete(i); else next.add(i);
+                            return next;
+                          })}
+                          className="h-4 w-4 rounded accent-[var(--brand)] cursor-pointer flex-shrink-0"
+                        />
+                        <span className="flex-1 text-sm">{c.name}</span>
+                        <span className="text-sm font-semibold text-[var(--brand)] flex-shrink-0">{c.price} ₼</span>
+                        <button
+                          onClick={() => {
+                            addItem({ id: product.id * 10000 + i + 1, name: `${c.name} (${product.name})`, price: c.price, image: product.image, qty: 1 });
+                            toast.success(`${c.name} səbətə əlavə edildi`);
+                          }}
+                          className="flex-shrink-0 rounded-lg border border-[var(--brand)] px-2 py-1 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)] hover:text-[var(--brand-foreground)] transition-colors">
+                          + Səbətə
+                        </button>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/40">
+                      <span className="text-sm font-bold">Cəmi</span>
+                      <span className="text-sm font-black text-[var(--accent-orange)]">{cartPrice} ₼</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="mt-3 flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium md:text-sm ${product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                {product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
+              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium md:text-sm ${(product.stock > 0 || product.in_stock === 1) ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
               </span>
             </div>
 
@@ -339,7 +409,14 @@ function ProductPage() {
                 <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
               </div>
               <button onClick={() => {
-                  addItem({ id: product.id, name: product.name, price: product.extra_price ?? product.sale_price ?? product.price, image: product.image, qty });
+                  // Base product (always)
+                  addItem({ id: product.id, name: product.name, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 24 });
+                  // Each selected component as separate cart item
+                  parsedComps.forEach((comp, i) => {
+                    if (selectedComps.has(i)) {
+                      addItem({ id: product.id * 10000 + i + 1, name: `${comp.name} (${product.name})`, price: comp.price, image: product.image, qty });
+                    }
+                  });
                   toast.success("Səbətə əlavə edildi");
                 }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
@@ -399,7 +476,7 @@ function ProductPage() {
                   className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
                   <div className="aspect-square overflow-hidden bg-secondary/30">
                     {getImageUrl(p.image)
-                      ? <img src={getImageUrl(p.image)!} alt={p.name} className="h-full w-full object-cover group-hover:scale-110 transition duration-500" loading="lazy" />
+                      ? <img src={getImageUrl(p.image)!} alt={p.name} className="h-full w-full object-contain group-hover:scale-105 transition duration-500" loading="lazy" />
                       : <div className="flex h-full w-full items-center justify-center text-4xl">{p.image || "📦"}</div>}
                   </div>
                   <div className="p-3 md:p-4">
@@ -520,8 +597,20 @@ function ProductPage() {
   );
 }
 
+const IDEAL_RATES: Record<number, { deducted: number; added: number }> = {
+  3:  { deducted: 10.0, added: 11.1 },
+  6:  { deducted: 15.0, added: 17.6 },
+  9:  { deducted: 19.0, added: 23.5 },
+  12: { deducted: 24.0, added: 31.6 },
+  15: { deducted: 27.0, added: 37.0 },
+  18: { deducted: 31.0, added: 44.9 },
+};
+
 function CreditModal({ product, onClose, onOrder }: { product: Product; onClose: () => void; onOrder: () => void }) {
-  const [months, setMonths] = useState(24);
+  const hasIdeal = (product.ideal_credit_months ?? 0) > 0;
+  const [tab, setTab] = useState<"free" | "ideal">(hasIdeal ? "ideal" : "free");
+  const [months, setMonths] = useState(product.credit_months || 24);
+  const [idealMonths, setIdealMonths] = useState(product.ideal_credit_months ?? 12);
   const [useDiscounted, setUseDiscounted] = useState(true);
 
   const activePrice = (() => {
@@ -535,48 +624,121 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
   const hasDiscount = discountedPrice !== null;
   const fullPrice = product.price;
   const basePrice = hasDiscount ? (useDiscounted ? discountedPrice! : fullPrice) : fullPrice;
-  const monthly = Math.round(basePrice / months);
+
+  const monthly = Math.ceil(basePrice / months * 100) / 100;
+  const totalPaid = +(monthly * months).toFixed(2);
+
+  // İdeal Kredit tab
+  const idealRow = IDEAL_RATES[idealMonths];
+  const idealTotal = idealRow ? Math.ceil(basePrice * (1 + idealRow.added / 100)) : 0;
+  const idealMonthly = idealRow ? Math.ceil(idealTotal / idealMonths) : 0;
+  const idealOverpay = idealTotal - basePrice;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl">
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-lg font-bold">Kredit hesabla</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
         </div>
         <div className="p-6 space-y-4">
+          {/* Tab seçimi */}
+          <div className="flex rounded-xl border border-border overflow-hidden text-sm font-semibold">
+            <button onClick={() => setTab("free")}
+              className={`flex-1 py-2.5 transition-colors ${tab === "free" ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
+              Faizsiz
+            </button>
+            <button onClick={() => setTab("ideal")}
+              className={`flex-1 py-2.5 transition-colors ${tab === "ideal" ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
+              İdeal Kredit
+            </button>
+          </div>
+
+          {/* Endirimli / tam qiymət seçimi */}
           {hasDiscount && (
-            <div className="flex rounded-xl border border-border overflow-hidden text-sm font-semibold">
+            <div className="flex rounded-xl border border-border overflow-hidden text-xs font-semibold">
               <button onClick={() => setUseDiscounted(true)}
-                className={`flex-1 py-2.5 transition-colors ${useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
+                className={`flex-1 py-2 transition-colors ${useDiscounted ? "bg-secondary" : "hover:bg-secondary/50"}`}>
                 Endirimli · {activePrice} ₼
               </button>
               <button onClick={() => setUseDiscounted(false)}
-                className={`flex-1 py-2.5 transition-colors ${!useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
+                className={`flex-1 py-2 transition-colors ${!useDiscounted ? "bg-secondary" : "hover:bg-secondary/50"}`}>
                 Tam · {fullPrice} ₼
               </button>
             </div>
           )}
+
+          {/* Qiymət */}
           <div className="text-center">
             <div className="text-3xl font-black">{basePrice} ₼</div>
-            <div className="text-sm text-muted-foreground mt-1">Faizsiz kredit</div>
           </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
-            <div className="flex flex-wrap gap-2">
-              {[6,12,18,24,36,48,60].map(m => (
-                <button key={m} onClick={() => setMonths(m)}
-                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${months === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                  {m} ay
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
-            <div className="text-sm text-muted-foreground">Aylıq ödəniş</div>
-            <div className="text-4xl font-black text-[var(--brand)] mt-1">{monthly} ₼</div>
-            <div className="text-xs text-muted-foreground mt-1">{months} ay × {monthly} ₼ = {basePrice} ₼</div>
-          </div>
+
+          {tab === "free" ? (
+            <>
+              <div>
+                <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
+                <div className="flex flex-wrap gap-2">
+                  {[3,6,9,12,15,18].map(m => (
+                    <button key={m} onClick={() => setMonths(m)}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${months === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                      {m} ay
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
+                <div className="text-xs text-muted-foreground">Aylıq ödəniş</div>
+                <div className="text-4xl font-black text-[var(--brand)] mt-1">{monthly.toFixed(2)} ₼</div>
+                <div className="text-xs text-muted-foreground mt-1">{months} ay × {monthly.toFixed(2)} ₼ = {totalPaid.toFixed(2)} ₼</div>
+              </div>
+              {!product.commission_free && (
+                <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-xs text-yellow-800">
+                  Rəsmiləşdirmə zamanı <strong>5–7% komissiya</strong> məbləği tələb oluna bilər.
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
+                <div className="flex flex-wrap gap-2">
+                  {[3,6,9,12,15,18].map(m => (
+                    <button key={m} onClick={() => setIdealMonths(m)}
+                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${idealMonths === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                      {m} ay
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {idealRow && (
+                <>
+                  <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
+                    <div className="text-xs text-muted-foreground">Aylıq ödəniş</div>
+                    <div className="text-4xl font-black text-[var(--brand)] mt-1">{idealMonthly} ₼</div>
+                    <div className="text-xs text-muted-foreground mt-1">{idealMonths} ay × {idealMonthly} ₼ = {idealTotal} ₼</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">(+{idealRow.added}% = +{idealOverpay.toFixed(0)} ₼ faiz)</div>
+                  </div>
+                  <div className="rounded-xl border border-border overflow-hidden text-xs">
+                    <div className="grid grid-cols-2 bg-secondary/60 font-semibold px-3 py-2 text-center text-muted-foreground">
+                      <span>Ay</span><span>Üzərinə gələn</span>
+                    </div>
+                    {Object.entries(IDEAL_RATES).map(([m, r]) => (
+                      <div key={m} onClick={() => setIdealMonths(Number(m))}
+                        className={`grid grid-cols-2 px-3 py-2 text-center cursor-pointer border-t border-border transition-colors ${Number(m) === idealMonths ? "bg-[var(--brand)]/8 font-semibold" : "hover:bg-secondary/40"}`}>
+                        <span>{m}</span><span>{r.added}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+              {!product.commission_free && (
+                <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-xs text-yellow-800">
+                  Rəsmiləşdirmə zamanı <strong>5–7% komissiya</strong> məbləği tələb oluna bilər.
+                </div>
+              )}
+            </>
+          )}
+
           <button onClick={onOrder}
             className="w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90">
             Kredit ilə sifariş ver

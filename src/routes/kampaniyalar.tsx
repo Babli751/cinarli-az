@@ -58,7 +58,7 @@ function KampaniyalarPage() {
             {products.map((p) => (
               <Link key={p.id} to="/mehsul/$slug" params={{ slug: String(p.id) }}
                 className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
-                <div className="aspect-square overflow-hidden bg-secondary/30">
+                <div className="aspect-[4/3] overflow-hidden bg-white">
                   <ProductImg p={p} />
                 </div>
                 <div className="p-4">
@@ -96,7 +96,7 @@ function KampaniyalarPage() {
 function ProductImg({ p }: { p: Product }) {
   const url = getImageUrl(p.image);
   if (url) {
-    return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+    return <img src={url} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

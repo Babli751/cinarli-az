@@ -27,7 +27,7 @@ function OutletPage() {
               {p.discount > 0 && (
                 <span className="absolute right-3 top-3 z-10 rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow">−{p.discount}%</span>
               )}
-              <div className="aspect-square overflow-hidden bg-secondary/30">
+              <div className="aspect-[4/3] overflow-hidden bg-white">
                 <ProductImg p={p} />
               </div>
               <div className="p-4">
@@ -48,7 +48,7 @@ function OutletPage() {
 function ProductImg({ p }: { p: Product }) {
   const url = getImageUrl(p.image);
   if (url) {
-    return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />;
+    return <img src={url} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />;
   }
   return <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>;
 }

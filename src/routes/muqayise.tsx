@@ -86,7 +86,7 @@ function ComparePage() {
                       <Link to="/mehsul/$slug" params={{ slug: String(item.id) }}>
                         <div className="mx-auto mb-2 h-24 w-24 overflow-hidden rounded-xl bg-secondary/30">
                           {url
-                            ? <img src={url} alt={item.name} className="h-full w-full object-cover" />
+                            ? <img src={url} alt={item.name} className="h-full w-full object-contain" />
                             : <div className="flex h-full w-full items-center justify-center text-3xl">{item.image || "📦"}</div>}
                         </div>
                         <div className="text-sm font-semibold hover:text-[var(--brand)] line-clamp-2">{item.name}</div>
