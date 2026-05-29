@@ -6,6 +6,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import logoChinarli from "@/assets/logo-chinarli.png";
 
+interface SearchResult {
+  id: number;
+  name: string;
+  price: number;
+  image: string;
+  compLabel?: string; // "Fiona Yataq Dəsti — Termo"
+}
+
 function useProductSearch() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [query, setQuery] = useState("");
@@ -15,9 +23,39 @@ function useProductSearch() {
     api.getProducts({ active: true }).then(setAllProducts).catch(() => {});
   }, []);
 
-  const results = query.trim().length >= 2
-    ? allProducts.filter(p => p.name.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
-    : [];
+  const results: SearchResult[] = query.trim().length >= 2 ? (() => {
+    const q = query.toLowerCase();
+    const seen = new Set<string>();
+    const out: SearchResult[] = [];
+
+    for (const p of allProducts) {
+      if (out.length >= 8) break;
+      // direct name match
+      if (p.name.toLowerCase().includes(q)) {
+        const key = `p-${p.id}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          const active = p.extra_price ?? p.sale_price ?? p.price;
+          out.push({ id: p.id!, name: p.name, price: active, image: p.image });
+        }
+      }
+      // component match
+      try {
+        const comps: { name: string; price: number }[] = JSON.parse(p.components || "[]");
+        for (const c of comps) {
+          if (out.length >= 8) break;
+          if (c.name.toLowerCase().includes(q)) {
+            const key = `c-${p.id}-${c.name}`;
+            if (!seen.has(key)) {
+              seen.add(key);
+              out.push({ id: p.id!, name: c.name, price: c.price, image: p.image, compLabel: `${p.name} — ${c.name}` });
+            }
+          }
+        }
+      } catch {}
+    }
+    return out;
+  })() : [];
 
   return { query, setQuery, results, open, setOpen };
 }
@@ -136,8 +174,8 @@ export function SiteHeader() {
                         {url ? <img src={url} alt="" className="h-full w-full object-contain" /> : <div className="flex h-full w-full items-center justify-center text-lg">{p.image || "📦"}</div>}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="truncate text-sm font-medium">{p.name}</div>
-                        <div className="text-xs text-[var(--brand)] font-semibold">{p.extra_price ?? p.sale_price ?? p.price} ₼</div>
+                        <div className="truncate text-sm font-medium">{p.compLabel ?? p.name}</div>
+                        <div className="text-xs text-[var(--brand)] font-semibold">{p.price} ₼</div>
                       </div>
                     </Link>
                   );

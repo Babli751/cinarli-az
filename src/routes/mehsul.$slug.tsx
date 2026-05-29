@@ -315,7 +315,6 @@ function ProductPage() {
                     if (r === 0) return Math.ceil(activePrice / months * 100) / 100;
                     return Math.ceil(activePrice * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1) * 100) / 100;
                   })();
-              const totalCredit = +(monthlyPayment * months).toFixed(2);
               return (
                 <>
                   <div className="mt-3 flex items-baseline gap-2 flex-wrap md:mt-4 md:gap-3">
@@ -330,27 +329,11 @@ function ProductPage() {
                       {savingAmt.toFixed(0)} ₼ qənaət
                     </div>
                   )}
-                  <div className="mt-3 rounded-xl bg-[var(--brand)]/5 px-3 py-2 text-xs md:px-4 md:py-2.5 md:text-sm">
-                    <div>
-                      <span className="font-semibold text-[var(--brand)]">
-                        {isFree ? "Faizsiz aylıq ödəniş:" : `Aylıq ödəniş (${rate}% illik faiz):`}
-                      </span>{" "}
-                      <span className="font-bold">{months} aya {monthlyPayment.toFixed(2)} ₼ / ay</span>
-                    </div>
-                    <div className="mt-0.5 text-muted-foreground">
-                      Cəmi: <span className="font-semibold text-foreground">{totalCredit.toFixed(2)} ₼</span>
-                      {!isFree && totalCredit > activePrice && (
-                        <span> (+{totalCredit - activePrice} ₼ faiz)</span>
-                      )}
-                    </div>
-                  </div>
+                  <InlineCredit price={activePrice} isFree={isFree} onOpenCalc={() => setCreditModal(true)} />
                 </>
               );
             })()}
 
-            {product.description && (
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{product.description}</p>
-            )}
 
             {(() => {
               const comps = parsedComps;
@@ -465,6 +448,9 @@ function ProductPage() {
             </div>
           </div>
         </div>
+
+        {/* Info Tabs */}
+        <ProductTabs product={product} />
 
         {/* Related */}
         {related.length > 0 && (
@@ -597,20 +583,134 @@ function ProductPage() {
   );
 }
 
-const IDEAL_RATES: Record<number, { deducted: number; added: number }> = {
-  3:  { deducted: 10.0, added: 11.1 },
-  6:  { deducted: 15.0, added: 17.6 },
-  9:  { deducted: 19.0, added: 23.5 },
-  12: { deducted: 24.0, added: 31.6 },
-  15: { deducted: 27.0, added: 37.0 },
-  18: { deducted: 31.0, added: 44.9 },
+const IDEAL_RATES: Record<number, { added: number }> = {
+  3:  { added: 11.1 },
+  6:  { added: 17.6 },
+  9:  { added: 23.5 },
+  12: { added: 31.6 },
+  15: { added: 37.0 },
+  18: { added: 44.9 },
 };
 
+// Bank kredit şərtləri
+function ProductTabs({ product }: { product: Product }) {
+  const [tab, setTab] = useState<"desc" | "specs" | "reviews">("desc");
+  const tabs = [
+    { id: "desc",    label: "Təsvir" },
+    { id: "specs",   label: "Texniki xüsusiyyətlər" },
+    { id: "reviews", label: "Reytinq və rəylər (0)" },
+  ] as const;
+
+  return (
+    <div className="mt-8 md:mt-12">
+      {/* Tab bar */}
+      <div className="flex border-b border-border overflow-x-auto scrollbar-none">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)}
+            className={`flex-shrink-0 px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+              tab === t.id
+                ? "border-[var(--accent-orange)] text-[var(--accent-orange)]"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="py-6">
+        {tab === "desc" && (
+          <div className="prose prose-sm max-w-none text-sm text-foreground leading-relaxed">
+            {product.description
+              ? <p>{product.description}</p>
+              : <p className="text-muted-foreground">Məhsul haqqında məlumat əlavə edilməyib.</p>}
+          </div>
+        )}
+        {tab === "specs" && (
+          <div className="text-sm text-muted-foreground">
+            <p>Texniki xüsusiyyətlər admin tərəfindən əlavə edilməyib.</p>
+          </div>
+        )}
+        {tab === "reviews" && (
+          <div className="text-sm text-muted-foreground">
+            <p>Hələ rəy yazılmayıb. Birinci siz yazın!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InlineCredit({ price, isFree, onOpenCalc }: { price: number; isFree: boolean; onOpenCalc: () => void }) {
+  const rows = [6, 12, 18];
+  const [selected, setSelected] = useState(12);
+  const monthly = (m: number) => (Math.ceil(price / m * 100) / 100).toFixed(2);
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-2xl border border-border shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between bg-[var(--brand)]/5 px-4 py-2.5 border-b border-border">
+        <span className="text-sm font-bold text-foreground">{isFree ? "İlkin ödənişsiz hissə-hissə ödə!" : "Hissə-hissə ödə!"}</span>
+        {isFree && (
+          <span className="flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+            ✓ Komissiyasız
+          </span>
+        )}
+      </div>
+
+      {/* Table */}
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border bg-secondary/30 text-xs text-muted-foreground">
+            <th className="w-10 py-2 pl-4 text-left font-medium">Seçim</th>
+            <th className="py-2 text-center font-medium">İlkin ödəniş</th>
+            <th className="py-2 text-center font-medium">Müddət</th>
+            <th className="py-2 text-center font-medium">Aylıq ödəniş</th>
+            <th className="py-2 pr-4 text-center font-medium">Yekun məbləğ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(m => (
+            <tr key={m} onClick={() => setSelected(m)}
+              className={`cursor-pointer border-b border-border transition-colors last:border-0 ${selected === m ? "bg-[var(--brand)]/5" : "hover:bg-secondary/30"}`}>
+              <td className="py-3 pl-4">
+                <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center transition-colors ${selected === m ? "border-[var(--brand)]" : "border-muted-foreground/30"}`}>
+                  {selected === m && <div className="h-2 w-2 rounded-full bg-[var(--brand)]" />}
+                </div>
+              </td>
+              <td className="py-3 text-center text-muted-foreground">0</td>
+              <td className="py-3 text-center font-semibold">{m} ay</td>
+              <td className="py-3 text-center font-bold text-[var(--brand)] text-base">{monthly(m)} ₼</td>
+              <td className="py-3 pr-4 text-center text-muted-foreground">{price.toFixed(2)} ₼</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Buttons */}
+      <div className="flex gap-2 border-t border-border bg-secondary/20 p-3">
+        <button onClick={onOpenCalc}
+          className="flex-1 rounded-xl border border-border bg-background py-2.5 text-sm font-semibold hover:bg-secondary transition-colors">
+          Hissəli alış kalkulyatoru
+        </button>
+        <button onClick={onOpenCalc}
+          className="flex-1 rounded-xl bg-[var(--brand)] py-2.5 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">
+          Hissə-hissə al
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const BANKS = [
+  { id: "bircard",  name: "Bircard",  months: [3,6,9,12,18], freeMonths: [3,6,9,12,18], addedPct: 0,    commission: false },
+  { id: "tamcard",  name: "Tamcard",  months: [3,6,9,12],    freeMonths: [3,6,9,12],    addedPct: 0,    commission: false },
+  { id: "ideal",    name: "İdeal",    months: [3,6,9,12,15,18], freeMonths: [],          addedPct: null, commission: true  },
+];
+
 function CreditModal({ product, onClose, onOrder }: { product: Product; onClose: () => void; onOrder: () => void }) {
-  const hasIdeal = (product.ideal_credit_months ?? 0) > 0;
-  const [tab, setTab] = useState<"free" | "ideal">(hasIdeal ? "ideal" : "free");
-  const [months, setMonths] = useState(product.credit_months || 24);
-  const [idealMonths, setIdealMonths] = useState(product.ideal_credit_months ?? 12);
+  const [bankId, setBankId] = useState("bircard");
+  const [months, setMonths] = useState(12);
+  const [downPayment, setDownPayment] = useState("");
   const [useDiscounted, setUseDiscounted] = useState(true);
 
   const activePrice = (() => {
@@ -620,123 +720,128 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
     if (product.discount > 0) return Math.round(product.price * (1 - product.discount / 100));
     return product.price;
   })();
-  const discountedPrice = activePrice < product.price ? activePrice : null;
-  const hasDiscount = discountedPrice !== null;
+  const hasDiscount = activePrice < product.price;
   const fullPrice = product.price;
-  const basePrice = hasDiscount ? (useDiscounted ? discountedPrice! : fullPrice) : fullPrice;
+  const basePrice = hasDiscount ? (useDiscounted ? activePrice : fullPrice) : fullPrice;
 
-  const monthly = Math.ceil(basePrice / months * 100) / 100;
-  const totalPaid = +(monthly * months).toFixed(2);
+  const bank = BANKS.find(b => b.id === bankId)!;
+  // ensure selected months valid for bank
+  const validMonths = bank.months.includes(months) ? months : bank.months[bank.months.length - 1];
 
-  // İdeal Kredit tab
-  const idealRow = IDEAL_RATES[idealMonths];
-  const idealTotal = idealRow ? Math.ceil(basePrice * (1 + idealRow.added / 100)) : 0;
-  const idealMonthly = idealRow ? Math.ceil(idealTotal / idealMonths) : 0;
-  const idealOverpay = idealTotal - basePrice;
+  const down = Math.min(Math.max(parseFloat(downPayment) || 0, 0), basePrice - 1);
+  const financed = basePrice - down;
+
+  let monthly: number;
+  let totalPaid: number;
+  let overpay: number;
+
+  if (bankId === "ideal") {
+    const row = IDEAL_RATES[validMonths];
+    const total = row ? Math.ceil(financed * (1 + row.added / 100)) : financed;
+    monthly = Math.ceil(total / validMonths);
+    totalPaid = monthly * validMonths + down;
+    overpay = totalPaid - basePrice;
+  } else {
+    monthly = Math.ceil(financed / validMonths * 100) / 100;
+    totalPaid = +(monthly * validMonths + down).toFixed(2);
+    overpay = 0;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl bg-background shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="text-lg font-bold">Kredit hesabla</h2>
           <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
         </div>
-        <div className="p-6 space-y-4">
-          {/* Tab seçimi */}
-          <div className="flex rounded-xl border border-border overflow-hidden text-sm font-semibold">
-            <button onClick={() => setTab("free")}
-              className={`flex-1 py-2.5 transition-colors ${tab === "free" ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
-              Faizsiz
-            </button>
-            <button onClick={() => setTab("ideal")}
-              className={`flex-1 py-2.5 transition-colors ${tab === "ideal" ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary"}`}>
-              İdeal Kredit
-            </button>
-          </div>
+        <div className="p-5 space-y-4">
 
-          {/* Endirimli / tam qiymət seçimi */}
+          {/* Endirimli / tam qiymət */}
           {hasDiscount && (
             <div className="flex rounded-xl border border-border overflow-hidden text-xs font-semibold">
               <button onClick={() => setUseDiscounted(true)}
-                className={`flex-1 py-2 transition-colors ${useDiscounted ? "bg-secondary" : "hover:bg-secondary/50"}`}>
+                className={`flex-1 py-2 transition-colors ${useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary/50"}`}>
                 Endirimli · {activePrice} ₼
               </button>
               <button onClick={() => setUseDiscounted(false)}
-                className={`flex-1 py-2 transition-colors ${!useDiscounted ? "bg-secondary" : "hover:bg-secondary/50"}`}>
+                className={`flex-1 py-2 transition-colors ${!useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary/50"}`}>
                 Tam · {fullPrice} ₼
               </button>
             </div>
           )}
 
-          {/* Qiymət */}
-          <div className="text-center">
-            <div className="text-3xl font-black">{basePrice} ₼</div>
+          {/* Məhsul qiyməti */}
+          <div className="flex items-center justify-between rounded-xl bg-secondary/40 px-4 py-3">
+            <span className="text-sm text-muted-foreground">Məhsul qiyməti</span>
+            <span className="text-xl font-black">{basePrice} ₼</span>
           </div>
 
-          {tab === "free" ? (
-            <>
-              <div>
-                <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
-                <div className="flex flex-wrap gap-2">
-                  {[3,6,9,12,15,18].map(m => (
-                    <button key={m} onClick={() => setMonths(m)}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${months === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                      {m} ay
-                    </button>
-                  ))}
-                </div>
+          {/* Bank seçimi */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold">Bank seçin</label>
+            <div className="grid grid-cols-3 gap-2">
+              {BANKS.map(b => (
+                <button key={b.id} onClick={() => { setBankId(b.id); if (!b.months.includes(months)) setMonths(b.months[b.months.length-1]); }}
+                  className={`rounded-xl border py-2.5 text-sm font-bold transition ${bankId === b.id ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:border-[var(--brand)] hover:text-[var(--brand)]"}`}>
+                  {b.name}
+                </button>
+              ))}
+            </div>
+            {bankId !== "ideal" && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" /> Komissiyasız · Faizsiz
               </div>
-              <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
-                <div className="text-xs text-muted-foreground">Aylıq ödəniş</div>
-                <div className="text-4xl font-black text-[var(--brand)] mt-1">{monthly.toFixed(2)} ₼</div>
-                <div className="text-xs text-muted-foreground mt-1">{months} ay × {monthly.toFixed(2)} ₼ = {totalPaid.toFixed(2)} ₼</div>
+            )}
+          </div>
+
+          {/* Müddət seçimi */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold">Müddət</label>
+            <div className="flex flex-wrap gap-2">
+              {bank.months.map(m => (
+                <button key={m} onClick={() => setMonths(m)}
+                  className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${validMonths === m ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:bg-secondary"}`}>
+                  {m} ay
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* İlkin ödəniş kalkulyatoru */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold">İlkin ödəniş (opsional)</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number" min="0" max={basePrice - 1}
+                value={downPayment}
+                onChange={e => setDownPayment(e.target.value)}
+                placeholder="0 ₼"
+                className="flex-1 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors"
+              />
+              <span className="text-sm text-muted-foreground">Qalan: <b>{financed.toFixed(0)} ₼</b></span>
+            </div>
+          </div>
+
+          {/* Nəticə */}
+          <div className="rounded-xl bg-[var(--brand)]/5 border border-[var(--brand)]/20 p-4">
+            <div className="text-center mb-3">
+              <div className="text-xs text-muted-foreground">Aylıq ödəniş</div>
+              <div className="text-4xl font-black text-[var(--brand)]">{monthly.toFixed(2)} ₼</div>
+            </div>
+            <div className="space-y-1 text-xs text-muted-foreground">
+              <div className="flex justify-between"><span>{validMonths} ay × {monthly.toFixed(2)} ₼</span><span>{(monthly * validMonths).toFixed(2)} ₼</span></div>
+              {down > 0 && <div className="flex justify-between"><span>İlkin ödəniş</span><span>+{down.toFixed(0)} ₼</span></div>}
+              <div className="flex justify-between font-semibold text-foreground border-t border-border pt-1 mt-1">
+                <span>Ümumi cəmi</span><span>{totalPaid.toFixed(2)} ₼</span>
               </div>
-              {!product.commission_free && (
-                <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-xs text-yellow-800">
-                  Rəsmiləşdirmə zamanı <strong>5–7% komissiya</strong> məbləği tələb oluna bilər.
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <div>
-                <label className="mb-2 block text-sm font-medium">Müddət seçin</label>
-                <div className="flex flex-wrap gap-2">
-                  {[3,6,9,12,15,18].map(m => (
-                    <button key={m} onClick={() => setIdealMonths(m)}
-                      className={`rounded-lg px-3 py-1.5 text-sm font-semibold border transition-colors ${idealMonths === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                      {m} ay
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {idealRow && (
-                <>
-                  <div className="rounded-xl bg-[var(--brand)]/5 p-4 text-center">
-                    <div className="text-xs text-muted-foreground">Aylıq ödəniş</div>
-                    <div className="text-4xl font-black text-[var(--brand)] mt-1">{idealMonthly} ₼</div>
-                    <div className="text-xs text-muted-foreground mt-1">{idealMonths} ay × {idealMonthly} ₼ = {idealTotal} ₼</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">(+{idealRow.added}% = +{idealOverpay.toFixed(0)} ₼ faiz)</div>
-                  </div>
-                  <div className="rounded-xl border border-border overflow-hidden text-xs">
-                    <div className="grid grid-cols-2 bg-secondary/60 font-semibold px-3 py-2 text-center text-muted-foreground">
-                      <span>Ay</span><span>Üzərinə gələn</span>
-                    </div>
-                    {Object.entries(IDEAL_RATES).map(([m, r]) => (
-                      <div key={m} onClick={() => setIdealMonths(Number(m))}
-                        className={`grid grid-cols-2 px-3 py-2 text-center cursor-pointer border-t border-border transition-colors ${Number(m) === idealMonths ? "bg-[var(--brand)]/8 font-semibold" : "hover:bg-secondary/40"}`}>
-                        <span>{m}</span><span>{r.added}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-              {!product.commission_free && (
-                <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-xs text-yellow-800">
-                  Rəsmiləşdirmə zamanı <strong>5–7% komissiya</strong> məbləği tələb oluna bilər.
-                </div>
-              )}
-            </>
+              {overpay > 0 && <div className="flex justify-between text-orange-600"><span>Faiz məbləği</span><span>+{overpay.toFixed(0)} ₼</span></div>}
+            </div>
+          </div>
+
+          {bankId === "ideal" && (
+            <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-xs text-yellow-800">
+              İdeal Kredit üzrə <strong>faiz tətbiq edilir</strong>. Komissiya da tələb oluna bilər.
+            </div>
           )}
 
           <button onClick={onOrder}
