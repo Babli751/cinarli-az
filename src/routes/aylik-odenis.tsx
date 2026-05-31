@@ -20,7 +20,7 @@ export const Route = createFileRoute("/aylik-odenis")({
       <div className="mt-8 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-xl font-bold">Hesablayıcı</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <input className="rounded-lg border border-border bg-secondary/40 px-3 py-2" placeholder="Məhsul qiyməti (₼)" />
+          <input className="rounded-lg border border-border bg-secondary/40 px-3 py-2" placeholder="Məhsul qiyməti (AZN)" />
           <select className="rounded-lg border border-border bg-secondary/40 px-3 py-2">
             <option>3 ay</option><option>6 ay</option><option>12 ay</option><option>24 ay</option>
           </select>

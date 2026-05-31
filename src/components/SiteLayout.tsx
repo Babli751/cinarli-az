@@ -175,7 +175,7 @@ export function SiteHeader() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="truncate text-sm font-medium">{p.compLabel ?? p.name}</div>
-                        <div className="text-xs text-[var(--brand)] font-semibold">{p.price} ₼</div>
+                        <div className="text-xs text-[var(--brand)] font-semibold">{p.price} AZN</div>
                       </div>
                     </Link>
                   );
@@ -258,7 +258,7 @@ export function SiteHeader() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="truncate text-sm font-medium">{p.name}</div>
-                          <div className="text-xs text-[var(--brand)] font-semibold">{p.extra_price ?? p.sale_price ?? p.price} ₼</div>
+                          <div className="text-xs text-[var(--brand)] font-semibold">{p.extra_price ?? p.sale_price ?? p.price} AZN</div>
                         </div>
                       </Link>
                     );

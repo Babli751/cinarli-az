@@ -125,7 +125,7 @@ function BrandPage() {
                         {discountPct > 0 && (
                           <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
                             <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-[10px] font-bold text-white shadow">−{discountPct}%</div>
-                            <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} ₼</div>
+                            <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} AZN</div>
                           </div>
                         )}
                         <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5">
@@ -139,14 +139,14 @@ function BrandPage() {
                         <div className="flex flex-1 flex-col p-3">
                           <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="line-clamp-2 min-h-[2.5rem] text-xs font-medium hover:text-[var(--brand)]">{p.name}</Link>
                           <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
-                            <span className="text-base font-black">{activePrice} ₼</span>
-                            {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} ₼</span>}
+                            <span className="text-base font-black">{activePrice} AZN</span>
+                            {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} AZN</span>}
                           </div>
                           {savingAmt > 0 && (
-                            <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%</div>
+                            <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} AZN qənaət · -{discountPct}%</div>
                           )}
                           <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)]">
-                            <Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} ₼/ay
+                            <Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} AZN/ay
                           </div>
                           <button onClick={() => addItem({ id: p.id, name: p.name, price: activePrice, image: p.image })}
                             className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90">

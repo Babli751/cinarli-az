@@ -214,7 +214,7 @@ function ProductPage() {
                 return (
                   <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1.5">
                     <div className="rounded-xl bg-[var(--accent-orange)] px-3 py-1 text-sm font-bold text-white shadow-lg">−{discountPct}%</div>
-                    <div className="rounded-xl bg-[var(--accent-orange)]/90 px-3 py-1 text-xs font-semibold text-white shadow-lg">−{savingAmt.toFixed(0)} ₼</div>
+                    <div className="rounded-xl bg-[var(--accent-orange)]/90 px-3 py-1 text-xs font-semibold text-white shadow-lg">−{savingAmt.toFixed(0)} AZN</div>
                   </div>
                 );
               })()}
@@ -305,28 +305,19 @@ function ProductPage() {
               })();
               const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
               const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
-              const months = product.credit_months || 24;
               const isFree = product.interest_free !== 0;
-              const rate = product.interest_rate || 0;
-              const monthlyPayment = isFree
-                ? Math.ceil(activePrice / months * 100) / 100
-                : (() => {
-                    const r = rate / 100 / 12;
-                    if (r === 0) return Math.ceil(activePrice / months * 100) / 100;
-                    return Math.ceil(activePrice * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1) * 100) / 100;
-                  })();
               return (
                 <>
                   <div className="mt-3 flex items-baseline gap-2 flex-wrap md:mt-4 md:gap-3">
-                    <span className="text-3xl font-black md:text-4xl">{activePrice} ₼</span>
-                    {originalPrice && <span className="text-base text-muted-foreground line-through md:text-xl">{originalPrice} ₼</span>}
+                    <span className="text-3xl font-black md:text-4xl">{activePrice} AZN</span>
+                    {originalPrice && <span className="text-base text-muted-foreground line-through md:text-xl">{originalPrice} AZN</span>}
                     {discountPct > 0 && (
                       <span className="rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white md:px-3 md:text-sm">−{discountPct}%</span>
                     )}
                   </div>
                   {savingAmt > 0 && (
                     <div className="mt-1 text-sm text-green-600 font-medium">
-                      {savingAmt.toFixed(0)} ₼ qənaət
+                      {savingAmt.toFixed(0)} AZN qənaət
                     </div>
                   )}
                   <InlineCredit price={activePrice} isFree={isFree} onOpenCalc={() => setCreditModal(true)} />
@@ -358,7 +349,7 @@ function ProductPage() {
                           className="h-4 w-4 rounded accent-[var(--brand)] cursor-pointer flex-shrink-0"
                         />
                         <span className="flex-1 text-sm">{c.name}</span>
-                        <span className="text-sm font-semibold text-[var(--brand)] flex-shrink-0">{c.price} ₼</span>
+                        <span className="text-sm font-semibold text-[var(--brand)] flex-shrink-0">{c.price} AZN</span>
                         <button
                           onClick={() => {
                             addItem({ id: product.id * 10000 + i + 1, name: `${c.name} (${product.name})`, price: c.price, image: product.image, qty: 1 });
@@ -371,7 +362,7 @@ function ProductPage() {
                     ))}
                     <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/40">
                       <span className="text-sm font-bold">Cəmi</span>
-                      <span className="text-sm font-black text-[var(--accent-orange)]">{cartPrice} ₼</span>
+                      <span className="text-sm font-black text-[var(--accent-orange)]">{cartPrice} AZN</span>
                     </div>
                   </div>
                 </div>
@@ -467,8 +458,8 @@ function ProductPage() {
                   </div>
                   <div className="p-3 md:p-4">
                     <div className="line-clamp-2 text-xs font-medium md:text-sm">{p.name}</div>
-                    <div className="mt-1 font-black md:mt-2">{p.price} ₼</div>
-                    <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> {Math.round(p.price / 12)} ₼/ay</div>
+                    <div className="mt-1 font-black md:mt-2">{p.price} AZN</div>
+                    <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> {Math.round(p.price / 12)} AZN/ay</div>
                   </div>
                 </Link>
               ))}
@@ -505,7 +496,7 @@ function ProductPage() {
               <div className="rounded-xl bg-secondary/50 p-3 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Məhsul:</span><span className="font-semibold">{product.name}</span></div>
                 <div className="flex justify-between mt-1"><span className="text-muted-foreground">Miqdar:</span><span className="font-semibold">{qty} ədəd</span></div>
-                <div className="flex justify-between mt-1"><span className="text-muted-foreground">Cəmi:</span><span className="font-black text-[var(--brand)]">{product.price * qty} ₼</span></div>
+                <div className="flex justify-between mt-1"><span className="text-muted-foreground">Cəmi:</span><span className="font-black text-[var(--brand)]">{product.price * qty} AZN</span></div>
               </div>
             </div>
             <div className="flex gap-3 border-t border-border px-6 py-4">
@@ -625,11 +616,38 @@ function ProductTabs({ product }: { product: Product }) {
               : <p className="text-muted-foreground">Məhsul haqqında məlumat əlavə edilməyib.</p>}
           </div>
         )}
-        {tab === "specs" && (
-          <div className="text-sm text-muted-foreground">
-            <p>Texniki xüsusiyyətlər admin tərəfindən əlavə edilməyib.</p>
-          </div>
-        )}
+        {tab === "specs" && (() => {
+          type Spec = { group?: string; label: string; value: string };
+          let specs: Spec[] = [];
+          try { specs = JSON.parse(product.specifications || "[]"); } catch {}
+          if (specs.length === 0) return <p className="text-sm text-muted-foreground">Texniki xüsusiyyətlər əlavə edilməyib.</p>;
+          // group by group field
+          const groups: Record<string, Spec[]> = {};
+          for (const s of specs) {
+            const g = s.group || "Ümumi";
+            if (!groups[g]) groups[g] = [];
+            groups[g].push(s);
+          }
+          return (
+            <div className="space-y-6">
+              {Object.entries(groups).map(([grp, items]) => (
+                <div key={grp}>
+                  <h3 className="mb-3 flex items-center gap-2 text-base font-bold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)] inline-block" />{grp}
+                  </h3>
+                  <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
+                    {items.map((s, i) => (
+                      <div key={i} className="flex px-4 py-2.5 text-sm odd:bg-secondary/20">
+                        <span className="w-1/2 text-muted-foreground">{s.label}</span>
+                        <span className="w-1/2 font-medium">{s.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
         {tab === "reviews" && (
           <div className="text-sm text-muted-foreground">
             <p>Hələ rəy yazılmayıb. Birinci siz yazın!</p>
@@ -679,8 +697,8 @@ function InlineCredit({ price, isFree, onOpenCalc }: { price: number; isFree: bo
               </td>
               <td className="py-3 text-center text-muted-foreground">0</td>
               <td className="py-3 text-center font-semibold">{m} ay</td>
-              <td className="py-3 text-center font-bold text-[var(--brand)] text-base">{monthly(m)} ₼</td>
-              <td className="py-3 pr-4 text-center text-muted-foreground">{price.toFixed(2)} ₼</td>
+              <td className="py-3 text-center font-bold text-[var(--brand)] text-base">{monthly(m)} AZN</td>
+              <td className="py-3 pr-4 text-center text-muted-foreground">{price.toFixed(2)} AZN</td>
             </tr>
           ))}
         </tbody>
@@ -761,11 +779,11 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
             <div className="flex rounded-xl border border-border overflow-hidden text-xs font-semibold">
               <button onClick={() => setUseDiscounted(true)}
                 className={`flex-1 py-2 transition-colors ${useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary/50"}`}>
-                Endirimli · {activePrice} ₼
+                Endirimli · {activePrice} AZN
               </button>
               <button onClick={() => setUseDiscounted(false)}
                 className={`flex-1 py-2 transition-colors ${!useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary/50"}`}>
-                Tam · {fullPrice} ₼
+                Tam · {fullPrice} AZN
               </button>
             </div>
           )}
@@ -773,7 +791,7 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
           {/* Məhsul qiyməti */}
           <div className="flex items-center justify-between rounded-xl bg-secondary/40 px-4 py-3">
             <span className="text-sm text-muted-foreground">Məhsul qiyməti</span>
-            <span className="text-xl font-black">{basePrice} ₼</span>
+            <span className="text-xl font-black">{basePrice} AZN</span>
           </div>
 
           {/* Bank seçimi */}
@@ -815,10 +833,10 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
                 type="number" min="0" max={basePrice - 1}
                 value={downPayment}
                 onChange={e => setDownPayment(e.target.value)}
-                placeholder="0 ₼"
+                placeholder="0 AZN"
                 className="flex-1 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors"
               />
-              <span className="text-sm text-muted-foreground">Qalan: <b>{financed.toFixed(0)} ₼</b></span>
+              <span className="text-sm text-muted-foreground">Qalan: <b>{financed.toFixed(0)} AZN</b></span>
             </div>
           </div>
 
@@ -826,15 +844,15 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
           <div className="rounded-xl bg-[var(--brand)]/5 border border-[var(--brand)]/20 p-4">
             <div className="text-center mb-3">
               <div className="text-xs text-muted-foreground">Aylıq ödəniş</div>
-              <div className="text-4xl font-black text-[var(--brand)]">{monthly.toFixed(2)} ₼</div>
+              <div className="text-4xl font-black text-[var(--brand)]">{monthly.toFixed(2)} AZN</div>
             </div>
             <div className="space-y-1 text-xs text-muted-foreground">
-              <div className="flex justify-between"><span>{validMonths} ay × {monthly.toFixed(2)} ₼</span><span>{(monthly * validMonths).toFixed(2)} ₼</span></div>
-              {down > 0 && <div className="flex justify-between"><span>İlkin ödəniş</span><span>+{down.toFixed(0)} ₼</span></div>}
+              <div className="flex justify-between"><span>{validMonths} ay × {monthly.toFixed(2)} AZN</span><span>{(monthly * validMonths).toFixed(2)} AZN</span></div>
+              {down > 0 && <div className="flex justify-between"><span>İlkin ödəniş</span><span>+{down.toFixed(0)} AZN</span></div>}
               <div className="flex justify-between font-semibold text-foreground border-t border-border pt-1 mt-1">
-                <span>Ümumi cəmi</span><span>{totalPaid.toFixed(2)} ₼</span>
+                <span>Ümumi cəmi</span><span>{totalPaid.toFixed(2)} AZN</span>
               </div>
-              {overpay > 0 && <div className="flex justify-between text-orange-600"><span>Faiz məbləği</span><span>+{overpay.toFixed(0)} ₼</span></div>}
+              {overpay > 0 && <div className="flex justify-between text-orange-600"><span>Faiz məbləği</span><span>+{overpay.toFixed(0)} AZN</span></div>}
             </div>
           </div>
 

@@ -105,7 +105,7 @@ function ProductCard({ p }: { p: Product }) {
       {discountPct > 0 && (
         <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
           <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow">−{discountPct}%</div>
-          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} ₼</div>
+          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} AZN</div>
         </div>
       )}
       <div className="aspect-[4/3] overflow-hidden bg-white">
@@ -123,14 +123,14 @@ function ProductCard({ p }: { p: Product }) {
           )}
         </div>
         <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
-          <span className="text-xl font-black">{activePrice} ₼</span>
-          {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} ₼</span>}
+          <span className="text-xl font-black">{activePrice} AZN</span>
+          {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} AZN</span>}
         </div>
         {savingAmt > 0 && (
-          <div className="text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(0)} ₼ qənaət</div>
+          <div className="text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(0)} AZN qənaət</div>
         )}
         <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-[var(--brand)]">
-          <Zap className="h-3 w-3" />{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼/ay
+          <Zap className="h-3 w-3" />{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay
         </div>
       </div>
     </Link>

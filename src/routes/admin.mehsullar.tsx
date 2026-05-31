@@ -184,8 +184,8 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                       : p.discount > 0 ? p.price
                       : null;
                     return <>
-                      <div className="font-bold">{active} ₼</div>
-                      {orig && <div className="text-xs text-muted-foreground line-through">{orig} ₼</div>}
+                      <div className="font-bold">{active} AZN</div>
+                      {orig && <div className="text-xs text-muted-foreground line-through">{orig} AZN</div>}
                     </>;
                   })()}
                 </td>
@@ -247,10 +247,10 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="rounded-xl border border-border bg-secondary/20 p-4 space-y-3">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Qiymət</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Əsas qiymət (₼) *">
+                  <Field label="Əsas qiymət (AZN) *">
                     <input type="number" min="0" step="0.01" className={inp} value={editing.price ?? ""} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} />
                   </Field>
-                  <Field label="Endirimli qiymət (₼)">
+                  <Field label="Endirimli qiymət (AZN)">
                     <input type="number" min="0" step="0.01" className={inp} placeholder="Boş = endirim yox"
                       value={editing.sale_price ?? ""}
                       onChange={(e) => setEditing({ ...editing, sale_price: e.target.value === "" ? null : Number(e.target.value) })} />
@@ -258,17 +258,17 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
                 {editing.price && editing.sale_price ? (
                   <p className="text-xs text-green-600">
-                    Endirim: <b>-{Math.round((1 - editing.sale_price / editing.price) * 100)}%</b> · {(editing.price - editing.sale_price).toFixed(2)} ₼ ucuzlaşır
+                    Endirim: <b>-{Math.round((1 - editing.sale_price / editing.price) * 100)}%</b> · {(editing.price - editing.sale_price).toFixed(2)} AZN ucuzlaşır
                   </p>
                 ) : null}
-                <Field label="Əlavə endirim qiyməti (₼) — opsional">
+                <Field label="Əlavə endirim qiyməti (AZN) — opsional">
                   <input type="number" min="0" step="0.01" className={inp} placeholder="Admin əlavə endirim istəyəndə"
                     value={editing.extra_price ?? ""}
                     onChange={(e) => setEditing({ ...editing, extra_price: e.target.value === "" ? null : Number(e.target.value) })} />
                 </Field>
                 {editing.price && editing.extra_price ? (
                   <p className="text-xs text-orange-600">
-                    Əlavə endirim: <b>-{Math.round((1 - editing.extra_price / editing.price) * 100)}%</b> · {(editing.price - editing.extra_price).toFixed(2)} ₼ ucuzlaşır
+                    Əlavə endirim: <b>-{Math.round((1 - editing.extra_price / editing.price) * 100)}%</b> · {(editing.price - editing.extra_price).toFixed(2)} AZN ucuzlaşır
                   </p>
                 ) : null}
               </div>
@@ -400,9 +400,9 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     const monthly = Math.ceil(total / editing.ideal_credit_months!);
                     return (
                       <div className="rounded-lg bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
-                        {editing.ideal_credit_months} ay → aylıq <span className="font-bold text-foreground">{monthly} ₼</span>,
-                        cəmi <span className="font-semibold text-foreground">{total} ₼</span>
-                        {" "}(+{row.added}% = +{(total - base).toFixed(0)} ₼)
+                        {editing.ideal_credit_months} ay → aylıq <span className="font-bold text-foreground">{monthly} AZN</span>,
+                        cəmi <span className="font-semibold text-foreground">{total} AZN</span>
+                        {" "}(+{row.added}% = +{(total - base).toFixed(0)} AZN)
                       </div>
                     );
                   })()
@@ -428,7 +428,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                           const c = [...comps]; c[idx] = { ...c[idx], name: e.target.value };
                           setEditing({ ...editing, components: JSON.stringify(c) });
                         }} />
-                      <input type="number" min="0" step="0.01" className="w-24 flex-shrink-0 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors" value={comp.price || ""} placeholder="₼"
+                      <input type="number" min="0" step="0.01" className="w-24 flex-shrink-0 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors" value={comp.price || ""} placeholder="AZN"
                         onChange={(e) => {
                           const c = [...comps]; c[idx] = { ...c[idx], price: Number(e.target.value) };
                           setEditing({ ...editing, components: JSON.stringify(c) });
@@ -460,6 +460,42 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </div>
               </label>
             </div>
+              {/* Specifications */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Texniki xüsusiyyətlər</p>
+                  <button type="button" onClick={() => {
+                    const specs: {group: string; label: string; value: string}[] = JSON.parse(editing.specifications || "[]");
+                    setEditing({ ...editing, specifications: JSON.stringify([...specs, { group: "Ümumi", label: "", value: "" }]) });
+                  }} className="rounded-lg border border-border px-2 py-1 text-xs font-semibold hover:bg-secondary">+ Əlavə et</button>
+                </div>
+                {(() => {
+                  let specs: {group: string; label: string; value: string}[] = [];
+                  try { specs = JSON.parse(editing.specifications || "[]"); } catch {}
+                  return specs.map((s, i) => {
+                    const update = (key: string, val: string) => {
+                      const c = [...specs];
+                      c[i] = { ...c[i], [key]: val };
+                      setEditing({ ...editing, specifications: JSON.stringify(c) });
+                    };
+                    return (
+                      <div key={i} className="flex gap-2 items-center">
+                        <input value={s.group} onChange={e => update("group", e.target.value)} placeholder="Qrup (məs: Şəbəkə)"
+                          className="w-28 flex-shrink-0 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-[var(--brand)]" />
+                        <input value={s.label} onChange={e => update("label", e.target.value)} placeholder="Xüsusiyyət"
+                          className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-[var(--brand)]" />
+                        <input value={s.value} onChange={e => update("value", e.target.value)} placeholder="Dəyər"
+                          className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-[var(--brand)]" />
+                        <button type="button" onClick={() => {
+                          const c = specs.filter((_, j) => j !== i);
+                          setEditing({ ...editing, specifications: JSON.stringify(c) });
+                        }} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10">✕</button>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
             <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
               <button onClick={() => setEditing(null)} className="rounded-xl border border-border px-5 py-2.5 font-medium hover:bg-secondary transition-colors">Ləğv et</button>
               <button onClick={save} className="rounded-xl bg-[var(--brand)] px-5 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">

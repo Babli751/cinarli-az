@@ -65,7 +65,7 @@ function OrdersAdmin() {
 
       <div className="mb-6">
         <h1 className="text-2xl font-black md:text-3xl">Sifarişlər</h1>
-        <p className="text-muted-foreground">{filtered.length} sifariş · {totalRevenue.toFixed(2)} ₼ gəlir</p>
+        <p className="text-muted-foreground">{filtered.length} sifariş · {totalRevenue.toFixed(2)} AZN gəlir</p>
       </div>
 
       <div className="flex flex-wrap gap-3 mb-4">
@@ -102,7 +102,7 @@ function OrdersAdmin() {
                 <td className="px-5 py-3 text-muted-foreground font-mono">#{o.id}</td>
                 <td className="px-5 py-3 font-semibold">{o.customer_name}</td>
                 <td className="px-5 py-3">{o.phone}</td>
-                <td className="px-5 py-3 font-bold">{o.total} ₼</td>
+                <td className="px-5 py-3 font-bold">{o.total} AZN</td>
                 <td className="px-5 py-3">
                   <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)}
                     className={`rounded-full px-3 py-1 text-xs font-semibold border-0 outline-none cursor-pointer ${STATUS_COLOR[o.status] ?? "bg-secondary"}`}>
@@ -137,7 +137,7 @@ function OrdersAdmin() {
                 </span>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-black">{open.total} ₼</div>
+                <div className="text-2xl font-black">{open.total} AZN</div>
                 <div className="text-xs text-muted-foreground">{new Date(open.created_at!).toLocaleDateString("az-AZ")}</div>
               </div>
             </div>
@@ -155,7 +155,7 @@ function OrdersAdmin() {
                       return Array.isArray(parsed) && parsed.length > 0 ? parsed.map((item: any, i: number) => (
                         <div key={i} className="flex justify-between text-sm">
                           <span>{item.name ?? item.title ?? JSON.stringify(item)}</span>
-                          <span className="font-semibold">{item.price ? `${item.price} ₼` : ""}</span>
+                          <span className="font-semibold">{item.price ? `${item.price} AZN` : ""}</span>
                         </div>
                       )) : <div className="text-xs text-muted-foreground">Məhsul məlumatı yoxdur</div>;
                     } catch {

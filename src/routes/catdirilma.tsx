@@ -8,7 +8,7 @@ export const Route = createFileRoute("/catdirilma")({
     <PageShell title="Çatdırılma və quraşdırma" subtitle="Bakı və regionlara sürətli çatdırılma.">
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { icon: Truck, t: "Bakı daxili", d: "1-2 iş günü, 200 ₼-dan yuxarı pulsuz" },
+          { icon: Truck, t: "Bakı daxili", d: "1-2 iş günü, 200 AZN-dan yuxarı pulsuz" },
           { icon: MapPin, t: "Regionlara", d: "3-5 iş günü, kuryer və ya terminal" },
           { icon: Clock, t: "Quraşdırma", d: "Peşəkar ustalar tərəfindən" },
         ].map((c) => (

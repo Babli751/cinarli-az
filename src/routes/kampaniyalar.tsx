@@ -64,8 +64,8 @@ function KampaniyalarPage() {
                 <div className="p-4">
                   <div className="line-clamp-2 text-sm font-medium">{p.name}</div>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="font-black">{p.price} ₼</span>
-                    {p.old_price && <span className="text-xs text-muted-foreground line-through">{p.old_price} ₼</span>}
+                    <span className="font-black">{p.price} AZN</span>
+                    {p.old_price && <span className="text-xs text-muted-foreground line-through">{p.old_price} AZN</span>}
                     {p.discount > 0 && <span className="ml-auto rounded bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white">−{p.discount}%</span>}
                   </div>
                 </div>

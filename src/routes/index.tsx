@@ -146,7 +146,7 @@ function Index() {
                       {discountPct > 0 && (
                         <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
                           <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow">−{discountPct}%</div>
-                          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} ₼</div>
+                          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} AZN</div>
                         </div>
                       )}
                       <ProductImg p={featured} className="mx-auto h-40 w-full rounded-lg object-contain transition duration-300 group-hover:scale-105" />
@@ -163,15 +163,15 @@ function Index() {
                         )}
                       </div>
                       <div className="mt-2 flex items-baseline gap-2 flex-wrap">
-                        <span className="text-2xl font-black text-[var(--accent-orange)]">{activePrice} ₼</span>
-                        {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} ₼</span>}
+                        <span className="text-2xl font-black text-[var(--accent-orange)]">{activePrice} AZN</span>
+                        {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} AZN</span>}
                       </div>
                       {savingAmt > 0 && (
-                        <div className="text-xs font-semibold text-green-600">{savingAmt.toFixed(0)} ₼ qənaət</div>
+                        <div className="text-xs font-semibold text-green-600">{savingAmt.toFixed(0)} AZN qənaət</div>
                       )}
                       <div className="mt-1.5 rounded-lg bg-secondary/50 px-3 py-2">
                         <span className="text-xs text-muted-foreground">Faizsiz aylıq ödəniş · </span>
-                        <span className="text-xs font-bold text-[var(--accent-orange)]">{(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼</span>
+                        <span className="text-xs font-bold text-[var(--accent-orange)]">{(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN</span>
                         <span className="text-xs text-muted-foreground"> / {months} ay</span>
                       </div>
                       <div className="mt-3 flex gap-2">
@@ -472,7 +472,7 @@ function ProductCard({ p }: { p: Product }) {
       {discountPct > 0 && (
         <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex flex-col items-end gap-1">
           <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow-md">−{discountPct}%</div>
-          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow-md">−{savingAmt.toFixed(0)} ₼</div>
+          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow-md">−{savingAmt.toFixed(0)} AZN</div>
         </div>
       )}
       <div className="absolute left-2 top-2 md:left-3 md:top-3 z-10 hidden md:flex flex-col gap-2">
@@ -492,21 +492,21 @@ function ProductCard({ p }: { p: Product }) {
           )}
         </div>
         <div className="mt-2 md:mt-3 flex items-baseline gap-2 flex-wrap">
-          <span className="text-xl md:text-2xl font-black">{activePrice} ₼</span>
-          {originalPrice && <span className="text-xs md:text-sm text-muted-foreground line-through">{originalPrice} ₼</span>}
+          <span className="text-xl md:text-2xl font-black">{activePrice} AZN</span>
+          {originalPrice && <span className="text-xs md:text-sm text-muted-foreground line-through">{originalPrice} AZN</span>}
         </div>
         {savingAmt > 0 && (
           <div className="mt-0.5 text-xs font-semibold text-[var(--accent-orange)]">
-            {savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%
+            {savingAmt.toFixed(2)} AZN qənaət · -{discountPct}%
           </div>
         )}
         {(p.ideal_credit_months ?? 0) > 0 ? (
           <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
-            <Zap className="h-3 w-3" />{p.ideal_credit_months} aya kredit · {Math.ceil(activePrice * (1 + 0.176) / (p.ideal_credit_months || 12))} ₼/ay
+            <Zap className="h-3 w-3" />{p.ideal_credit_months} aya kredit · {Math.ceil(activePrice * (1 + 0.176) / (p.ideal_credit_months || 12))} AZN/ay
           </div>
         ) : (
           <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
-            <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼/ay
+            <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay
           </div>
         )}
         {(p.stock > 0 || p.in_stock === 1) && (

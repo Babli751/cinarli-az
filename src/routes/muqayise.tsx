@@ -103,8 +103,8 @@ function ComparePage() {
                 <td className="border border-border p-3 text-sm font-medium text-muted-foreground bg-secondary/10">{f.label}</td>
                 {items.map(item => (
                   <td key={item.id} className="border border-border p-3 text-center text-sm font-semibold">
-                    {f.key === "price" ? `${item.price} ₼`
-                      : f.key === "old_price" ? (item.old_price ? `${item.old_price} ₼` : "—")
+                    {f.key === "price" ? `${item.price} AZN`
+                      : f.key === "old_price" ? (item.old_price ? `${item.old_price} AZN` : "—")
                       : f.key === "discount" ? (item.discount > 0 ? `−${item.discount}%` : "—")
                       : f.key === "stock" ? (item.stock > 0 ? `${item.stock} ədəd` : "Yoxdur")
                       : (item[f.key] as string) || "—"}

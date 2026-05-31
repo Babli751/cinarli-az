@@ -93,7 +93,7 @@ function CartPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold line-clamp-2 text-sm">{item.name}</p>
-                  <div className="mt-1 font-black text-[var(--brand)]">{item.price} ₼</div>
+                  <div className="mt-1 font-black text-[var(--brand)]">{item.price} AZN</div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button onClick={() => updateQty(item.id, item.qty - 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary">
@@ -105,7 +105,7 @@ function CartPage() {
                   </button>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <div className="font-black">{item.price * item.qty} ₼</div>
+                  <div className="font-black">{item.price * item.qty} AZN</div>
                   <button onClick={() => removeItem(item.id)} className="mt-1 text-destructive hover:opacity-70">
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -122,13 +122,13 @@ function CartPage() {
             {items.map(item => (
               <div key={item.id} className="flex justify-between text-muted-foreground">
                 <span className="line-clamp-1 flex-1 mr-2">{item.name} ×{item.qty}</span>
-                <span className="flex-shrink-0 font-medium">{item.price * item.qty} ₼</span>
+                <span className="flex-shrink-0 font-medium">{item.price * item.qty} AZN</span>
               </div>
             ))}
           </div>
           <div className="border-t border-border pt-3 flex justify-between font-black text-lg">
             <span>Cəmi</span>
-            <span className="text-[var(--brand)]">{total} ₼</span>
+            <span className="text-[var(--brand)]">{total} AZN</span>
           </div>
 
           {/* Coupon */}
@@ -157,7 +157,7 @@ function CartPage() {
             <div className="flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-3 py-2">
               <div>
                 <span className="text-xs font-semibold text-green-700">{couponApplied.label} tətbiq edildi</span>
-                {discountAmount > 0 && <div className="text-xs text-green-600">−{discountAmount} ₼ endirim</div>}
+                {discountAmount > 0 && <div className="text-xs text-green-600">−{discountAmount} AZN endirim</div>}
                 {couponApplied.freeDelivery && <div className="text-xs text-green-600">Pulsuz çatdırılma</div>}
               </div>
               <button onClick={() => setCouponApplied(null)} className="text-xs text-muted-foreground hover:text-destructive">✕</button>
@@ -167,7 +167,7 @@ function CartPage() {
           {discountAmount > 0 && (
             <div className="flex justify-between font-black text-lg text-green-600">
               <span>Endirimlə</span>
-              <span>{finalTotal} ₼</span>
+              <span>{finalTotal} AZN</span>
             </div>
           )}
 
@@ -175,7 +175,7 @@ function CartPage() {
             const avgMonths = Math.round(items.reduce((s, i) => s + (i.credit_months || 24) * i.qty, 0) / Math.max(items.reduce((s, i) => s + i.qty, 0), 1));
             return (
               <div className="rounded-xl bg-[var(--brand)]/5 p-3 text-xs text-center text-[var(--brand)] font-medium">
-                Faizsiz kredit: {(Math.ceil(finalTotal / avgMonths * 100) / 100).toFixed(2)} ₼/ay × {avgMonths} ay
+                Faizsiz kredit: {(Math.ceil(finalTotal / avgMonths * 100) / 100).toFixed(2)} AZN/ay × {avgMonths} ay
               </div>
             );
           })()}
@@ -218,17 +218,17 @@ function CartPage() {
               <div className="rounded-xl bg-secondary/40 px-4 py-3 space-y-1">
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Məbləğ</span><span>{total} ₼</span>
+                    <span>Məbləğ</span><span>{total} AZN</span>
                   </div>
                 )}
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 font-semibold">
-                    <span>{couponApplied?.label}</span><span>−{discountAmount} ₼</span>
+                    <span>{couponApplied?.label}</span><span>−{discountAmount} AZN</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold">
                   <span>Cəmi məbləğ</span>
-                  <span className="text-[var(--brand)]">{finalTotal} ₼</span>
+                  <span className="text-[var(--brand)]">{finalTotal} AZN</span>
                 </div>
               </div>
               <button onClick={submitOrder} disabled={busy}

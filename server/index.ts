@@ -393,8 +393,9 @@ app.post("/api/products", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const images = Array.isArray(b.images) ? JSON.stringify(b.images) : "[]";
   const components = Array.isArray(b.components) ? JSON.stringify(b.components) : "[]";
-  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate, components, commission_free, ideal_credit_months, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null
+  const specifications = Array.isArray(b.specifications) ? JSON.stringify(b.specifications) : "[]";
+  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate, components, commission_free, ideal_credit_months, in_stock, specifications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, specifications
   );
   return c.json({ id: result.lastInsertRowid });
 });
@@ -411,8 +412,9 @@ app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
     images = existing?.images || "[]";
   }
   const components2 = Array.isArray(b.components) ? JSON.stringify(b.components) : (b.components ?? "[]");
-  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=?, components=?, commission_free=?, ideal_credit_months=?, in_stock=? WHERE id=?").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components2, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, c.req.param("id")
+  const specifications2 = Array.isArray(b.specifications) ? JSON.stringify(b.specifications) : (b.specifications ?? "[]");
+  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=?, components=?, commission_free=?, ideal_credit_months=?, in_stock=?, specifications=? WHERE id=?").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components2, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, specifications2, c.req.param("id")
   );
   return c.json({ ok: true });
 });

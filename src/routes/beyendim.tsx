@@ -79,8 +79,8 @@ function WishlistPage() {
                 </div>
                 <div className="p-3">
                   <div className="line-clamp-2 text-sm font-medium">{item.name}</div>
-                  <div className="mt-1 font-black text-[var(--brand)]">{item.price} ₼</div>
-                  {item.old_price && <div className="text-xs text-muted-foreground line-through">{item.old_price} ₼</div>}
+                  <div className="mt-1 font-black text-[var(--brand)]">{item.price} AZN</div>
+                  {item.old_price && <div className="text-xs text-muted-foreground line-through">{item.old_price} AZN</div>}
                 </div>
               </Link>
             </div>

@@ -118,7 +118,7 @@ function FeaturedAdmin() {
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-sm line-clamp-1">{p.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {p.price} ₼
+                        {p.price} AZN
                         {item.discount ? ` · −${item.discount}%` : ""}
                         {` · ${item.credit_months || 24} ay`}
                         {item.until ? ` · ${new Date(item.until).toLocaleDateString("az")}` : ""}
@@ -207,7 +207,7 @@ function FeaturedAdmin() {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm line-clamp-1">{p.name}</div>
                   <div className="text-xs text-muted-foreground mt-0.5 flex gap-2">
-                    <span>{p.price} ₼</span>
+                    <span>{p.price} AZN</span>
                     {p.discount > 0 && <span className="text-[var(--accent-orange)]">−{p.discount}%</span>}
                     <span className={p.stock === 0 ? "text-red-500" : ""}>{p.stock} stok</span>
                   </div>

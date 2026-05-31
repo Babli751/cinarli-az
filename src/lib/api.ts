@@ -191,6 +191,7 @@ export interface Product {
   commission_free?: number;
   ideal_credit_months?: number;
   in_stock?: number | null;
+  specifications?: string;
   view_count?: number;
   created_at?: string;
 }

@@ -254,7 +254,7 @@ function SifarislerTab() {
                     {items.map((it: any) => `${it.name} × ${it.qty}`).join(", ")}
                   </div>
                 )}
-                <div className="mt-2 font-bold">{o.total.toFixed(2)} ₼</div>
+                <div className="mt-2 font-bold">{o.total.toFixed(2)} AZN</div>
               </div>
             );
           })}
@@ -305,7 +305,7 @@ function BeyendiklerimTab() {
                   </div>
                   <div className="p-3">
                     <div className="text-sm font-semibold line-clamp-2">{p.name}</div>
-                    <div className="mt-1 font-bold text-[var(--brand)]">{p.price.toFixed(2)} ₼</div>
+                    <div className="mt-1 font-bold text-[var(--brand)]">{p.price.toFixed(2)} AZN</div>
                   </div>
                 </Link>
               </div>
@@ -369,7 +369,7 @@ function MuqayiseTab() {
             </thead>
             <tbody className="divide-y divide-border">
               {[
-                { label: "Qiymət", fn: (p: Product) => `${p.price.toFixed(2)} ₼` },
+                { label: "Qiymət", fn: (p: Product) => `${p.price.toFixed(2)} AZN` },
                 { label: "Endirim", fn: (p: Product) => p.discount ? `${p.discount}%` : "—" },
                 { label: "Stok", fn: (p: Product) => p.stock > 0 ? `${p.stock} ədəd` : "Yoxdur" },
                 { label: "Kateqoriya", fn: (p: Product) => p.category_slug || "—" },

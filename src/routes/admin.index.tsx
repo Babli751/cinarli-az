@@ -95,7 +95,7 @@ function AdminDashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs text-muted-foreground">Ümumi gəlir</div>
-              <div className="text-2xl font-black">{stats.revenue.toFixed(0)} ₼</div>
+              <div className="text-2xl font-black">{stats.revenue.toFixed(0)} AZN</div>
               {pv && pv.monthlyRevenue.length > 0 && (
                 <div className="mt-2 text-xs text-muted-foreground">30 günlük trend</div>
               )}
@@ -352,7 +352,7 @@ function AdminDashboard() {
                 <tr key={o.id} className="border-t border-border hover:bg-secondary/20">
                   <td className="px-6 py-3 text-muted-foreground">#{o.id}</td>
                   <td className="px-6 py-3 font-medium">{o.customer_name}</td>
-                  <td className="px-6 py-3 font-bold">{o.total} ₼</td>
+                  <td className="px-6 py-3 font-bold">{o.total} AZN</td>
                   <td className="px-6 py-3">
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLOR[o.status] ?? "bg-secondary"}`}>
                       {STATUS_AZ[o.status] ?? o.status}

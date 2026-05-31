@@ -31,9 +31,9 @@ function YeniPage() {
               </div>
               <div className="p-4">
                 <div className="line-clamp-2 text-sm font-medium">{p.name}</div>
-                <div className="mt-2 font-black">{p.price} ₼</div>
-                {p.old_price && <div className="text-xs text-muted-foreground line-through">{p.old_price} ₼</div>}
-                <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} ₼-dan</div>
+                <div className="mt-2 font-black">{p.price} AZN</div>
+                {p.old_price && <div className="text-xs text-muted-foreground line-through">{p.old_price} AZN</div>}
+                <div className="mt-1 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> Aylıq {Math.round(p.price / 12)} AZN-dan</div>
               </div>
             </Link>
           ))}

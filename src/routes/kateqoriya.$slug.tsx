@@ -73,7 +73,7 @@ function CategoryPage() {
       <label className="block text-xs font-medium text-muted-foreground">Axtarış</label>
       <input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Məhsul adı..."
         className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
-      <label className="block text-xs font-medium text-muted-foreground">Qiymət (₼)</label>
+      <label className="block text-xs font-medium text-muted-foreground">Qiymət (AZN)</label>
       <div className="flex gap-2">
         <input type="number" value={min || ""} placeholder="Min"
           onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, min: Number(e.target.value) || 0 }) })}
@@ -247,7 +247,7 @@ function CategoryPage() {
                     {discountPct > 0 && (
                       <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1 md:right-3 md:top-3">
                         <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-[10px] font-bold text-white shadow-md md:text-xs">−{discountPct}%</div>
-                        <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow-md md:text-[10px]">−{savingAmt.toFixed(0)} ₼</div>
+                        <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow-md md:text-[10px]">−{savingAmt.toFixed(0)} AZN</div>
                       </div>
                     )}
                     <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 md:left-3 md:top-3 md:gap-2">
@@ -260,13 +260,13 @@ function CategoryPage() {
                     <div className="flex flex-1 flex-col p-3 md:p-4">
                       <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="line-clamp-2 min-h-[2.5rem] text-xs font-medium hover:text-[var(--brand)] md:text-sm">{p.name}</Link>
                       <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
-                        <span className="text-base font-black md:text-xl">{activePrice} ₼</span>
-                        {originalPrice && <span className="text-xs text-muted-foreground line-through md:text-sm">{originalPrice} ₼</span>}
+                        <span className="text-base font-black md:text-xl">{activePrice} AZN</span>
+                        {originalPrice && <span className="text-xs text-muted-foreground line-through md:text-sm">{originalPrice} AZN</span>}
                       </div>
                       {savingAmt > 0 && (
-                        <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} ₼ qənaət · -{discountPct}%</div>
+                        <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} AZN qənaət · -{discountPct}%</div>
                       )}
-                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} ₼/ay</div>
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay</div>
                       <button className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:mt-3 md:py-2 md:text-sm">
                         Səbətə əlavə et
                       </button>
