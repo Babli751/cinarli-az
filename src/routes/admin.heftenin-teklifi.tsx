@@ -120,7 +120,7 @@ function FeaturedAdmin() {
                       <div className="text-xs text-muted-foreground">
                         {p.price} AZN
                         {item.discount ? ` · −${item.discount}%` : ""}
-                        {` · ${item.credit_months || 24} ay`}
+                        {` · ${item.credit_months || 12} ay`}
                         {item.until ? ` · ${new Date(item.until).toLocaleDateString("az")}` : ""}
                       </div>
                     </div>
@@ -158,7 +158,7 @@ function FeaturedAdmin() {
                           <div className="flex flex-wrap gap-1.5 mt-1">
                             {CREDIT_OPTIONS.map(m => (
                               <button key={m} onClick={() => updateItem(p.id, { credit_months: m })}
-                                className={`rounded-lg px-2.5 py-1 text-xs font-semibold border transition-colors ${(item.credit_months || 24) === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                                className={`rounded-lg px-2.5 py-1 text-xs font-semibold border transition-colors ${(item.credit_months || 12) === m ? "bg-[var(--brand)] text-[var(--brand-foreground)] border-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
                                 {m} ay
                               </button>
                             ))}

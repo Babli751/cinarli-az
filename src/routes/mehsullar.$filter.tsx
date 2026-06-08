@@ -59,7 +59,7 @@ function FilterPage() {
       <div className="mx-auto max-w-7xl px-4 py-6">
         {/* Breadcrumb */}
         <nav className="mb-4 flex items-center gap-1 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">Çınarlı</Link>
+          <Link to="/" className="hover:text-foreground">Manqo</Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground font-medium">{meta.label}</span>
         </nav>
@@ -114,6 +114,7 @@ function ProductCard({ p }: { p: Product }) {
           : <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>}
       </div>
       <div className="flex flex-1 flex-col p-3">
+        
         <h3 className="line-clamp-2 min-h-[2.5rem] text-xs font-semibold md:text-sm">{p.name}</h3>
         <div className="mt-1.5">
           {(p.stock > 0 || p.in_stock === 1) ? (

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/SiteLayout";
 
 export const Route = createFileRoute("/aylik-odenis")({
-  head: () => ({ meta: [{ title: "Aylıq ödəniş — Çınarlı Mebel" }, { name: "description", content: "Faizsiz 24 aya qədər aylıq ödəniş." }] }),
+  head: () => ({ meta: [{ title: "Aylıq ödəniş — Manqo — Onlayn Ticarət Mərkəzi" }, { name: "description", content: "Faizsiz 24 aya qədər aylıq ödəniş." }] }),
   component: () => (
     <PageShell title="Aylıq ödəniş" subtitle="Faizsiz 24 aya qədər. Birbankın bütün kartları ilə.">
       <div className="grid gap-4 md:grid-cols-3">

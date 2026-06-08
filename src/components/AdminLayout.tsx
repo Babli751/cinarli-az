@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/useAuth";
-import { LayoutDashboard, Package, Tag, ShoppingBag, Users, LogOut, Megaphone, MapPin, Star, Menu, X, Award, Image } from "lucide-react";
+import { LayoutDashboard, Package, Tag, ShoppingBag, Users, LogOut, Megaphone, MapPin, Star, Menu, X, Award, Image, CreditCard, Ticket } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const items = [
@@ -11,6 +11,8 @@ const items = [
   { to: "/admin/bannerler", label: "Bannerlər", icon: Image },
   { to: "/admin/kampaniyalar", label: "Kampaniyalar", icon: Megaphone },
   { to: "/admin/heftenin-teklifi", label: "Həftənin teklifi", icon: Star },
+  { to: "/admin/kreditler", label: "Kredit şirkətləri", icon: CreditCard },
+  { to: "/admin/promokodlar", label: "Promokodlar", icon: Ticket },
   { to: "/admin/sifarisler", label: "Sifarişlər", icon: ShoppingBag },
   { to: "/admin/magazalar", label: "Mağazalar", icon: MapPin },
   { to: "/admin/istifadeciler", label: "İstifadəçilər", icon: Users },

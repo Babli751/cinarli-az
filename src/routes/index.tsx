@@ -10,7 +10,7 @@ import heroLiving from "@/assets/hero-living.jpg";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Çınarlı — Onlayn mebel mağazası" },
+      { title: "Manqo — Onlayn Ticarət Mərkəzi" },
       { name: "description", content: "Divan, çarpayı, masa, şkaf və daha çoxu. Sürətli çatdırılma, faizsiz aylıq ödəniş." },
     ],
   }),
@@ -28,6 +28,7 @@ function Index() {
   const [featuredList, setFeaturedList] = useState<(Product & { _until?: string | null; _note?: string; _discount?: number; _credit_months?: number })[] | undefined>(undefined);
   const [featuredIdx, setFeaturedIdx] = useState(0);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaignsLoaded, setCampaignsLoaded] = useState(false);
   const [heroIdx, setHeroIdx] = useState(0);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -38,7 +39,7 @@ function Index() {
     api.getPopularProducts(24).then(setPopular).catch(() => {});
     api.getMostSoldProducts(24).then(setMostSold).catch(() => {});
     api.getFeaturedProduct().then((arr) => setFeaturedList(arr)).catch(() => setFeaturedList([]));
-    api.getCampaigns().then((c) => setCampaigns(c.filter(x => x.is_active))).catch(() => {});
+    api.getCampaigns().then((c) => { setCampaigns(c.filter(x => x.is_active)); setCampaignsLoaded(true); }).catch(() => setCampaignsLoaded(true));
     api.getBrands().then(setBrands).catch(() => {});
     api.getBanners().then(setBanners).catch(() => {});
   }, []);
@@ -81,41 +82,40 @@ function Index() {
       {/* Hero */}
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-3 px-4 py-4 lg:grid-cols-3 lg:py-5">
         <div className="relative col-span-2 overflow-hidden rounded-2xl bg-neutral-900 text-white">
-          {/* Campaign background slides */}
-          {campaigns.length > 0 ? (
-            campaigns.map((camp, i) => {
-              const url = getImageUrl(camp.image);
-              return url ? (
-                <img key={camp.id} src={url} alt={camp.title}
-                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === heroIdx ? "opacity-100" : "opacity-0"}`} />
-              ) : null;
-            })
-          ) : (
-            <img src={heroLiving} alt="Hero" className="absolute inset-0 h-full w-full object-cover opacity-90 saturate-150" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-          <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-end p-4 md:min-h-[360px] md:p-8">
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Link to="/kampaniyalar" className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-neutral-900 shadow-lg hover:bg-white/90">
-                Kampaniyalar <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-              <Link to="/kateqoriya/$slug" params={{ slug: "mebel-dunyasi" }} className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/10">
-                Yeni kolleksiya
-              </Link>
-            </div>
-            {campaigns.length > 1 && (
-              <div className="mt-3 flex gap-1.5">
-                {campaigns.map((_, i) => (
-                  <button key={i} onClick={() => setHeroIdx(i)}
-                    className={`h-1.5 rounded-full transition-all ${i === heroIdx ? "w-4 bg-white" : "w-1.5 bg-white/40"}`} />
-                ))}
+          {/* Carousel track */}
+          <div className="flex transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${heroIdx * 100}%)` }}>
+            {campaignsLoaded && campaigns.length === 0 ? (
+              <div className="w-full flex-shrink-0 aspect-[16/9] sm:aspect-[2/1]">
+                <img src={heroLiving} alt="Hero" className="w-full h-full object-cover opacity-90 saturate-150" />
               </div>
-            )}
+            ) : campaigns.map((camp) => {
+              const url = getImageUrl(camp.image);
+              if (!url) return null;
+              const imgEl = (
+                <div className="w-full aspect-[16/9] sm:aspect-[2/1] overflow-hidden">
+                  <img src={url} alt={camp.title} className="w-full h-full object-cover" />
+                </div>
+              );
+              return (
+                <div key={camp.id} className="w-full flex-shrink-0">
+                  {camp.link ? <a href={camp.link}>{imgEl}</a> : imgEl}
+                </div>
+              );
+            })}
           </div>
+          {campaigns.length > 1 && (
+            <div className="absolute bottom-3 left-4 flex gap-1.5 z-10">
+              {campaigns.map((_, i) => (
+                <button key={i} onClick={() => setHeroIdx(i)}
+                  className={`h-1.5 rounded-full transition-all ${i === heroIdx ? "w-4 bg-white" : "w-1.5 bg-white/40"}`} />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Featured — compact irshad.az style */}
-        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm flex flex-col">
+        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm flex flex-col group/featured">
           <div className="flex items-center justify-between bg-[var(--accent-orange)] px-4 py-2.5">
             <div className="flex items-center gap-2">
               <span className="text-base">★</span>
@@ -129,6 +129,20 @@ function Index() {
                 </div>
               )}
             </div>
+            <div className="flex items-center gap-1">
+              {featuredList && featuredList.length > 1 && (
+                <>
+                  <button onClick={() => setFeaturedIdx(i => (i - 1 + (featuredList?.length ?? 1)) % (featuredList?.length ?? 1))}
+                    className="rounded-full bg-white/20 p-1 text-white hover:bg-white/40 transition opacity-0 group-hover/featured:opacity-100">
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setFeaturedIdx(i => (i + 1) % (featuredList?.length ?? 1))}
+                    className="rounded-full bg-white/20 p-1 text-white hover:bg-white/40 transition opacity-0 group-hover/featured:opacity-100">
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </div>
             <FeaturedCountdown until={featured?._until} />
           </div>
           {featured === undefined ? (
@@ -139,40 +153,24 @@ function Index() {
                 const { activePrice, originalPrice } = calcPrice(featured);
                 const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
                 const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
-                const months = featured._credit_months || 24;
+                const months = featured._credit_months || 12;
                 return (
                   <>
-                    <div className="relative bg-secondary/20 px-4 pt-3 pb-2">
-                      {discountPct > 0 && (
-                        <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1">
-                          <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow">−{discountPct}%</div>
-                          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} AZN</div>
-                        </div>
-                      )}
+                    <div className="bg-secondary/20 px-4 pt-3 pb-2">
                       <ProductImg p={featured} className="mx-auto h-40 w-full rounded-lg object-contain transition duration-300 group-hover:scale-105" />
                     </div>
-                    <div className="px-4 py-3 flex flex-col flex-1">
+                    <div className="px-3 py-2.5 flex flex-col flex-1">
                       <h3 className="text-sm font-bold leading-snug line-clamp-2 text-foreground">{featured.name}</h3>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {featured.stock > 0 ? (
-                          <span className="rounded border border-[var(--brand)] px-2 py-0.5 text-xs font-semibold text-[var(--brand)]">
-                            Stokda var · {featured.stock} ədəd
-                          </span>
-                        ) : (
-                          <span className="rounded border border-red-300 px-2 py-0.5 text-xs font-semibold text-red-600">Stokda yoxdur</span>
-                        )}
-                      </div>
-                      <div className="mt-2 flex items-baseline gap-2 flex-wrap">
-                        <span className="text-2xl font-black text-[var(--accent-orange)]">{activePrice} AZN</span>
+                      <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                        <span className="text-xl font-black text-[var(--accent-orange)]">{activePrice} AZN</span>
                         {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} AZN</span>}
+                        {discountPct > 0 && <span className="rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-[10px] font-bold text-white">−{discountPct}%</span>}
                       </div>
                       {savingAmt > 0 && (
                         <div className="text-xs font-semibold text-green-600">{savingAmt.toFixed(0)} AZN qənaət</div>
                       )}
-                      <div className="mt-1.5 rounded-lg bg-secondary/50 px-3 py-2">
-                        <span className="text-xs text-muted-foreground">Faizsiz aylıq ödəniş · </span>
-                        <span className="text-xs font-bold text-[var(--accent-orange)]">{(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN</span>
-                        <span className="text-xs text-muted-foreground"> / {months} ay</span>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Faizsiz · <span className="font-bold text-[var(--accent-orange)]">{(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN</span> / {months} ay
                       </div>
                       <div className="mt-3 flex gap-2">
                         <button onClick={(e) => {
@@ -217,7 +215,7 @@ function Index() {
             { icon: Zap, label: "Sürətli alış-veriş" },
           ].map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-2 text-center">
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-[var(--brand)]/10">
+              <div className="grid h-12 w-12 place-items-center rounded-full" style={{ backgroundColor: "rgba(20,184,166,0.1)" }}>
                 <Icon className="h-6 w-6 text-[var(--brand)]" />
               </div>
               <span className="text-sm font-medium">{label}</span>
@@ -237,7 +235,7 @@ function Index() {
                   return (
                     <div key={b.id} className="w-full flex-shrink-0">
                       {url
-                        ? <img src={url} alt="" className="w-full object-cover max-h-64 md:max-h-80 rounded-2xl" />
+                        ? <div className="w-full aspect-[3/1] sm:aspect-[4/1] overflow-hidden rounded-2xl"><img src={url} alt="" className="w-full h-full object-cover block" /></div>
                         : <div className="h-48 bg-secondary rounded-2xl" />}
                     </div>
                   );
@@ -464,7 +462,7 @@ function ProductCard({ p }: { p: Product }) {
   const { activePrice, originalPrice } = calcPrice(p);
   const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
   const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
-  const months = p.credit_months || 24;
+  const months = p.credit_months || 12;
 
   return (
     <Link to="/mehsul/$slug" params={{ slug: String(p.id) }}
@@ -483,6 +481,7 @@ function ProductCard({ p }: { p: Product }) {
         <ProductImg p={p} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
       </div>
       <div className="flex flex-1 flex-col p-3 md:p-4">
+        
         <h3 className="line-clamp-2 min-h-[2.5rem] text-xs md:text-sm font-semibold">{p.name}</h3>
         <div className="mt-2 flex flex-wrap gap-1.5 md:gap-2">
           {(p.stock > 0 || p.in_stock === 1) ? (
@@ -504,11 +503,11 @@ function ProductCard({ p }: { p: Product }) {
           <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
             <Zap className="h-3 w-3" />{p.ideal_credit_months} aya kredit · {Math.ceil(activePrice * (1 + 0.176) / (p.ideal_credit_months || 12))} AZN/ay
           </div>
-        ) : (
+        ) : months > 0 ? (
           <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
             <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay
           </div>
-        )}
+        ) : null}
         {(p.stock > 0 || p.in_stock === 1) && (
           <button className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">
             Səbətə əlavə et

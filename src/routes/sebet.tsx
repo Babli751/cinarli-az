@@ -25,11 +25,16 @@ function CartPage() {
   const { items, removeItem, updateQty, clearCart, total } = useCart();
   const [orderModal, setOrderModal] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [paymentType, setPaymentType] = useState<"cash" | "credit">("cash");
   const [busy, setBusy] = useState(false);
   const [couponCode] = useState(() => localStorage.getItem(COUPON_KEY) ?? "");
   const [couponInput, setCouponInput] = useState("");
   const [couponApplied, setCouponApplied] = useState<ReturnType<typeof parseCoupon>>(null);
   const [couponError, setCouponError] = useState("");
+  const [promoInput, setPromoInput] = useState("");
+  const [promoResult, setPromoResult] = useState<{ discount: number; label: string } | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
 
   const applyCoupon = () => {
     const parsed = parseCoupon(couponInput.trim().toUpperCase());
@@ -38,13 +43,31 @@ function CartPage() {
     setCouponError("");
   };
 
+  const applyPromo = async () => {
+    if (!promoInput.trim()) return;
+    setPromoBusy(true);
+    setPromoError("");
+    try {
+      const res = await api.validatePromo(promoInput.trim().toUpperCase(), finalTotalBase);
+      setPromoResult({ discount: res.discount, label: promoInput.trim().toUpperCase() });
+    } catch (e: any) {
+      setPromoError(e.message || "Promokod tapılmadı");
+      setPromoResult(null);
+    } finally {
+      setPromoBusy(false);
+    }
+  };
+
   const discountAmount = couponApplied ? Math.round(total * couponApplied.discountPct / 100) : 0;
-  const finalTotal = total - discountAmount;
+  const finalTotalBase = total - discountAmount;
+  const promoDiscount = promoResult?.discount ?? 0;
+  const finalTotal = finalTotalBase - promoDiscount;
 
   const submitOrder = async () => {
     if (!form.name.trim()) return toast.error("Ad mütləqdir");
     if (!form.phone.trim()) return toast.error("Telefon mütləqdir");
     setBusy(true);
+    const avgMonths = Math.round(items.reduce((s, i) => s + (i.credit_months || 12) * i.qty, 0) / Math.max(items.reduce((s, i) => s + i.qty, 0), 1));
     try {
       await api.createOrder({
         customer_name: form.name,
@@ -54,11 +77,18 @@ function CartPage() {
         total: finalTotal,
         items: JSON.stringify(items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))),
         status: "pending",
+        payment_type: paymentType,
+        credit_months: paymentType === "credit" ? avgMonths : undefined,
+        promo_code: promoResult ? promoResult.label : "",
+        promo_discount: promoResult ? promoResult.discount : 0,
       });
       toast.success("Sifarişiniz qəbul edildi! Tezliklə əlaqə saxlayacağıq.");
       clearCart();
       setOrderModal(false);
       setForm({ name: "", phone: "", address: "", notes: "" });
+      setPaymentType("cash");
+      setPromoInput("");
+      setPromoResult(null);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -172,7 +202,7 @@ function CartPage() {
           )}
 
           {(() => {
-            const avgMonths = Math.round(items.reduce((s, i) => s + (i.credit_months || 24) * i.qty, 0) / Math.max(items.reduce((s, i) => s + i.qty, 0), 1));
+            const avgMonths = Math.round(items.reduce((s, i) => s + (i.credit_months || 12) * i.qty, 0) / Math.max(items.reduce((s, i) => s + i.qty, 0), 1));
             return (
               <div className="rounded-xl bg-[var(--brand)]/5 p-3 text-xs text-center text-[var(--brand)] font-medium">
                 Faizsiz kredit: {(Math.ceil(finalTotal / avgMonths * 100) / 100).toFixed(2)} AZN/ay × {avgMonths} ay
@@ -189,12 +219,12 @@ function CartPage() {
       {/* Order modal */}
       {orderModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOrderModal(false)}>
-          <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-background shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-background shadow-2xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-border px-6 py-4 flex-shrink-0">
               <h2 className="text-lg font-bold">Sifariş məlumatları</h2>
               <button onClick={() => setOrderModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><X className="h-5 w-5" /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto">
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Ad Soyad *</label>
                 <input className={inp} placeholder="Məs: Əli Əliyev" value={form.name}
@@ -211,12 +241,37 @@ function CartPage() {
                   onChange={e => setForm({ ...form, address: e.target.value })} />
               </div>
               <div>
+                <label className="mb-1.5 block text-sm font-medium">Ödəniş növü</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["cash", "credit"] as const).map(t => (
+                    <button key={t} type="button" onClick={() => setPaymentType(t)}
+                      className={`rounded-xl border py-2.5 text-sm font-semibold transition-colors ${paymentType === t ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:bg-secondary"}`}>
+                      {t === "cash" ? "💵 Nağd" : "💳 Kredit"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Promokod</label>
+                <div className="flex gap-2">
+                  <input className={`${inp} flex-1`} placeholder="Promokod..." value={promoInput}
+                    onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoResult(null); setPromoError(""); }}
+                    onKeyDown={e => e.key === "Enter" && applyPromo()} />
+                  <button onClick={applyPromo} disabled={promoBusy || !promoInput.trim()}
+                    className="rounded-xl border border-border px-3 py-2 text-sm font-semibold hover:bg-secondary disabled:opacity-40 transition-colors">
+                    {promoBusy ? "..." : "Tətbiq"}
+                  </button>
+                </div>
+                {promoResult && <p className="mt-1 text-xs text-green-600 font-semibold">✓ −{promoResult.discount} AZN endirim</p>}
+                {promoError && <p className="mt-1 text-xs text-destructive">{promoError}</p>}
+              </div>
+              <div>
                 <label className="mb-1.5 block text-sm font-medium">Qeyd (opsional)</label>
                 <textarea className={inp} rows={2} placeholder="Əlavə məlumat..." value={form.notes}
                   onChange={e => setForm({ ...form, notes: e.target.value })} />
               </div>
               <div className="rounded-xl bg-secondary/40 px-4 py-3 space-y-1">
-                {discountAmount > 0 && (
+                {(discountAmount > 0 || promoDiscount > 0) && (
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Məbləğ</span><span>{total} AZN</span>
                   </div>
@@ -224,6 +279,11 @@ function CartPage() {
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-green-600 font-semibold">
                     <span>{couponApplied?.label}</span><span>−{discountAmount} AZN</span>
+                  </div>
+                )}
+                {promoDiscount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 font-semibold">
+                    <span>Promokod ({promoResult?.label})</span><span>−{promoDiscount} AZN</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold">

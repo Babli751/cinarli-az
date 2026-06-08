@@ -10,6 +10,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import type { Context, Next } from "hono";
+import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const JWT_SECRET = process.env.JWT_SECRET || "cinarli_secret_2024";
@@ -107,13 +108,16 @@ app.post("/api/auth/login", async (c) => {
 });
 
 app.post("/api/auth/register", async (c) => {
-  const { email, password, full_name } = await c.req.json();
+  const { email, password, full_name, phone } = await c.req.json();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) return c.json({ error: "Düzgün email daxil edin" }, 400);
+  if (!phone || !/^\+?[0-9]{7,15}$/.test(phone.replace(/\s/g, ""))) return c.json({ error: "Mobil nömrə tələb olunur" }, 400);
   const exists = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
   if (exists) return c.json({ error: "Bu email artıq mövcuddur" }, 400);
   const hash = bcrypt.hashSync(password, 10);
   const count = (db.prepare("SELECT COUNT(*) as c FROM users").get() as any).c;
   const role = count === 0 ? "admin" : "user";
-  const result = db.prepare("INSERT INTO users (email, password, full_name, role) VALUES (?, ?, ?, ?)").run(email, hash, full_name || "", role);
+  const result = db.prepare("INSERT INTO users (email, password, full_name, role, phone) VALUES (?, ?, ?, ?, ?)").run(email, hash, full_name || "", role, phone);
   const token = sign({ id: result.lastInsertRowid, email, role, full_name: full_name || "" }, JWT_SECRET, { expiresIn: "7d" });
   return c.json({ token, user: { id: result.lastInsertRowid, email, role, full_name: full_name || "" } });
 });
@@ -237,6 +241,10 @@ app.get("/api/categories", (c) => {
   return c.json(db.prepare("SELECT * FROM categories WHERE is_hidden=0 ORDER BY position ASC, id ASC").all());
 });
 
+app.get("/api/categories/search-index", (c) => {
+  return c.json(db.prepare("SELECT id, slug, name, parent_id FROM categories ORDER BY id ASC").all());
+});
+
 app.get("/api/categories/all", authMiddleware, adminMiddleware, (c) => {
   return c.json(db.prepare("SELECT * FROM categories ORDER BY position ASC, id ASC").all());
 });
@@ -295,10 +303,10 @@ app.post("/api/categories", authMiddleware, adminMiddleware, async (c) => {
 });
 
 app.put("/api/categories/:id", authMiddleware, adminMiddleware, async (c) => {
-  const { slug, name, description, parent_id, is_hidden } = await c.req.json();
+  const { slug, name, description, parent_id, is_hidden, featured_product_id } = await c.req.json();
   const icon = autoIcon(name);
   try {
-    db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=? WHERE id=?").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, c.req.param("id"));
+    db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=?, featured_product_id=? WHERE id=?").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, featured_product_id || null, c.req.param("id"));
     return c.json({ ok: true });
   } catch (e: any) {
     if (e.message?.includes("UNIQUE")) return c.json({ error: "Bu slug artıq mövcuddur" }, 400);
@@ -391,11 +399,12 @@ app.get("/api/products/:id", (c) => {
 
 app.post("/api/products", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  const images = Array.isArray(b.images) ? JSON.stringify(b.images) : "[]";
-  const components = Array.isArray(b.components) ? JSON.stringify(b.components) : "[]";
-  const specifications = Array.isArray(b.specifications) ? JSON.stringify(b.specifications) : "[]";
-  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate, components, commission_free, ideal_credit_months, in_stock, specifications) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, specifications
+  const images = Array.isArray(b.images) ? JSON.stringify(b.images) : (b.images ?? "[]");
+  const components = Array.isArray(b.components) ? JSON.stringify(b.components) : (b.components ?? "[]");
+  const specifications = Array.isArray(b.specifications) ? JSON.stringify(b.specifications) : (b.specifications ?? "[]");
+  const colors = Array.isArray(b.colors) ? JSON.stringify(b.colors) : (b.colors ?? "[]");
+  const result = db.prepare("INSERT INTO products (name, price, old_price, discount, sale_price, extra_price, image, images, category_slug, brand_slug, stock, is_active, description, credit_months, interest_free, interest_rate, components, commission_free, ideal_credit_months, in_stock, specifications, colors, commission_free_months) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months ?? 12, b.interest_free ?? 1, b.interest_rate || 0, components, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, specifications, colors, b.commission_free_months || 0
   );
   return c.json({ id: result.lastInsertRowid });
 });
@@ -413,8 +422,9 @@ app.put("/api/products/:id", authMiddleware, adminMiddleware, async (c) => {
   }
   const components2 = Array.isArray(b.components) ? JSON.stringify(b.components) : (b.components ?? "[]");
   const specifications2 = Array.isArray(b.specifications) ? JSON.stringify(b.specifications) : (b.specifications ?? "[]");
-  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=?, components=?, commission_free=?, ideal_credit_months=?, in_stock=?, specifications=? WHERE id=?").run(
-    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months || 24, b.interest_free ?? 1, b.interest_rate || 0, components2, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, specifications2, c.req.param("id")
+  const colors2 = Array.isArray(b.colors) ? JSON.stringify(b.colors) : (b.colors ?? "[]");
+  db.prepare("UPDATE products SET name=?, price=?, old_price=?, discount=?, sale_price=?, extra_price=?, image=?, images=?, category_slug=?, brand_slug=?, stock=?, is_active=?, description=?, credit_months=?, interest_free=?, interest_rate=?, components=?, commission_free=?, ideal_credit_months=?, in_stock=?, specifications=?, colors=?, commission_free_months=? WHERE id=?").run(
+    b.name, b.price, b.old_price || null, b.discount || 0, b.sale_price ?? null, b.extra_price ?? null, b.image || "", images, b.category_slug || null, b.brand_slug || null, b.stock || 0, b.is_active !== false ? 1 : 0, b.description || "", b.credit_months ?? 12, b.interest_free ?? 1, b.interest_rate || 0, components2, b.commission_free ? 1 : 0, b.ideal_credit_months || 0, b.in_stock ?? null, specifications2, colors2, b.commission_free_months || 0, c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -472,16 +482,16 @@ app.get("/api/campaigns", (c) => {
 
 app.post("/api/campaigns", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  const result = db.prepare("INSERT INTO campaigns (title, description, discount_percent, image, start_date, end_date, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
-    b.title, b.description || "", b.discount_percent || 0, b.image || "", b.start_date || null, b.end_date || null, b.is_active !== false ? 1 : 0
+  const result = db.prepare("INSERT INTO campaigns (title, description, discount_percent, image, start_date, end_date, is_active, link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.title, b.description || "", b.discount_percent || 0, b.image || "", b.start_date || null, b.end_date || null, b.is_active !== false ? 1 : 0, b.link || ""
   );
   return c.json({ id: result.lastInsertRowid });
 });
 
 app.put("/api/campaigns/:id", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  db.prepare("UPDATE campaigns SET title=?, description=?, discount_percent=?, image=?, start_date=?, end_date=?, is_active=? WHERE id=?").run(
-    b.title, b.description || "", b.discount_percent || 0, b.image || "", b.start_date || null, b.end_date || null, b.is_active !== false ? 1 : 0, c.req.param("id")
+  db.prepare("UPDATE campaigns SET title=?, description=?, discount_percent=?, image=?, start_date=?, end_date=?, is_active=?, link=? WHERE id=?").run(
+    b.title, b.description || "", b.discount_percent || 0, b.image || "", b.start_date || null, b.end_date || null, b.is_active !== false ? 1 : 0, b.link || "", c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -498,8 +508,20 @@ app.get("/api/orders", authMiddleware, adminMiddleware, (c) => {
 
 app.post("/api/orders", async (c) => {
   const b = await c.req.json();
-  const result = db.prepare("INSERT INTO orders (customer_name, phone, address, total, items, notes) VALUES (?, ?, ?, ?, ?, ?)").run(
-    b.customer_name, b.phone, b.address || "", b.total, JSON.stringify(b.items || []), b.notes || ""
+  // validate promo if provided and increment usage
+  let promoDiscount = 0;
+  let promoCode = b.promo_code || "";
+  if (promoCode) {
+    const promo = db.prepare("SELECT * FROM promo_codes WHERE code=? AND is_active=1").get(promoCode.toUpperCase().trim()) as any;
+    if (promo) {
+      promoDiscount = promo.type === "percent" ? Math.round(b.total * promo.value / 100 * 100) / 100 : Math.min(promo.value, b.total);
+      db.prepare("UPDATE promo_codes SET used_count=used_count+1 WHERE id=?").run(promo.id);
+      promoCode = promo.code;
+    }
+  }
+  const finalTotal = Math.max(0, b.total - promoDiscount);
+  const result = db.prepare("INSERT INTO orders (customer_name, phone, address, total, items, notes, payment_type, credit_months, promo_code, promo_discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").run(
+    b.customer_name, b.phone, b.address || "", finalTotal, JSON.stringify(b.items || []), b.notes || "", b.payment_type || "cash", b.credit_months || 0, promoCode, promoDiscount
   );
   return c.json({ id: result.lastInsertRowid });
 });
@@ -517,7 +539,18 @@ app.delete("/api/orders/:id", authMiddleware, adminMiddleware, (c) => {
 
 // ─── USERS ──────────────────────────────────────────────
 app.get("/api/users", authMiddleware, adminMiddleware, (c) => {
-  return c.json(db.prepare("SELECT id, email, full_name, role, created_at FROM users ORDER BY created_at DESC").all());
+  return c.json(db.prepare("SELECT id, email, full_name, role, phone, created_at FROM users ORDER BY created_at DESC").all());
+});
+
+app.delete("/api/users/:id", authMiddleware, adminMiddleware, (c) => {
+  const id = Number(c.req.param("id"));
+  const u = c.get("user");
+  if (u.id === id) return c.json({ error: "Özünüzü silə bilməzsiniz" }, 400);
+  db.prepare("DELETE FROM wishlists WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM compares WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM user_addresses WHERE user_id=?").run(id);
+  db.prepare("DELETE FROM users WHERE id=?").run(id);
+  return c.json({ ok: true });
 });
 
 app.put("/api/users/:id/role", authMiddleware, adminMiddleware, async (c) => {
@@ -544,15 +577,101 @@ app.post("/api/upload", authMiddleware, adminMiddleware, async (c) => {
   const req = nodeEnv?.incoming ?? (c as any).req.raw;
   const res = nodeEnv?.outgoing;
   return new Promise<Response>((resolve) => {
-    upload.single("file")(req, res, (err: any) => {
+    upload.single("file")(req, res, async (err: any) => {
       if (err || !req.file) {
         resolve(c.json({ error: "Yükləmə xətası" }, 400) as any);
         return;
       }
+      const filePath = req.file.path;
+      try {
+        const img = sharp(filePath);
+        const meta = await img.metadata();
+        const w = meta.width || 800;
+        const h = meta.height || 600;
+        const fontSize = Math.max(16, Math.round(w * 0.045));
+        const padding = Math.round(fontSize * 0.6);
+        const text = "manqo.az";
+        const svgWatermark = Buffer.from(
+          `<svg width="${w}" height="${h}">
+            <style>.wm { font-family: Arial, sans-serif; font-size: ${fontSize}px; font-weight: bold; fill: rgba(255,255,255,0.45); }</style>
+            <text x="${w / 2}" y="${h / 2 + fontSize / 3}" text-anchor="middle" class="wm">${text}</text>
+          </svg>`
+        );
+        const tmpPath = filePath + "_wm.jpg";
+        await img.composite([{ input: svgWatermark, blend: "over" }]).toFile(tmpPath);
+        fs.renameSync(tmpPath, filePath);
+      } catch (_) {}
       const url = `/uploads/${req.file.filename}`;
       resolve(c.json({ url }) as any);
     });
   });
+});
+
+// Promo Codes
+app.get("/api/promo-codes", authMiddleware, adminMiddleware, (c) => {
+  return c.json(db.prepare("SELECT * FROM promo_codes ORDER BY created_at DESC").all());
+});
+app.post("/api/promo-codes/validate", async (c) => {
+  const { code, total } = await c.req.json();
+  if (!code) return c.json({ error: "Kod daxil edin" }, 400);
+  const promo = db.prepare("SELECT * FROM promo_codes WHERE code=? AND is_active=1").get(code.toUpperCase().trim()) as any;
+  if (!promo) return c.json({ error: "Promokod tapılmadı və ya aktiv deyil" }, 404);
+  if (promo.expires_at && new Date(promo.expires_at) < new Date()) return c.json({ error: "Promokodun müddəti bitib" }, 400);
+  if (promo.max_uses > 0 && promo.used_count >= promo.max_uses) return c.json({ error: "Promokod limiti dolub" }, 400);
+  if (promo.min_order > 0 && total < promo.min_order) return c.json({ error: `Minimum sifariş məbləği ${promo.min_order} AZN` }, 400);
+  const discount = promo.type === "percent" ? Math.round(total * promo.value / 100 * 100) / 100 : Math.min(promo.value, total);
+  return c.json({ ok: true, code: promo.code, type: promo.type, value: promo.value, discount });
+});
+app.post("/api/promo-codes", authMiddleware, adminMiddleware, async (c) => {
+  const d = await c.req.json();
+  const code = (d.code || "").toUpperCase().trim();
+  if (!code) return c.json({ error: "Kod mütləqdir" }, 400);
+  const r = db.prepare("INSERT INTO promo_codes (code,type,value,min_order,max_uses,is_active,expires_at) VALUES (?,?,?,?,?,?,?)").run(
+    code, d.type || "percent", d.value || 0, d.min_order || 0, d.max_uses || 0, d.is_active ?? 1, d.expires_at || null
+  );
+  return c.json({ id: r.lastInsertRowid });
+});
+app.put("/api/promo-codes/:id", authMiddleware, adminMiddleware, async (c) => {
+  const id = Number(c.req.param("id"));
+  const d = await c.req.json();
+  const code = d.code ? d.code.toUpperCase().trim() : undefined;
+  db.prepare("UPDATE promo_codes SET code=COALESCE(?,code), type=COALESCE(?,type), value=COALESCE(?,value), min_order=COALESCE(?,min_order), max_uses=COALESCE(?,max_uses), is_active=COALESCE(?,is_active), expires_at=? WHERE id=?")
+    .run(code ?? null, d.type ?? null, d.value ?? null, d.min_order ?? null, d.max_uses ?? null, d.is_active ?? null, d.expires_at ?? null, id);
+  return c.json({ ok: true });
+});
+app.delete("/api/promo-codes/:id", authMiddleware, adminMiddleware, (c) => {
+  db.prepare("DELETE FROM promo_codes WHERE id=?").run(Number(c.req.param("id")));
+  return c.json({ ok: true });
+});
+
+// Credit Companies
+app.get("/api/credit-companies", (c) => {
+  const rows = db.prepare("SELECT * FROM credit_companies ORDER BY position, id").all();
+  return c.json(rows);
+});
+app.get("/api/credit-companies/active", (c) => {
+  const rows = db.prepare("SELECT * FROM credit_companies WHERE is_active=1 ORDER BY position, id").all();
+  return c.json(rows);
+});
+app.post("/api/credit-companies", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  const plans = Array.isArray(b.plans) ? JSON.stringify(b.plans) : "[]";
+  const r = db.prepare("INSERT INTO credit_companies (name, logo, plans, is_active, position) VALUES (?,?,?,?,?)").run(
+    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0
+  );
+  return c.json({ id: r.lastInsertRowid });
+});
+app.put("/api/credit-companies/:id", authMiddleware, adminMiddleware, async (c) => {
+  const b = await c.req.json();
+  const plans = Array.isArray(b.plans) ? JSON.stringify(b.plans) : "[]";
+  db.prepare("UPDATE credit_companies SET name=?,logo=?,plans=?,is_active=?,position=? WHERE id=?").run(
+    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, c.req.param("id")
+  );
+  return c.json({ ok: true });
+});
+app.delete("/api/credit-companies/:id", authMiddleware, adminMiddleware, (c) => {
+  db.prepare("DELETE FROM credit_companies WHERE id=?").run(c.req.param("id"));
+  return c.json({ ok: true });
 });
 
 // ─── STORES ─────────────────────────────────────────────
@@ -736,6 +855,27 @@ app.get("/api/page-views", authMiddleware, adminMiddleware, (c) => {
     conversionRate,
     ordersWeek,
   });
+});
+
+// ─── REVIEWS ─────────────────────────────────────────────
+app.get("/api/products/:id/reviews", (c) => {
+  const rows = db.prepare("SELECT * FROM product_reviews WHERE product_id=? AND is_approved=1 ORDER BY created_at DESC").all(c.req.param("id"));
+  return c.json(rows);
+});
+
+app.post("/api/products/:id/reviews", async (c) => {
+  const b = await c.req.json();
+  if (!b.body?.trim()) return c.json({ error: "Rəy mətni boşdur" }, 400);
+  const rating = Math.min(5, Math.max(1, Number(b.rating) || 5));
+  const result = db.prepare("INSERT INTO product_reviews (product_id, author_name, rating, body) VALUES (?, ?, ?, ?)").run(
+    c.req.param("id"), b.author_name?.trim() || "Anonim", rating, b.body.trim()
+  );
+  return c.json({ id: result.lastInsertRowid });
+});
+
+app.delete("/api/reviews/:id", authMiddleware, adminMiddleware, (c) => {
+  db.prepare("DELETE FROM product_reviews WHERE id=?").run(Number(c.req.param("id")));
+  return c.json({ ok: true });
 });
 
 serve({ fetch: app.fetch, port: PORT }, () => {

@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { api, getImageUrl, type Brand } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, ImageIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X } from "lucide-react";
+import { ImageCropUploader } from "@/components/ImageCropUploader";
 
 export const Route = createFileRoute("/admin/brendler")({
   component: BrandsAdmin,
@@ -11,7 +12,6 @@ export const Route = createFileRoute("/admin/brendler")({
 function BrandsAdmin() {
   const [items, setItems] = useState<Brand[]>([]);
   const [editing, setEditing] = useState<Partial<Brand> | null>(null);
-  const [uploading, setUploading] = useState(false);
 
   const load = () => api.getBrandsAll().then(setItems).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -38,16 +38,6 @@ function BrandsAdmin() {
     load();
   };
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const url = await api.uploadFile(file);
-      setEditing(ed => ed ? { ...ed, logo: url } : ed);
-    } catch (err: any) { toast.error(err.message); }
-    finally { setUploading(false); e.target.value = ""; }
-  };
 
   return (
     <div>
@@ -100,16 +90,12 @@ function BrandsAdmin() {
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Logo</label>
-                <div className="flex items-center gap-3">
-                  {getImageUrl(editing.logo ?? "") && (
-                    <img src={getImageUrl(editing.logo ?? "")!} alt="" className="h-12 w-20 object-contain rounded-lg border border-border bg-secondary/30 p-1" />
-                  )}
-                  <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2 text-sm hover:border-[var(--brand)] transition-colors">
-                    {uploading ? "Yüklənir..." : <><ImageIcon className="h-4 w-4" /> Logo yüklə</>}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploading} />
-                  </label>
-                </div>
-                <input className={`${inp} mt-2`} value={editing.logo ?? ""} onChange={e => setEditing({ ...editing, logo: e.target.value })} placeholder="və ya URL yapışdır..." />
+                <ImageCropUploader
+                  ratio={1}
+                  value={getImageUrl(editing.logo ?? "") ?? ""}
+                  onChange={(url) => setEditing({ ...editing, logo: url })}
+                  label="Logo yüklə"
+                />
               </div>
               <label className="flex items-center gap-3 cursor-pointer">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}

@@ -3,8 +3,9 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Heart, ShoppingCart, Scale, User, Menu, X, ChevronRight, Shield, Home, Grid3x3 } from "lucide-react";
 import { api, getImageUrl, type Category, type Product } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import logoChinarli from "@/assets/logo-chinarli.png";
+import logoManqo from "@/assets/logo-manqo.png";
 
 interface SearchResult {
   id: number;
@@ -72,6 +73,12 @@ export function SiteHeader() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeSlug, setActiveSlug] = useState("");
   const { isAdmin } = useAuth();
+  const { count: cartCount } = useCart();
+  const [compareCount, setCompareCount] = useState(0);
+
+  useEffect(() => {
+    api.getCompare().then(list => setCompareCount(list.length)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     api.getCategories().then((cats) => {
@@ -110,6 +117,27 @@ export function SiteHeader() {
 
   return (
     <>
+      {/* Announcement bar */}
+      <div className="w-full overflow-hidden bg-[var(--brand)] py-2 text-white">
+        <div className="flex animate-marquee gap-16 whitespace-nowrap text-xs font-semibold sm:text-sm">
+          {[
+            "🔥 24 aya faizsiz kredit",
+            "🚚 Sürətli çatdırılma",
+            "✅ Rəsmi zəmanət",
+            "💳 Birbank · Tamkart ilə hissəli ödəniş",
+            "🎁 Endirimli məhsullar hər gün",
+          ].concat([
+            "🔥 24 aya faizsiz kredit",
+            "🚚 Sürətli çatdırılma",
+            "✅ Rəsmi zəmanət",
+            "💳 Birbank · Tamkart ilə hissəli ödəniş",
+            "🎁 Endirimli məhsullar hər gün",
+          ]).map((t, i) => (
+            <span key={i}>{t}</span>
+          ))}
+        </div>
+      </div>
+
       {/* Top bar — desktop only */}
       <div className="hidden border-b border-border bg-secondary/40 text-sm lg:block">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2">
@@ -134,8 +162,8 @@ export function SiteHeader() {
       {/* Header — desktop */}
       <header className="hidden border-b border-border bg-background lg:block">
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-2">
-          <Link to="/" className="flex items-center" aria-label="Chinarli Mebel">
-            <img src={logoChinarli} alt="Chinarli Mebel" width={1536} height={1024} className="h-20 w-auto md:h-24 lg:h-28" />
+          <Link to="/" className="flex items-center" aria-label="Manqo">
+            <img src={logoManqo} alt="Manqo" className="h-20 w-auto md:h-24 lg:h-28" />
           </Link>
 
           <button
@@ -154,8 +182,8 @@ export function SiteHeader() {
               onChange={e => { ds.setQuery(e.target.value); ds.setOpen(true); }}
               onFocus={() => ds.setOpen(true)}
               onKeyDown={e => {
-                if (e.key === "Enter" && ds.results.length > 0) {
-                  navigate({ to: "/mehsul/$slug", params: { slug: String(ds.results[0].id) } });
+                if (e.key === "Enter" && ds.query.trim().length >= 1) {
+                  navigate({ to: "/axtar", search: { q: ds.query.trim() } });
                   ds.setQuery(""); ds.setOpen(false);
                 }
                 if (e.key === "Escape") ds.setOpen(false);
@@ -180,14 +208,27 @@ export function SiteHeader() {
                     </Link>
                   );
                 })}
+                <Link to="/axtar" search={{ q: ds.query.trim() }}
+                  onClick={() => { ds.setQuery(""); ds.setOpen(false); }}
+                  className="flex items-center justify-center gap-2 border-t border-border px-4 py-2.5 text-sm font-medium text-[var(--brand)] hover:bg-secondary/40 transition-colors">
+                  Bütün nəticələrə bax →
+                </Link>
               </div>
             )}
           </div>
 
           <div className="flex items-center gap-4 text-muted-foreground">
-            <Link to="/muqayise" className="flex flex-col items-center text-xs hover:text-foreground"><Scale className="h-5 w-5" />Müqayisə</Link>
+            <Link to="/muqayise" className="relative flex flex-col items-center text-xs hover:text-foreground">
+              <Scale className="h-5 w-5" />
+              {compareCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">{compareCount}</span>}
+              Müqayisə
+            </Link>
             <Link to="/beyendim" className="flex flex-col items-center text-xs hover:text-foreground"><Heart className="h-5 w-5" />Bəyəndim</Link>
-            <Link to="/sebet" className="flex flex-col items-center text-xs hover:text-foreground"><ShoppingCart className="h-5 w-5" />Səbət</Link>
+            <Link to="/sebet" className="relative flex flex-col items-center text-xs hover:text-foreground">
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">{cartCount}</span>}
+              Səbət
+            </Link>
           </div>
 
           <Link to="/aylik-odenis" className="flex items-center gap-1.5 rounded-lg border-2 border-[var(--brand)] px-3 py-2 text-sm font-semibold text-[var(--brand)] hover:bg-[var(--brand)]/10">
@@ -207,8 +248,8 @@ export function SiteHeader() {
             <Menu className="h-6 w-6" />
           </button>
 
-          <Link to="/" className="flex flex-1 items-center justify-center" aria-label="Chinarli Mebel">
-            <img src={logoChinarli} alt="Chinarli Mebel" className="h-12 w-auto sm:h-14" />
+          <Link to="/" className="flex flex-1 items-center justify-center" aria-label="Manqo">
+            <img src={logoManqo} alt="Manqo" className="h-12 w-auto sm:h-14"  />
           </Link>
 
           <button
@@ -218,11 +259,13 @@ export function SiteHeader() {
           >
             <Search className="h-5 w-5" />
           </button>
-          <Link to="/muqayise" className="grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-secondary" aria-label="Müqayisə">
+          <Link to="/muqayise" className="relative grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-secondary" aria-label="Müqayisə">
             <Scale className="h-5 w-5" />
+            {compareCount > 0 && <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">{compareCount}</span>}
           </Link>
-          <Link to="/sebet" className="grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-secondary" aria-label="Səbət">
+          <Link to="/sebet" className="relative grid h-10 w-10 place-items-center rounded-lg text-foreground hover:bg-secondary" aria-label="Səbət">
             <ShoppingCart className="h-5 w-5" />
+            {cartCount > 0 && <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none">{cartCount}</span>}
           </Link>
         </div>
 
@@ -237,8 +280,8 @@ export function SiteHeader() {
                 value={ms.query}
                 onChange={e => { ms.setQuery(e.target.value); ms.setOpen(true); }}
                 onKeyDown={e => {
-                  if (e.key === "Enter" && ms.results.length > 0) {
-                    navigate({ to: "/mehsul/$slug", params: { slug: String(ms.results[0].id) } });
+                  if (e.key === "Enter" && ms.query.trim().length >= 1) {
+                    navigate({ to: "/axtar", search: { q: ms.query.trim() } });
                     ms.setQuery(""); ms.setOpen(false); setMobileSearchOpen(false);
                   }
                   if (e.key === "Escape") { ms.setOpen(false); setMobileSearchOpen(false); }
@@ -258,11 +301,16 @@ export function SiteHeader() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="truncate text-sm font-medium">{p.name}</div>
-                          <div className="text-xs text-[var(--brand)] font-semibold">{p.extra_price ?? p.sale_price ?? p.price} AZN</div>
+                          <div className="text-xs text-[var(--brand)] font-semibold">{p.price} AZN</div>
                         </div>
                       </Link>
                     );
                   })}
+                  <Link to="/axtar" search={{ q: ms.query.trim() }}
+                    onClick={() => { ms.setQuery(""); ms.setOpen(false); setMobileSearchOpen(false); }}
+                    className="flex items-center justify-center gap-2 border-t border-border px-4 py-2.5 text-sm font-medium text-[var(--brand)] hover:bg-secondary/40 transition-colors">
+                    Bütün nəticələrə bax →
+                  </Link>
                 </div>
               )}
             </div>
@@ -280,7 +328,7 @@ export function SiteHeader() {
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-border px-4 py-3 flex-shrink-0">
-              <img src={logoChinarli} alt="Chinarli Mebel" className="h-10 w-auto" />
+              <img src={logoManqo} alt="Manqo" className="h-10 w-auto" />
               <button onClick={() => setMobileMenuOpen(false)} className="grid h-9 w-9 place-items-center rounded-lg hover:bg-secondary" aria-label="Bağla">
                 <X className="h-5 w-5" />
               </button>
@@ -442,19 +490,19 @@ export function SiteFooter() {
   return (
     <footer className="bg-[#18181a] text-white pb-20 lg:pb-0">
       <div className="mx-auto max-w-7xl px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-5">
-          {/* Col 1: Logo + QR */}
-          <div className="sm:col-span-1">
+        <div className="grid grid-cols-3 gap-4 sm:grid-cols-2 md:grid-cols-5">
+          {/* Col 1: Logo + QR — desktop only */}
+          <div className="hidden sm:block sm:col-span-1">
             <div className="mb-6 rounded-xl bg-white p-3 w-fit">
-              <img src={logoChinarli} alt="Chinarli Mebel" className="h-28 w-auto" />
+              <img src={logoManqo} alt="Manqo" className="h-28 w-auto" />
             </div>
-            <p className="mb-6 text-sm text-gray-400">Etibarlı mebel mağazası. 24/7 dəstək.</p>
+            <p className="mb-6 text-sm text-gray-400">Onlayn Ticarət Mərkəzi. 24/7 dəstək.</p>
           </div>
 
           {/* Col 2: Şirkət */}
           <div>
-            <h3 className="mb-4 font-semibold text-white text-lg">Şirkət</h3>
-            <ul className="space-y-2.5 text-sm text-gray-400">
+            <h3 className="mb-3 font-semibold text-white text-sm md:text-lg">Şirkət</h3>
+            <ul className="space-y-2 text-xs md:text-sm text-gray-400">
               <li><Link to="/haqqimizda" className="hover:text-[var(--brand)] transition">Haqqımızda</Link></li>
               <li><Link to="/magazalar" className="hover:text-[var(--brand)] transition">Mağazalar</Link></li>
               <li><Link to="/korporativ" className="hover:text-[var(--brand)] transition">Korporativ</Link></li>
@@ -465,8 +513,8 @@ export function SiteFooter() {
 
           {/* Col 3: Müştəri üçün */}
           <div>
-            <h3 className="mb-4 font-semibold text-white text-lg">Müştəri üçün</h3>
-            <ul className="space-y-2.5 text-sm text-gray-400">
+            <h3 className="mb-3 font-semibold text-white text-sm md:text-lg">Müştəri üçün</h3>
+            <ul className="space-y-2 text-xs md:text-sm text-gray-400">
               <li><Link to="/elaqe" className="hover:text-[var(--brand)] transition">Sual-Cavab</Link></li>
               <li><Link to="/aylik-odenis" className="hover:text-[var(--brand)] transition">Hissə-hissə ödəniş</Link></li>
               <li><Link to="/privacy" className="hover:text-[var(--brand)] transition">Məxfilik siyasəti</Link></li>
@@ -477,37 +525,34 @@ export function SiteFooter() {
 
           {/* Col 4: Əlaqə (Contact) */}
           <div className="sm:col-span-1">
-            <h3 className="mb-4 font-semibold text-white text-lg">Əlaqə</h3>
+            <h3 className="mb-3 font-semibold text-white text-sm md:text-lg">Əlaqə</h3>
 
             {/* Phone */}
-            <div className="mb-6">
-              <a href="tel:+994507072221" className="flex items-center gap-3 text-[var(--brand)] font-bold text-lg hover:opacity-80 transition">
-                📞 +994 50 707 22 21
+            <div className="mb-3">
+              <a href="tel:+994507072221" className="flex items-center gap-1 text-[var(--brand)] font-bold text-xs md:text-lg hover:opacity-80 transition">
+                📞 <span className="hidden md:inline">+994 50 707 22 21</span><span className="md:hidden">50 707 22 21</span>
               </a>
             </div>
 
-            {/* Address */}
-            <div className="mb-6 text-sm text-gray-400">
-              <p className="mb-1">📍 İmişli şəhəri, N.Nərimanov küçəsi, Bazarın arxası</p>
-            </div>
-
             {/* Social Media */}
-            <div className="mb-4">
-              <p className="text-xs font-semibold text-gray-300 mb-3">Bizi izləyin</p>
+            <div className="mb-3">
+              <p className="text-xs font-semibold text-gray-300 mb-2">Bizi izləyin</p>
               <div className="flex gap-2 flex-wrap">
-                <a href="https://www.facebook.com/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Facebook">f</a>
-                <a href="https://www.instagram.com/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Instagram">📷</a>
-                <a href="https://www.youtube.com/@chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="YouTube">▶</a>
-                <a href="https://api.whatsapp.com/send?phone=994507072221" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="WhatsApp">💬</a>
-                <a href="https://t.me/chinarli" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white/10 text-white hover:bg-[var(--brand)] transition" title="Telegram">✈</a>
+                <a href="https://www.instagram.com/manqo.az" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-white hover:bg-[var(--brand)] transition" title="Instagram">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                  <span className="text-xs font-semibold">Instagram</span>
+                </a>
+                <a href="https://www.tiktok.com/@manqo.az" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 rounded-xl bg-white/10 px-3 py-2 text-white hover:bg-[var(--brand)] transition" title="TikTok">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current flex-shrink-0" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.75a4.85 4.85 0 01-1.01-.06z"/>
+                  </svg>
+                  <span className="text-xs font-semibold">TikTok</span>
+                </a>
               </div>
-            </div>
-
-            {/* Apps */}
-            <div className="flex gap-2">
-              <a href="https://play.google.com/store" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-[var(--brand)] transition">Google Play</a>
-              <span className="text-gray-500">·</span>
-              <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-[var(--brand)] transition">App Store</a>
             </div>
           </div>
         </div>

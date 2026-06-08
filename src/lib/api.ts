@@ -1,5 +1,20 @@
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
+export interface CreditPlan {
+  months: number;
+  rate: number;
+  label?: string;
+}
+
+export interface CreditCompany {
+  id: number;
+  name: string;
+  logo: string;
+  plans: CreditPlan[] | string;
+  is_active: number;
+  position: number;
+}
+
 export function getImageUrl(image: string | undefined | null): string | null {
   if (!image) return null;
   if (image.startsWith("http")) return image;
@@ -33,13 +48,14 @@ export const api = {
   // Auth
   login: (email: string, password: string) =>
     req<{ token: string; user: User }>("POST", "/api/auth/login", { email, password }),
-  register: (email: string, password: string, full_name: string) =>
-    req<{ token: string; user: User }>("POST", "/api/auth/register", { email, password, full_name }),
+  register: (email: string, password: string, full_name: string, phone: string) =>
+    req<{ token: string; user: User }>("POST", "/api/auth/register", { email, password, full_name, phone }),
   me: () => req<{ user: User }>("GET", "/api/auth/me", undefined, true),
 
   // Categories
   getCategories: () => req<Category[]>("GET", "/api/categories"),
   getCategoriesAll: () => req<Category[]>("GET", "/api/categories/all", undefined, true),
+  getCategoriesSearchIndex: () => req<Pick<Category, "id"|"slug"|"name">[]>("GET", "/api/categories/search-index"),
   createCategory: (data: Partial<Category>) => req<{ id: number }>("POST", "/api/categories", data, true),
   updateCategory: (id: number, data: Partial<Category>) => req<{ ok: boolean }>("PUT", `/api/categories/${id}`, data, true),
   deleteCategory: (id: number) => req<{ ok: boolean }>("DELETE", `/api/categories/${id}`, undefined, true),
@@ -77,6 +93,19 @@ export const api = {
   updateOrderStatus: (id: number, status: string) => req<{ ok: boolean }>("PUT", `/api/orders/${id}/status`, { status }, true),
   deleteOrder: (id: number) => req<{ ok: boolean }>("DELETE", `/api/orders/${id}`, undefined, true),
 
+  // Promo Codes
+  getPromoCodes: () => req<PromoCode[]>("GET", "/api/promo-codes", undefined, true),
+  validatePromo: (code: string, total: number) => req<{ ok: boolean; code: string; type: string; value: number; discount: number }>("POST", "/api/promo-codes/validate", { code, total }),
+  createPromoCode: (data: Partial<PromoCode>) => req<{ id: number }>("POST", "/api/promo-codes", data, true),
+  updatePromoCode: (id: number, data: Partial<PromoCode>) => req<{ ok: boolean }>("PUT", `/api/promo-codes/${id}`, data, true),
+  deletePromoCode: (id: number) => req<{ ok: boolean }>("DELETE", `/api/promo-codes/${id}`, undefined, true),
+
+  // Reviews
+  getProductReviews: (productId: number) => req<ProductReview[]>("GET", `/api/products/${productId}/reviews`),
+  createReview: (productId: number, data: { author_name: string; rating: number; body: string }) =>
+    req<{ id: number }>("POST", `/api/products/${productId}/reviews`, data),
+  deleteReview: (id: number) => req<{ ok: boolean }>("DELETE", `/api/reviews/${id}`, undefined, true),
+
   // Profile
   updateProfile: (data: { full_name?: string; password?: string; new_password?: string }) =>
     req<{ user: User }>("PUT", "/api/auth/profile", data, true),
@@ -103,6 +132,7 @@ export const api = {
   // Users
   getUsers: () => req<User[]>("GET", "/api/users", undefined, true),
   updateUserRole: (id: number, role: string) => req<{ ok: boolean }>("PUT", `/api/users/${id}/role`, { role }, true),
+  deleteUser: (id: number) => req<{ ok: boolean }>("DELETE", `/api/users/${id}`, undefined, true),
 
   // Banners
   getBanners: () => req<Banner[]>("GET", "/api/banners"),
@@ -123,6 +153,13 @@ export const api = {
   createStore: (data: Partial<Store>) => req<{ id: number }>("POST", "/api/stores", data, true),
   updateStore: (id: number, data: Partial<Store>) => req<{ ok: boolean }>("PUT", `/api/stores/${id}`, data, true),
   deleteStore: (id: number) => req<{ ok: boolean }>("DELETE", `/api/stores/${id}`, undefined, true),
+
+  // Credit Companies
+  getCreditCompanies: () => req<CreditCompany[]>("GET", "/api/credit-companies/active"),
+  getCreditCompaniesAll: () => req<CreditCompany[]>("GET", "/api/credit-companies", undefined, true),
+  createCreditCompany: (data: Partial<CreditCompany>) => req<{ id: number }>("POST", "/api/credit-companies", data, true),
+  updateCreditCompany: (id: number, data: Partial<CreditCompany>) => req<{ ok: boolean }>("PUT", `/api/credit-companies/${id}`, data, true),
+  deleteCreditCompany: (id: number) => req<{ ok: boolean }>("DELETE", `/api/credit-companies/${id}`, undefined, true),
 
   // Stats
   getStats: () => req<Stats>("GET", "/api/stats", undefined, true),
@@ -152,6 +189,7 @@ export interface User {
   email: string;
   full_name: string;
   role: "admin" | "user";
+  phone?: string;
   created_at?: string;
 }
 
@@ -163,6 +201,7 @@ export interface Category {
   description: string;
   parent_id?: number | null;
   is_hidden?: number;
+  featured_product_id?: number | null;
   created_at?: string;
 }
 
@@ -189,9 +228,11 @@ export interface Product {
   interest_free?: number;
   interest_rate?: number;
   commission_free?: number;
+  commission_free_months?: number;
   ideal_credit_months?: number;
   in_stock?: number | null;
   specifications?: string;
+  colors?: string;
   view_count?: number;
   created_at?: string;
 }
@@ -205,6 +246,7 @@ export interface Campaign {
   start_date?: string;
   end_date?: string;
   is_active: number;
+  link?: string;
   created_at?: string;
 }
 
@@ -217,6 +259,33 @@ export interface Order {
   status: string;
   items: string;
   notes: string;
+  payment_type?: string;
+  credit_months?: number;
+  promo_code?: string;
+  promo_discount?: number;
+  created_at?: string;
+}
+
+export interface PromoCode {
+  id: number;
+  code: string;
+  type: "percent" | "amount";
+  value: number;
+  min_order: number;
+  max_uses: number;
+  used_count: number;
+  is_active: number;
+  expires_at?: string | null;
+  created_at?: string;
+}
+
+export interface ProductReview {
+  id: number;
+  product_id: number;
+  author_name: string;
+  rating: number;
+  body: string;
+  is_approved: number;
   created_at?: string;
 }
 

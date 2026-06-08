@@ -16,10 +16,12 @@ function CatsAdmin() {
   const [editing, setEditing] = useState<Partial<Category> | null>(null);
   const [editMode, setEditMode] = useState<EditMode>("parent");
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
+  const [allProducts, setAllProducts] = useState<import("@/lib/api").Product[]>([]);
 
   const load = async () => {
     const [cats, products] = await Promise.all([api.getCategoriesAll(), api.getProducts()]);
     setItems(cats);
+    setAllProducts(products);
     const counts: Record<string, number> = {};
     products.forEach((p) => { if (p.category_slug) counts[p.category_slug] = (counts[p.category_slug] || 0) + 1; });
     setProductCounts(counts);
@@ -280,6 +282,21 @@ function CatsAdmin() {
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </Field>
+              {editing.id && (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Banner məhsulu (opsional)</label>
+                  <select
+                    className={inp}
+                    value={editing.featured_product_id ?? ""}
+                    onChange={e => setEditing({ ...editing, featured_product_id: e.target.value ? Number(e.target.value) : null })}>
+                    <option value="">— Avtomatik (ən ucuz aylıq) —</option>
+                    {allProducts.filter(p => p.is_active !== 0).map(p => (
+                      <option key={p.id} value={p.id}>{p.name} — {p.extra_price ?? p.sale_price ?? p.price} AZN</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {editMode !== "child" && editing.id && (
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input

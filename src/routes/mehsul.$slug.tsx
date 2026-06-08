@@ -22,22 +22,27 @@ function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
+  const [creditCompanies, setCreditCompanies] = useState<import("@/lib/api").CreditCompany[]>([]);
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const [orderModal, setOrderModal] = useState(false);
   const [creditModal, setCreditModal] = useState(false);
-  const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "" });
+  const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "", promo: "", payment_type: "cash" });
+  const [promoResult, setPromoResult] = useState<{ discount: number; code: string; type: string; value: number } | null>(null);
+  const [promoError, setPromoError] = useState("");
+  const [promoBusy, setPromoBusy] = useState(false);
   const [orderBusy, setOrderBusy] = useState(false);
   const [inWishlist, setInWishlist] = useState(false);
   const [inCompare, setInCompare] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loginModal, setLoginModal] = useState(false);
   const [selectedComps, setSelectedComps] = useState<Set<number>>(new Set());
+  const [selectedColor, setSelectedColor] = useState<{name: string; hex: string} | null>(null);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginTab, setLoginTab] = useState<"login" | "register">("login");
-  const [registerForm, setRegisterForm] = useState({ email: "", password: "", full_name: "" });
+  const [registerForm, setRegisterForm] = useState({ email: "", password: "", full_name: "", phone: "" });
   const [pendingAction, setPendingAction] = useState<"wishlist" | "compare" | null>(null);
 
   useEffect(() => { setImgIdx(0); setInWishlist(false); setInCompare(false); }, [slug]);
@@ -58,6 +63,7 @@ function ProductPage() {
         });
       }
     }).catch(() => {});
+    api.getCreditCompanies().then(setCreditCompanies).catch(() => {});
   }, [slug]);
 
   const allImages: string[] = (() => {
@@ -113,7 +119,7 @@ function ProductPage() {
       if (loginTab === "login") {
         await login(loginForm.email, loginForm.password);
       } else {
-        await register(registerForm.email, registerForm.password, registerForm.full_name);
+        await register(registerForm.email, registerForm.password, registerForm.full_name, registerForm.phone);
       }
       setLoginModal(false);
       if (pendingAction === "wishlist") toggleWishlist();
@@ -130,23 +136,53 @@ function ProductPage() {
     });
   };
 
+  const calcActivePrice = (p: typeof product) => {
+    if (!p) return 0;
+    if (p.extra_price != null) return p.extra_price;
+    if (p.sale_price != null) return p.sale_price;
+    if (p.old_price && p.old_price > p.price) return p.price;
+    if (p.discount > 0) return Math.round(p.price * (1 - p.discount / 100));
+    return p.price;
+  };
+
+  const applyPromo = async () => {
+    if (!product || !orderForm.promo.trim()) return;
+    setPromoError(""); setPromoResult(null); setPromoBusy(true);
+    const baseTotal = calcActivePrice(product) * qty;
+    try {
+      const res = await api.validatePromo(orderForm.promo.trim(), baseTotal);
+      setPromoResult(res);
+      toast.success(`Promokod tətbiq edildi: -${res.discount} AZN`);
+    } catch (e: any) { setPromoError(e.message || "Promokod tapılmadı"); }
+    finally { setPromoBusy(false); }
+  };
+
   const submitOrder = async () => {
     if (!product) return;
     if (!orderForm.name || !orderForm.phone) return toast.error("Ad və telefon mütləqdir");
     setOrderBusy(true);
+    const price = calcActivePrice(product);
+    const baseTotal = price * qty;
+    const promoDiscount = promoResult?.discount ?? 0;
+    const finalTotal = Math.max(0, baseTotal - promoDiscount);
+    const payLabel = orderForm.payment_type === "credit" ? ` | Kredit` : " | Nağd";
     try {
       await api.createOrder({
         customer_name: orderForm.name,
         phone: orderForm.phone,
         address: orderForm.address,
-        total: (product.extra_price ?? product.sale_price ?? (product.old_price && product.old_price > product.price ? product.price : product.discount > 0 ? Math.round(product.price * (1 - product.discount / 100)) : product.price)) * qty,
-        items: JSON.stringify([{ id: product.id, name: product.name, qty, price: product.extra_price ?? product.sale_price ?? (product.old_price && product.old_price > product.price ? product.price : product.discount > 0 ? Math.round(product.price * (1 - product.discount / 100)) : product.price) }]),
-        notes: `Bir kliklə al — ${product.name} x${qty}${selectedComps.size > 0 ? ` (seçilmiş hissələr: ${Array.from(selectedComps).map(i => { try { return JSON.parse(product.components || "[]")[i]?.name; } catch { return ""; } }).filter(Boolean).join(", ")})` : ""}`,
+        total: finalTotal,
+        items: JSON.stringify([{ id: product.id, name: product.name, qty, price }]),
+        notes: `Bir kliklə al — ${product.name} x${qty}${payLabel}${promoResult ? ` | Promo: ${promoResult.code} (-${promoDiscount} AZN)` : ""}`,
         status: "pending",
+        payment_type: orderForm.payment_type,
+        promo_code: promoResult?.code || "",
+        promo_discount: promoDiscount,
       });
       toast.success("Sifarişiniz qəbul edildi! Tezliklə əlaqə saxlayacağıq.");
       setOrderModal(false);
-      setOrderForm({ name: "", phone: "", address: "" });
+      setOrderForm({ name: "", phone: "", address: "", promo: "", payment_type: "cash" });
+      setPromoResult(null); setPromoError("");
     } catch (e: any) { toast.error(e.message); }
     finally { setOrderBusy(false); }
   };
@@ -178,7 +214,7 @@ function ProductPage() {
       <div className="mx-auto max-w-7xl px-3 py-4 md:px-4 md:py-6">
         {/* Breadcrumb */}
         <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground mb-4 md:text-sm md:mb-6">
-          <Link to="/" className="hover:text-foreground">Çınarlı</Link>
+          <Link to="/" className="hover:text-foreground">Manqo</Link>
           <ChevronRight className="h-3 w-3" />
           {category && (
             <>
@@ -290,6 +326,15 @@ function ProductPage() {
           <div className="flex flex-col">
             <h1 className="text-xl font-bold md:text-3xl">{product.name}</h1>
 
+            {/* Color swatches */}
+            {(() => {
+              type Color = { name: string; hex: string };
+              let cols: Color[] = [];
+              try { cols = JSON.parse(product.colors || "[]"); } catch {}
+              if (cols.length === 0) return null;
+              return <ColorSwatches colors={cols} selected={selectedColor} onSelect={setSelectedColor} />;
+            })()}
+
             <div className="mt-2 flex items-center gap-2">
               <div className="flex text-amber-400">{[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current md:h-4 md:w-4" />)}</div>
               <span className="text-xs text-muted-foreground md:text-sm">5.0</span>
@@ -306,6 +351,8 @@ function ProductPage() {
               const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
               const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
               const isFree = product.interest_free !== 0;
+              const hasCredit = product.credit_months == null ? true : product.credit_months > 0;
+              const commFreeMonths = product.commission_free_months ?? 0;
               return (
                 <>
                   <div className="mt-3 flex items-baseline gap-2 flex-wrap md:mt-4 md:gap-3">
@@ -320,7 +367,36 @@ function ProductPage() {
                       {savingAmt.toFixed(0)} AZN qənaət
                     </div>
                   )}
-                  <InlineCredit price={activePrice} isFree={isFree} onOpenCalc={() => setCreditModal(true)} />
+                  {commFreeMonths > 0 && (
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2">
+                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border border-green-300 bg-white text-xs font-bold text-green-700">i</span>
+                      <span className="text-sm font-semibold text-green-800">{commFreeMonths} aya komissiyasız</span>
+                    </div>
+                  )}
+                  {hasCredit && creditCompanies.length > 0 && (() => {
+                    const creditMonths = product.credit_months || 12;
+                    const monthly = (Math.ceil(activePrice / creditMonths * 100) / 100).toFixed(2);
+                    return (
+                      <div className="mt-3 flex flex-col gap-2">
+                        {creditCompanies.map(co => {
+                          const logoUrl = getImageUrl(co.logo);
+                          return (
+                            <button key={co.id} onClick={() => setCreditModal(true)}
+                              className="flex items-center gap-3 rounded-2xl border-2 border-[var(--accent-orange)] bg-card px-4 py-3 text-left hover:bg-secondary/30 transition-colors">
+                              {logoUrl
+                                ? <img src={logoUrl} alt={co.name} className="h-10 w-20 flex-shrink-0 object-contain" />
+                                : <span className="w-20 flex-shrink-0 text-sm font-bold text-center">{co.name}</span>}
+                              <div>
+                                <div className="font-black text-base">{monthly} AZN × {creditMonths} ay</div>
+                                <div className="text-xs text-muted-foreground">{co.name} ilə {creditMonths} aya faizsiz ödə!</div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                  {hasCredit && <InlineCredit price={activePrice} isFree={isFree} onOpenCalc={() => setCreditModal(true)} />}
                 </>
               );
             })()}
@@ -362,7 +438,7 @@ function ProductPage() {
                     ))}
                     <div className="flex items-center justify-between px-4 py-2.5 bg-secondary/40">
                       <span className="text-sm font-bold">Cəmi</span>
-                      <span className="text-sm font-black text-[var(--accent-orange)]">{cartPrice} AZN</span>
+                      <span className="text-sm font-black text-[var(--accent-orange)]">{selectedCompsTotal} AZN</span>
                     </div>
                   </div>
                 </div>
@@ -383,14 +459,17 @@ function ProductPage() {
                 <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
               </div>
               <button onClick={() => {
-                  // Base product (always)
-                  addItem({ id: product.id, name: product.name, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 24 });
-                  // Each selected component as separate cart item
-                  parsedComps.forEach((comp, i) => {
-                    if (selectedComps.has(i)) {
-                      addItem({ id: product.id * 10000 + i + 1, name: `${comp.name} (${product.name})`, price: comp.price, image: product.image, qty });
-                    }
-                  });
+                  if (selectedComps.size > 0) {
+                    parsedComps.forEach((comp, i) => {
+                      if (selectedComps.has(i)) {
+                        addItem({ id: product.id * 10000 + i + 1, name: `${comp.name} (${product.name})`, price: comp.price, image: product.image, qty });
+                      }
+                    });
+                  } else {
+                    // no component selected → add base product
+                    const colorSuffix = selectedColor ? ` — ${selectedColor.name}` : "";
+                    addItem({ id: product.id, name: product.name + colorSuffix, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 });
+                  }
                   toast.success("Səbətə əlavə edildi");
                 }}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
@@ -403,10 +482,12 @@ function ProductPage() {
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[var(--accent-orange)] bg-[var(--accent-orange)]/5 py-2.5 text-xs font-semibold text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/10 md:py-3 md:text-sm md:gap-2">
                 <MousePointerClick className="h-3.5 w-3.5 md:h-4 md:w-4" /> Bir kliklə al
               </button>
-              <button onClick={() => setCreditModal(true)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
-                <CreditCard className="h-3.5 w-3.5 md:h-4 md:w-4" /> Kredit
-              </button>
+              {(product.credit_months == null || product.credit_months > 0) && (
+                <button onClick={() => setCreditModal(true)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
+                  <CreditCard className="h-3.5 w-3.5 md:h-4 md:w-4" /> Kredit
+                </button>
+              )}
             </div>
 
             <div className="mt-3 flex gap-2">
@@ -493,11 +574,64 @@ function ProductPage() {
                 <label className="mb-1.5 block text-sm font-medium">Ünvan</label>
                 <input className={minp} value={orderForm.address} onChange={e => setOrderForm({...orderForm, address: e.target.value})} placeholder="Çatdırılma ünvanı" />
               </div>
-              <div className="rounded-xl bg-secondary/50 p-3 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Məhsul:</span><span className="font-semibold">{product.name}</span></div>
-                <div className="flex justify-between mt-1"><span className="text-muted-foreground">Miqdar:</span><span className="font-semibold">{qty} ədəd</span></div>
-                <div className="flex justify-between mt-1"><span className="text-muted-foreground">Cəmi:</span><span className="font-black text-[var(--brand)]">{product.price * qty} AZN</span></div>
+
+              {/* Ödəniş növü */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Ödəniş növü</label>
+                <div className="flex gap-2">
+                  {[{ v: "cash", l: "💵 Nağd" }, { v: "credit", l: "💳 Kredit" }].map(o => (
+                    <button key={o.v} onClick={() => setOrderForm({...orderForm, payment_type: o.v})}
+                      className={`flex-1 rounded-xl border py-2 text-sm font-semibold transition ${orderForm.payment_type === o.v ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
               </div>
+
+              {/* Promokod */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Promokod</label>
+                <div className="flex gap-2">
+                  <input className={minp + " flex-1"} value={orderForm.promo}
+                    onChange={e => { setOrderForm({...orderForm, promo: e.target.value}); setPromoResult(null); setPromoError(""); }}
+                    placeholder="Promokodu daxil edin"
+                    onKeyDown={e => e.key === "Enter" && applyPromo()} />
+                  <button onClick={applyPromo} disabled={promoBusy || !orderForm.promo.trim()}
+                    className="rounded-xl bg-[var(--brand)] px-4 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 transition">
+                    {promoBusy ? "..." : "Tətbiq et"}
+                  </button>
+                </div>
+                {promoResult && (
+                  <div className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-green-700">
+                    <Check className="h-3.5 w-3.5" /> {promoResult.code} — {promoResult.type === "percent" ? `${promoResult.value}%` : `${promoResult.value} AZN`} endirim tətbiq edildi
+                  </div>
+                )}
+                {promoError && <p className="mt-1 text-xs text-red-600">{promoError}</p>}
+              </div>
+
+              {/* Xülasə */}
+              {(() => {
+                const price = calcActivePrice(product);
+                const originalPrice = product.extra_price != null ? product.price : product.sale_price != null ? product.price : product.old_price && product.old_price > product.price ? product.old_price : null;
+                const promoDiscount = promoResult?.discount ?? 0;
+                const finalTotal = Math.max(0, price * qty - promoDiscount);
+                return (
+                  <div className="rounded-xl bg-secondary/50 p-3 text-sm space-y-1">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Məhsul:</span><span className="font-semibold line-clamp-1">{product.name}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Miqdar:</span><span className="font-semibold">{qty} ədəd</span></div>
+                    {originalPrice && (
+                      <div className="flex justify-between"><span className="text-muted-foreground">Əvvəlki qiymət:</span><span className="line-through text-muted-foreground">{originalPrice * qty} AZN</span></div>
+                    )}
+                    {promoDiscount > 0 && (
+                      <div className="flex justify-between text-green-700"><span>Promokod endirimi:</span><span className="font-semibold">-{promoDiscount} AZN</span></div>
+                    )}
+                    <div className="flex justify-between border-t border-border pt-1 mt-1">
+                      <span className="text-muted-foreground font-medium">Cəmi:</span>
+                      <span className="font-black text-lg text-[var(--brand)]">{finalTotal} AZN</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
             <div className="flex gap-3 border-t border-border px-6 py-4">
               <button onClick={() => setOrderModal(false)} className="flex-1 rounded-xl border border-border py-2.5 font-medium hover:bg-secondary">Ləğv et</button>
@@ -554,6 +688,10 @@ function ProductPage() {
                     <input className={minp} type="email" value={registerForm.email} onChange={e => setRegisterForm({...registerForm, email: e.target.value})} placeholder="email@example.com" />
                   </div>
                   <div>
+                    <label className="mb-1.5 block text-sm font-medium">Mobil nömrə *</label>
+                    <input className={minp} type="tel" value={registerForm.phone} onChange={e => setRegisterForm({...registerForm, phone: e.target.value})} placeholder="+994 50 000 00 00" />
+                  </div>
+                  <div>
                     <label className="mb-1.5 block text-sm font-medium">Şifrə</label>
                     <input className={minp} type="password" value={registerForm.password} onChange={e => setRegisterForm({...registerForm, password: e.target.value})} placeholder="••••••••" onKeyDown={e => e.key === "Enter" && submitLogin()} />
                   </div>
@@ -574,22 +712,78 @@ function ProductPage() {
   );
 }
 
-const IDEAL_RATES: Record<number, { added: number }> = {
-  3:  { added: 11.1 },
-  6:  { added: 17.6 },
-  9:  { added: 23.5 },
-  12: { added: 31.6 },
-  15: { added: 37.0 },
-  18: { added: 44.9 },
-};
-
 // Bank kredit şərtləri
+function ColorSwatches({ colors, selected, onSelect }: {
+  colors: { name: string; hex: string }[];
+  selected: { name: string; hex: string } | null;
+  onSelect: (c: { name: string; hex: string } | null) => void;
+}) {
+  const selectedIdx = selected ? colors.findIndex(c => c.hex === selected.hex && c.name === selected.name) : -1;
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        {colors.map((c, i) => (
+          <button
+            key={i}
+            onClick={() => onSelect(selectedIdx === i ? null : c)}
+            title={c.name}
+            className={`relative h-9 w-9 rounded-full border-2 transition-all ${selectedIdx === i ? "border-[var(--brand)] scale-110 shadow-md" : "border-transparent hover:border-muted-foreground/40"}`}
+            style={{ backgroundColor: c.hex }}
+          >
+            {selectedIdx === i && (
+              <span className="absolute inset-0 flex items-center justify-center">
+                <span className="h-2.5 w-2.5 rounded-full bg-white shadow" />
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {selected?.name && (
+        <span className="text-xs text-muted-foreground">Seçilmiş rəng: <span className="font-semibold text-foreground">{selected.name}</span></span>
+      )}
+    </div>
+  );
+}
+
+function StarRating({ value, onChange }: { value: number; onChange?: (v: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1,2,3,4,5].map(i => (
+        <button key={i} type="button"
+          onClick={() => onChange?.(i)}
+          onMouseEnter={() => onChange && setHover(i)}
+          onMouseLeave={() => onChange && setHover(0)}
+          className={`text-2xl transition-transform ${onChange ? "cursor-pointer hover:scale-110" : "cursor-default"}`}>
+          <span className={(hover || value) >= i ? "text-yellow-400" : "text-muted-foreground/30"}>★</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function ProductTabs({ product }: { product: Product }) {
   const [tab, setTab] = useState<"desc" | "specs" | "reviews">("desc");
+  const [reviews, setReviews] = useState<import("@/lib/api").ProductReview[]>([]);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [form, setForm] = useState({ author_name: "", rating: 5, body: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const loadReviews = () => {
+    api.getProductReviews(product.id).then(r => { setReviews(r); setReviewsLoaded(true); }).catch(() => setReviewsLoaded(true));
+  };
+
+  useEffect(() => {
+    if (tab === "reviews" && !reviewsLoaded) loadReviews();
+  }, [tab]);
+
+  const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) : 0;
+
   const tabs = [
     { id: "desc",    label: "Təsvir" },
     { id: "specs",   label: "Texniki xüsusiyyətlər" },
-    { id: "reviews", label: "Reytinq və rəylər (0)" },
+    { id: "reviews", label: `Reytinq və rəylər${reviews.length > 0 ? ` (${reviews.length})` : ""}` },
   ] as const;
 
   return (
@@ -635,11 +829,11 @@ function ProductTabs({ product }: { product: Product }) {
                   <h3 className="mb-3 flex items-center gap-2 text-base font-bold">
                     <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)] inline-block" />{grp}
                   </h3>
-                  <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
+                  <div className="rounded-xl border border-border overflow-hidden">
                     {items.map((s, i) => (
-                      <div key={i} className="flex px-4 py-2.5 text-sm odd:bg-secondary/20">
-                        <span className="w-1/2 text-muted-foreground">{s.label}</span>
-                        <span className="w-1/2 font-medium">{s.value}</span>
+                      <div key={i} className={`flex items-center justify-between gap-4 px-4 py-3 text-sm border-b border-border last:border-0 ${i % 2 === 0 ? "bg-background" : "bg-secondary/20"}`}>
+                        <span className="text-muted-foreground shrink-0">{s.label}</span>
+                        <span className="font-medium text-right">{s.value}</span>
                       </div>
                     ))}
                   </div>
@@ -649,8 +843,89 @@ function ProductTabs({ product }: { product: Product }) {
           );
         })()}
         {tab === "reviews" && (
-          <div className="text-sm text-muted-foreground">
-            <p>Hələ rəy yazılmayıb. Birinci siz yazın!</p>
+          <div className="space-y-6">
+            {/* Summary */}
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-4 rounded-2xl border border-border bg-secondary/20 px-5 py-4">
+                <div className="text-center">
+                  <div className="text-4xl font-black">{avgRating.toFixed(1)}</div>
+                  <StarRating value={Math.round(avgRating)} />
+                  <div className="mt-1 text-xs text-muted-foreground">{reviews.length} rəy</div>
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  {[5,4,3,2,1].map(s => {
+                    const cnt = reviews.filter(r => r.rating === s).length;
+                    const pct = reviews.length ? Math.round(cnt / reviews.length * 100) : 0;
+                    return (
+                      <div key={s} className="flex items-center gap-2 text-xs">
+                        <span className="w-4 text-right text-muted-foreground">{s}</span>
+                        <span className="text-yellow-400 text-xs">★</span>
+                        <div className="flex-1 h-1.5 rounded-full bg-border overflow-hidden">
+                          <div className="h-full rounded-full bg-yellow-400 transition-all" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="w-6 text-muted-foreground">{cnt}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Review list */}
+            {!reviewsLoaded && <div className="text-center text-sm text-muted-foreground py-6">Yüklənir...</div>}
+            {reviewsLoaded && reviews.length === 0 && !submitted && (
+              <p className="text-sm text-muted-foreground">Hələ rəy yazılmayıb. Birinci siz yazın!</p>
+            )}
+            {reviews.map(r => (
+              <div key={r.id} className="rounded-2xl border border-border p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-sm">{r.author_name}</div>
+                  <div className="text-xs text-muted-foreground">{r.created_at ? new Date(r.created_at).toLocaleDateString("az-AZ") : ""}</div>
+                </div>
+                <StarRating value={r.rating} />
+                <p className="text-sm text-foreground leading-relaxed">{r.body}</p>
+              </div>
+            ))}
+
+            {/* Write review form */}
+            {submitted ? (
+              <div className="rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm text-green-700 font-medium">
+                ✓ Rəyiniz qəbul edildi. Təşəkkür edirik!
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border p-5 space-y-4">
+                <h3 className="font-bold">Rəy yaz</h3>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Reytinq</label>
+                  <StarRating value={form.rating} onChange={v => setForm(f => ({ ...f, rating: v }))} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Ad (opsional)</label>
+                  <input className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors"
+                    placeholder="Adınız..." value={form.author_name}
+                    onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">Rəy *</label>
+                  <textarea className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors resize-none"
+                    rows={3} placeholder="Məhsul haqqında fikirlərinizi yazın..."
+                    value={form.body} onChange={e => setForm(f => ({ ...f, body: e.target.value }))} />
+                </div>
+                <button disabled={submitting || !form.body.trim()}
+                  onClick={async () => {
+                    setSubmitting(true);
+                    try {
+                      await api.createReview(product.id, { author_name: form.author_name || "Anonim", rating: form.rating, body: form.body });
+                      setSubmitted(true);
+                      loadReviews();
+                    } catch {}
+                    setSubmitting(false);
+                  }}
+                  className="rounded-xl bg-[var(--brand)] px-6 py-2.5 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 disabled:opacity-40 transition-opacity">
+                  {submitting ? "Göndərilir..." : "Rəyi göndər"}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -719,17 +994,27 @@ function InlineCredit({ price, isFree, onOpenCalc }: { price: number; isFree: bo
   );
 }
 
-const BANKS = [
-  { id: "bircard",  name: "Bircard",  months: [3,6,9,12,18], freeMonths: [3,6,9,12,18], addedPct: 0,    commission: false },
-  { id: "tamcard",  name: "Tamcard",  months: [3,6,9,12],    freeMonths: [3,6,9,12],    addedPct: 0,    commission: false },
-  { id: "ideal",    name: "İdeal",    months: [3,6,9,12,15,18], freeMonths: [],          addedPct: null, commission: true  },
-];
-
 function CreditModal({ product, onClose, onOrder }: { product: Product; onClose: () => void; onOrder: () => void }) {
-  const [bankId, setBankId] = useState("bircard");
+  const [companies, setCompanies] = useState<import("@/lib/api").CreditCompany[]>([]);
+  const [companyIdx, setCompanyIdx] = useState(0);
   const [months, setMonths] = useState(12);
   const [downPayment, setDownPayment] = useState("");
   const [useDiscounted, setUseDiscounted] = useState(true);
+
+  useEffect(() => {
+    api.getCreditCompanies().then(list => {
+      setCompanies(list);
+      if (list.length > 0) {
+        const plans = parsePlansLocal(list[0].plans);
+        setMonths(plans[0]?.months ?? 12);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const parsePlansLocal = (raw: import("@/lib/api").CreditPlan[] | string): import("@/lib/api").CreditPlan[] => {
+    if (Array.isArray(raw)) return raw;
+    try { return JSON.parse(raw as string); } catch { return []; }
+  };
 
   const activePrice = (() => {
     if (product.extra_price != null) return product.extra_price;
@@ -742,20 +1027,21 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
   const fullPrice = product.price;
   const basePrice = hasDiscount ? (useDiscounted ? activePrice : fullPrice) : fullPrice;
 
-  const bank = BANKS.find(b => b.id === bankId)!;
-  // ensure selected months valid for bank
-  const validMonths = bank.months.includes(months) ? months : bank.months[bank.months.length - 1];
+  const currentCompany = companies[companyIdx];
+  const currentPlans = currentCompany ? parsePlansLocal(currentCompany.plans) : [];
+  const validPlan = currentPlans.find(p => p.months === months) ?? currentPlans[0];
+  const validMonths = validPlan?.months ?? months;
 
   const down = Math.min(Math.max(parseFloat(downPayment) || 0, 0), basePrice - 1);
   const financed = basePrice - down;
 
+  const rate = validPlan?.rate ?? 0;
   let monthly: number;
   let totalPaid: number;
   let overpay: number;
 
-  if (bankId === "ideal") {
-    const row = IDEAL_RATES[validMonths];
-    const total = row ? Math.ceil(financed * (1 + row.added / 100)) : financed;
+  if (rate > 0) {
+    const total = Math.ceil(financed * (1 + rate / 100));
     monthly = Math.ceil(total / validMonths);
     totalPaid = monthly * validMonths + down;
     overpay = totalPaid - basePrice;
@@ -794,36 +1080,60 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
             <span className="text-xl font-black">{basePrice} AZN</span>
           </div>
 
-          {/* Bank seçimi */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold">Bank seçin</label>
-            <div className="grid grid-cols-3 gap-2">
-              {BANKS.map(b => (
-                <button key={b.id} onClick={() => { setBankId(b.id); if (!b.months.includes(months)) setMonths(b.months[b.months.length-1]); }}
-                  className={`rounded-xl border py-2.5 text-sm font-bold transition ${bankId === b.id ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:border-[var(--brand)] hover:text-[var(--brand)]"}`}>
-                  {b.name}
-                </button>
-              ))}
+          {/* Kredit şirkəti seçimi */}
+          {companies.length === 0 ? (
+            <div className="rounded-xl bg-secondary/40 px-4 py-3 text-center text-sm text-muted-foreground">
+              Admin paneldən kredit şirkəti əlavə edin
             </div>
-            {bankId !== "ideal" && (
-              <div className="mt-1.5 flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" /> Komissiyasız · Faizsiz
+          ) : (
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Kredit şirkəti seçin</label>
+              {/* Scrollable card row */}
+              <div className="flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory">
+                {companies.map((c, i) => {
+                  const logoUrl = getImageUrl(c.logo);
+                  const isActive = companyIdx === i;
+                  return (
+                    <button key={c.id} onClick={() => {
+                      setCompanyIdx(i);
+                      const plans = parsePlansLocal(c.plans);
+                      setMonths(plans[0]?.months ?? 12);
+                    }}
+                      className={`snap-start flex-shrink-0 flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 px-4 py-3 transition-all w-28 ${isActive ? "border-[var(--brand)] bg-[var(--brand)]/5 shadow-md" : "border-border hover:border-[var(--brand)]/50"}`}>
+                      {logoUrl
+                        ? <img src={logoUrl} alt={c.name} className="h-10 w-20 object-contain" />
+                        : <span className="text-sm font-bold text-center leading-tight">{c.name}</span>
+                      }
+                      {logoUrl && <span className="text-[10px] font-semibold text-muted-foreground">{c.name}</span>}
+                    </button>
+                  );
+                })}
               </div>
-            )}
-          </div>
+              {validPlan && validPlan.rate === 0 && (
+                <div className="mt-1.5 flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" /> Faizsiz · Komissiyasız
+                </div>
+              )}
+              {validPlan && validPlan.rate > 0 && (
+                <div className="mt-1.5 text-xs text-orange-600 font-medium">+{validPlan.rate}% faiz tətbiq olunur</div>
+              )}
+            </div>
+          )}
 
           {/* Müddət seçimi */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold">Müddət</label>
-            <div className="flex flex-wrap gap-2">
-              {bank.months.map(m => (
-                <button key={m} onClick={() => setMonths(m)}
-                  className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${validMonths === m ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:bg-secondary"}`}>
-                  {m} ay
-                </button>
-              ))}
+          {currentPlans.length > 0 && (
+            <div>
+              <label className="mb-2 block text-sm font-semibold">Müddət</label>
+              <div className="flex flex-wrap gap-2">
+                {currentPlans.map(p => (
+                  <button key={p.months} onClick={() => setMonths(p.months)}
+                    className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${validMonths === p.months ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:bg-secondary"}`}>
+                    {p.months} ay{p.label ? ` · ${p.label}` : ""}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* İlkin ödəniş kalkulyatoru */}
           <div>
@@ -856,9 +1166,9 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
             </div>
           </div>
 
-          {bankId === "ideal" && (
+          {validPlan && validPlan.rate > 0 && (
             <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-xs text-yellow-800">
-              İdeal Kredit üzrə <strong>faiz tətbiq edilir</strong>. Komissiya da tələb oluna bilər.
+              <strong>+{validPlan.rate}% faiz</strong> tətbiq edilir. Komissiya da tələb oluna bilər.
             </div>
           )}
 

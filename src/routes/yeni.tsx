@@ -5,7 +5,7 @@ import { api, getImageUrl, type Product } from "@/lib/api";
 import { Zap } from "lucide-react";
 
 export const Route = createFileRoute("/yeni")({
-  head: () => ({ meta: [{ title: "Yeni məhsullar — Çınarlı" }] }),
+  head: () => ({ meta: [{ title: "Yeni məhsullar — Manqo" }] }),
   component: YeniPage,
 });
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/SiteLayout";
 
 export const Route = createFileRoute("/geri-qaytarma")({
-  head: () => ({ meta: [{ title: "Geri qaytarma — Çınarlı Mebel" }] }),
+  head: () => ({ meta: [{ title: "Geri qaytarma — Manqo — Onlayn Ticarət Mərkəzi" }] }),
   component: () => (
     <PageShell title="Geri qaytarma və zəmanət" subtitle="14 gün ərzində geri qaytarma. 2 il rəsmi zəmanət.">
       <div className="space-y-4">

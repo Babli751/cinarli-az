@@ -28,8 +28,8 @@ export function useAuth() {
     return user;
   };
 
-  const register = async (email: string, password: string, full_name: string) => {
-    const { token, user } = await api.register(email, password, full_name);
+  const register = async (email: string, password: string, full_name: string, phone: string) => {
+    const { token, user } = await api.register(email, password, full_name, phone);
     localStorage.setItem("token", token);
     setUser(user);
     return user;

@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/kabinet")({
-  head: () => ({ meta: [{ title: "Şəxsi kabinet — Çınarlı" }] }),
+  head: () => ({ meta: [{ title: "Şəxsi kabinet — Manqo" }] }),
   component: KabinetPage,
 });
 
@@ -24,6 +24,7 @@ function KabinetPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<Tab>("profil");
 
@@ -40,7 +41,7 @@ function KabinetPage() {
         toast.success("Xoş gəldiniz!");
         if (u.role === "admin") navigate({ to: "/admin" });
       } else {
-        await register(email, password, fullName);
+        await register(email, password, fullName, phone);
         toast.success("Qeydiyyat tamamlandı!");
       }
     } catch (err: any) {
@@ -122,11 +123,19 @@ function KabinetPage() {
         </div>
         <form onSubmit={submit} className="space-y-4">
           {mode === "signup" && (
-            <div>
-              <label className="mb-1 block text-sm font-medium">Ad Soyad</label>
-              <input required value={fullName} onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-[var(--brand)]" />
-            </div>
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Ad Soyad</label>
+                <input required value={fullName} onChange={(e) => setFullName(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-[var(--brand)]" />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium">Mobil nömrə *</label>
+                <input required type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+994 50 000 00 00"
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-[var(--brand)]" />
+              </div>
+            </>
           )}
           <div>
             <label className="mb-1 block text-sm font-medium">Email</label>

@@ -161,11 +161,53 @@ try { db.exec("ALTER TABLE products ADD COLUMN commission_free INTEGER DEFAULT 0
 try { db.exec("ALTER TABLE products ADD COLUMN ideal_credit_months INTEGER DEFAULT 0"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN in_stock INTEGER DEFAULT NULL"); } catch {}
 try { db.exec("ALTER TABLE products ADD COLUMN specifications TEXT DEFAULT '[]'"); } catch {}
+try { db.exec("ALTER TABLE categories ADD COLUMN featured_product_id INTEGER DEFAULT NULL"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN colors TEXT DEFAULT '[]'"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS credit_companies (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  logo TEXT DEFAULT '',
+  plans TEXT NOT NULL DEFAULT '[]',
+  is_active INTEGER DEFAULT 1,
+  position INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
 try { db.exec(`CREATE TABLE IF NOT EXISTS banners (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   image TEXT NOT NULL DEFAULT '',
   position INTEGER DEFAULT 0,
   is_active INTEGER DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
+
+try { db.exec("ALTER TABLE campaigns ADD COLUMN link TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE products ADD COLUMN commission_free_months INTEGER DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN payment_type TEXT DEFAULT 'cash'"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN promo_code TEXT DEFAULT ''"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN promo_discount REAL DEFAULT 0"); } catch {}
+try { db.exec("ALTER TABLE orders ADD COLUMN credit_months INTEGER DEFAULT 0"); } catch {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS promo_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL UNIQUE,
+  type TEXT NOT NULL DEFAULT 'percent',
+  value REAL NOT NULL DEFAULT 0,
+  min_order REAL DEFAULT 0,
+  max_uses INTEGER DEFAULT 0,
+  used_count INTEGER DEFAULT 0,
+  is_active INTEGER DEFAULT 1,
+  expires_at TEXT DEFAULT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`); } catch {}
+
+try { db.exec(`CREATE TABLE IF NOT EXISTS product_reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  author_name TEXT NOT NULL DEFAULT 'Anonim',
+  rating INTEGER NOT NULL DEFAULT 5,
+  body TEXT NOT NULL DEFAULT '',
+  is_approved INTEGER NOT NULL DEFAULT 1,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 )`); } catch {}
 

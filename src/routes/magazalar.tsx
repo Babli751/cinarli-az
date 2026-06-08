@@ -5,7 +5,7 @@ import { MapPin, Phone, Clock } from "lucide-react";
 import { api, type Store } from "@/lib/api";
 
 export const Route = createFileRoute("/magazalar")({
-  head: () => ({ meta: [{ title: "Mağazalar — Çınarlı" }, { name: "description", content: "Çınarlı mağaza şəbəkəsi və ünvanları." }] }),
+  head: () => ({ meta: [{ title: "Mağazalar — Manqo" }, { name: "description", content: "Manqo mağaza şəbəkəsi və ünvanları." }] }),
   component: Magazalar,
 });
 

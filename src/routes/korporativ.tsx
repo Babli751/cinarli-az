@@ -3,7 +3,7 @@ import { PageShell } from "@/components/SiteLayout";
 import { Building2, Briefcase, Users, FileText } from "lucide-react";
 
 export const Route = createFileRoute("/korporativ")({
-  head: () => ({ meta: [{ title: "Korporativ satışlar — Çınarlı Mebel" }, { name: "description", content: "Şirkətlər, otellər və ofislər üçün xüsusi şərtlər." }] }),
+  head: () => ({ meta: [{ title: "Korporativ satışlar — Manqo — Onlayn Ticarət Mərkəzi" }, { name: "description", content: "Şirkətlər, otellər və ofislər üçün xüsusi şərtlər." }] }),
   component: () => (
     <PageShell title="Korporativ satışlar" subtitle="Şirkətlər, otellər, restoran və ofislər üçün xüsusi qiymət və şərtlər.">
       <div className="grid gap-4 md:grid-cols-4">

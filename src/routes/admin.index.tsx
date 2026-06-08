@@ -70,7 +70,7 @@ function AdminDashboard() {
     <div>
       <div className="mb-8">
         <h1 className="text-2xl font-black md:text-3xl">Dashboard</h1>
-        <p className="mt-1 text-muted-foreground">Çınarlı idarəetmə paneli</p>
+        <p className="mt-1 text-muted-foreground">Manqo idarəetmə paneli</p>
       </div>
 
       {/* Main KPI cards */}

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/SiteLayout";
 
 export const Route = createFileRoute("/terms")({
-  head: () => ({ meta: [{ title: "İstifadə qaydaları — Çınarlı" }] }),
+  head: () => ({ meta: [{ title: "İstifadə qaydaları — Manqo" }] }),
   component: TermsPage,
 });
 
@@ -11,7 +11,7 @@ function TermsPage() {
     <PageShell title="İstifadə qaydaları" subtitle="Son yenilənmə: May 2026">
       <div className="max-w-3xl mx-auto space-y-4">
         <Section title="1. Ümumi şərtlər">
-          chinarli.store saytından istifadə etməklə siz bu istifadə qaydalarını qəbul etmiş
+          manqo.az saytından istifadə etməklə siz bu istifadə qaydalarını qəbul etmiş
           sayılırsınız. Şərtlərlə razı deyilsinizsə, saytdan istifadəni dayandırın.
         </Section>
 
@@ -55,7 +55,7 @@ function TermsPage() {
         <Section title="7. Əlaqə">
           <div className="space-y-1 mt-1">
             <div>Suallarınız üçün:</div>
-            <div><strong>Email:</strong> info@chinarli.store</div>
+            <div><strong>Email:</strong> info@manqo.az</div>
             <div><strong>Telefon:</strong> +994 50 707 22 21</div>
           </div>
         </Section>

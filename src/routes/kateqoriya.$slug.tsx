@@ -9,9 +9,9 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { SpinWheelBanner } from "@/components/SpinWheel";
 
 const searchSchema = z.object({
-  sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").default("popular"),
-  min: fallback(z.number(), 0).default(0),
-  max: fallback(z.number(), 99999).default(99999),
+  sort: fallback(z.enum(["popular", "price-asc", "price-desc", "discount"]), "popular").optional(),
+  min: fallback(z.number(), 0).optional(),
+  max: fallback(z.number(), 99999).optional(),
 });
 
 export const Route = createFileRoute("/kateqoriya/$slug")({
@@ -21,7 +21,10 @@ export const Route = createFileRoute("/kateqoriya/$slug")({
 
 function CategoryPage() {
   const { slug } = Route.useParams();
-  const { sort, min, max } = Route.useSearch();
+  const { sort: _sort, min: _min, max: _max } = Route.useSearch();
+  const sort = _sort ?? "popular";
+  const min = _min ?? 0;
+  const max = _max ?? 99999;
   const navigate = Route.useNavigate();
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -66,7 +69,7 @@ function CategoryPage() {
     return list;
   }, [allProducts, slug, sort, min, max, search, subFilter, isParent, subCats]);
 
-  const resetFilters = () => { setSearch(""); navigate({ search: { sort: "popular", min: 0, max: 99999 } }); };
+  const resetFilters = () => { setSearch(""); navigate({ search: {} }); };
 
   const FilterPanel = () => (
     <div className="space-y-4">
@@ -76,14 +79,14 @@ function CategoryPage() {
       <label className="block text-xs font-medium text-muted-foreground">Qiymət (AZN)</label>
       <div className="flex gap-2">
         <input type="number" value={min || ""} placeholder="Min"
-          onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, min: Number(e.target.value) || 0 }) })}
+          onChange={(e) => { const v = Number(e.target.value); navigate({ search: (prev: any) => ({ ...prev, min: v || undefined }) }); }}
           className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
         <input type="number" value={max === 99999 ? "" : max} placeholder="Max"
-          onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, max: Number(e.target.value) || 99999 }) })}
+          onChange={(e) => { const v = Number(e.target.value); navigate({ search: (prev: any) => ({ ...prev, max: v || undefined }) }); }}
           className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
       </div>
       <label className="block text-xs font-medium text-muted-foreground">Sıralama</label>
-      <select value={sort} onChange={(e) => navigate({ search: (prev: any) => ({ ...prev, sort: e.target.value }) })}
+      <select value={sort} onChange={(e) => { const v = e.target.value; navigate({ search: (prev: any) => ({ ...prev, sort: v === "popular" ? undefined : v }) }); }}
         className="w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm outline-none focus:border-[var(--brand)]">
         <option value="popular">Populyarlıq</option>
         <option value="price-asc">Qiymət: ucuzdan</option>
@@ -101,11 +104,47 @@ function CategoryPage() {
       <SiteHeader />
       <div className="mx-auto max-w-7xl px-3 py-4 md:px-4 md:py-6">
         <nav className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground md:text-sm">
-          <Link to="/" className="hover:text-foreground">Çınarlı</Link>
+          <Link to="/" className="hover:text-foreground">Manqo</Link>
           <ChevronRight className="h-3 w-3" />
           <span className="text-foreground">{cat?.name ?? slug}</span>
         </nav>
         <h1 className="mt-2 text-2xl font-bold md:mt-3 md:text-3xl">{cat?.name ?? slug}</h1>
+
+        {/* Cheapest monthly payment banner */}
+        {(() => {
+          if (allProducts.length === 0) return null;
+          const slugsInScope = isParent
+            ? [slug, ...subCats.map(c => c.slug)]
+            : [slug];
+          const pool = allProducts.filter(p => slugsInScope.includes(p.category_slug ?? ""));
+          if (pool.length === 0) return null;
+          // use admin-pinned product if set, else cheapest monthly
+          const pinned = cat?.featured_product_id
+            ? allProducts.find(p => p.id === cat.featured_product_id)
+            : null;
+          const calcMonthly = (p: typeof pool[0]) => {
+            const ap = p.extra_price ?? p.sale_price ?? (p.old_price && p.old_price > p.price ? p.price : p.discount > 0 ? Math.round(p.price * (1 - p.discount / 100)) : p.price);
+            return { p, monthly: Math.ceil(ap / (p.credit_months || 12) * 100) / 100 };
+          };
+          const cheapest = pinned
+            ? calcMonthly(pinned)
+            : calcMonthly(pool[Math.floor(Math.random() * pool.length)]);
+          const url = getImageUrl(cheapest.p.image);
+          return (
+            <Link to="/mehsul/$slug" params={{ slug: String(cheapest.p.id) }}
+              className="mt-3 flex items-center gap-4 rounded-2xl border border-[var(--brand)]/30 bg-gradient-to-r from-[var(--brand)]/5 to-transparent px-4 py-3 hover:border-[var(--brand)]/60 transition-colors">
+              {url && <img src={url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-contain bg-white" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">Bu kateqoriyada ən ucuz aylıq ödəniş:</p>
+                <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <p className="text-xs text-muted-foreground">ayda cəmi</p>
+                <p className="rounded-xl border-2 border-[var(--brand)] px-3 py-1 text-lg font-black text-[var(--brand)]">{cheapest.monthly.toFixed(2)} AZN</p>
+              </div>
+            </Link>
+          );
+        })()}
 
         {/* Category chips — only parent categories, horizontal scroll on mobile */}
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none md:flex-wrap md:overflow-visible">
@@ -241,7 +280,7 @@ function CategoryPage() {
                   })();
                   const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
                   const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
-                  const months = p.credit_months || 24;
+                  const months = p.credit_months || 12;
                   return (
                   <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
                     {discountPct > 0 && (
@@ -258,6 +297,7 @@ function CategoryPage() {
                       <ProductImg p={p} />
                     </Link>
                     <div className="flex flex-1 flex-col p-3 md:p-4">
+                      
                       <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="line-clamp-2 min-h-[2.5rem] text-xs font-medium hover:text-[var(--brand)] md:text-sm">{p.name}</Link>
                       <div className="mt-2 flex items-baseline gap-1.5 flex-wrap">
                         <span className="text-base font-black md:text-xl">{activePrice} AZN</span>

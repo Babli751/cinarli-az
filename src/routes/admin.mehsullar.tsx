@@ -30,7 +30,8 @@ function ProductsAdmin() {
   useEffect(() => { load(); }, []);
 
   const filtered = useMemo(() => items.filter((p) => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const q = search.toLowerCase();
+    const matchSearch = p.name.toLowerCase().includes(q) || (p.brand_slug ?? "").toLowerCase().includes(q);
     const matchCat = !filterCat || p.category_slug === filterCat;
     return matchSearch && matchCat;
   }), [items, search, filterCat]);
@@ -169,7 +170,12 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 </td>
                 <td className="px-4 py-3">
                   <div className="font-semibold">{p.name}</div>
-                  {p.discount > 0 && <span className="text-xs text-[var(--brand)] font-medium">-{p.discount}% endirim</span>}
+                  {(() => {
+                    if (p.extra_price != null) return <span className="text-xs text-[var(--brand)] font-medium">-{Math.round((1 - p.extra_price / p.price) * 100)}% endirim</span>;
+                    if (p.sale_price != null) return <span className="text-xs text-[var(--brand)] font-medium">-{Math.round((1 - p.sale_price / p.price) * 100)}% endirim</span>;
+                    if (p.discount > 0) return <span className="text-xs text-[var(--brand)] font-medium">-{p.discount}% endirim</span>;
+                    return null;
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">{cats.find(c => c.slug === p.category_slug)?.name ?? "—"}</td>
                 <td className="px-4 py-3">
@@ -313,7 +319,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     );
                   })}
                   {/* Upload button */}
-                  <label className="flex h-20 w-20 flex-col items-center justify-center cursor-pointer rounded-xl border-2 border-dashed border-border hover:border-[var(--brand)] transition-colors">
+                  <label className="flex h-20 w-20 flex-col items-center justify-center cursor-pointer rounded-xl border-2 border-dashed border-border hover:border-[var(--brand)] transition-colors flex-shrink-0">
                     {uploading
                       ? <span className="text-xs text-muted-foreground">...</span>
                       : <><ImageIcon className="h-5 w-5 text-muted-foreground mb-1" /><span className="text-xs text-muted-foreground">Əlavə et</span></>
@@ -334,12 +340,14 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Kredit müddəti (ay)">
                     <select className={inp} value={editing.credit_months ?? 12} onChange={(e) => setEditing({ ...editing, credit_months: Number(e.target.value) })}>
+                      <option value={0}>❌ Kredit yoxdur</option>
                       <option value={3}>3 ay</option>
                       <option value={6}>6 ay</option>
                       <option value={9}>9 ay</option>
                       <option value={12}>12 ay</option>
                       <option value={15}>15 ay</option>
                       <option value={18}>18 ay</option>
+                      <option value={24}>24 ay</option>
                     </select>
                   </Field>
                   <Field label="Növ">
@@ -356,6 +364,23 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                       placeholder="Məs: 2.5" />
                   </Field>
                 )}
+              </div>
+
+              {/* Komissiyasız badge */}
+              <div className="rounded-xl border border-border p-4 space-y-3">
+                <div className="text-sm font-semibold">Komissiyasız badge</div>
+                <Field label="Komissiyasız müddət (məhsul səhifəsində göstərilir)">
+                  <select className={inp} value={editing.commission_free_months ?? 0}
+                    onChange={(e) => setEditing({ ...editing, commission_free_months: Number(e.target.value) })}>
+                    <option value={0}>Göstərmə</option>
+                    <option value={3}>3 aya komissiyasız</option>
+                    <option value={6}>6 aya komissiyasız</option>
+                    <option value={9}>9 aya komissiyasız</option>
+                    <option value={12}>12 aya komissiyasız</option>
+                    <option value={18}>18 aya komissiyasız</option>
+                    <option value={24}>24 aya komissiyasız</option>
+                  </select>
+                </Field>
               </div>
 
               {/* İdeal Kredit */}
@@ -414,8 +439,11 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dəst tərkibi (opsional)</p>
                   <button type="button" onClick={() => {
-                    const comps: {name: string; price: number}[] = JSON.parse(editing.components || "[]");
-                    setEditing({ ...editing, components: JSON.stringify([...comps, { name: "", price: 0 }]) });
+                    setEditing(prev => {
+                      if (!prev) return prev;
+                      const comps: {name: string; price: number}[] = JSON.parse(prev.components || "[]");
+                      return { ...prev, components: JSON.stringify([...comps, { name: "", price: 0 }]) };
+                    });
                   }} className="rounded-lg bg-[var(--brand)] px-3 py-1 text-xs font-semibold text-[var(--brand-foreground)]">+ Əlavə et</button>
                 </div>
                 {(() => {
@@ -425,48 +453,74 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     <div key={idx} className="flex gap-2 items-center">
                       <input className="flex-1 min-w-0 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors" value={comp.name} placeholder="Hissə adı (Vitrin, Kamod...)"
                         onChange={(e) => {
-                          const c = [...comps]; c[idx] = { ...c[idx], name: e.target.value };
-                          setEditing({ ...editing, components: JSON.stringify(c) });
+                          const val = e.target.value;
+                          setEditing(prev => {
+                            if (!prev) return prev;
+                            const c: {name: string; price: number}[] = JSON.parse(prev.components || "[]");
+                            c[idx] = { ...c[idx], name: val };
+                            return { ...prev, components: JSON.stringify(c) };
+                          });
                         }} />
-                      <input type="number" min="0" step="0.01" className="w-24 flex-shrink-0 rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors" value={comp.price || ""} placeholder="AZN"
-                        onChange={(e) => {
-                          const c = [...comps]; c[idx] = { ...c[idx], price: Number(e.target.value) };
-                          setEditing({ ...editing, components: JSON.stringify(c) });
-                        }} />
+                      <div className="relative flex-shrink-0">
+                        <input type="number" min="0" step="0.01" className="w-28 rounded-xl border border-border bg-background pl-3 pr-10 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors" value={comp.price || ""} placeholder="0"
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            setEditing(prev => {
+                              if (!prev) return prev;
+                              const c: {name: string; price: number}[] = JSON.parse(prev.components || "[]");
+                              c[idx] = { ...c[idx], price: val };
+                              return { ...prev, components: JSON.stringify(c) };
+                            });
+                          }} />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground pointer-events-none">AZN</span>
+                      </div>
                       <button type="button" onClick={() => {
-                        const c = comps.filter((_, i) => i !== idx);
-                        setEditing({ ...editing, components: JSON.stringify(c) });
+                        setEditing(prev => {
+                          if (!prev) return prev;
+                          const c: {name: string; price: number}[] = JSON.parse(prev.components || "[]");
+                          return { ...prev, components: JSON.stringify(c.filter((_, i) => i !== idx)) };
+                        });
                       }} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">✕</button>
                     </div>
                   ));
                 })()}
               </div>
 
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-border px-4 py-3 hover:bg-secondary/30 transition-colors">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}
-                  className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${editing.is_active ? "bg-[var(--brand)]" : "bg-secondary"}`}>
+                  className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${editing.is_active ? "bg-green-500" : "bg-secondary"}`}>
                   <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${editing.is_active ? "translate-x-5" : "translate-x-0.5"}`} />
                 </div>
-                <span className="text-sm font-medium">Aktiv (saytda görünsün)</span>
+                <div>
+                  <div className={`text-sm font-semibold ${editing.is_active ? "text-green-600" : "text-muted-foreground"}`}>
+                    {editing.is_active ? "✓ Aktiv" : "Passiv"} — saytda görünsün
+                  </div>
+                </div>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer">
+              <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-border px-4 py-3 hover:bg-secondary/30 transition-colors">
                 <div onClick={() => setEditing({ ...editing, in_stock: editing.in_stock === 1 ? null : 1 })}
                   className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${editing.in_stock === 1 ? "bg-green-500" : "bg-secondary"}`}>
                   <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${editing.in_stock === 1 ? "translate-x-5" : "translate-x-0.5"}`} />
                 </div>
                 <div>
-                  <div className="text-sm font-medium">Stokda var (məcburi)</div>
+                  <div className={`text-sm font-semibold ${editing.in_stock === 1 ? "text-green-600" : "text-muted-foreground"}`}>
+                    {editing.in_stock === 1 ? "✓ Stokda var (məcburi)" : "Stokda var (məcburi) — söndülü"}
+                  </div>
                   <div className="text-xs text-muted-foreground">Stok sayı 0 olsa belə "Stokda var" görsənsin</div>
                 </div>
               </label>
-            </div>
+
               {/* Specifications */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Texniki xüsusiyyətlər</p>
                   <button type="button" onClick={() => {
-                    const specs: {group: string; label: string; value: string}[] = JSON.parse(editing.specifications || "[]");
-                    setEditing({ ...editing, specifications: JSON.stringify([...specs, { group: "Ümumi", label: "", value: "" }]) });
+                    setEditing(prev => {
+                      if (!prev) return prev;
+                      let specs: {group: string; label: string; value: string}[] = [];
+                      try { specs = JSON.parse(prev.specifications || "[]"); } catch {}
+                      return { ...prev, specifications: JSON.stringify([...specs, { group: "Ümumi", label: "", value: "" }]) };
+                    });
                   }} className="rounded-lg border border-border px-2 py-1 text-xs font-semibold hover:bg-secondary">+ Əlavə et</button>
                 </div>
                 {(() => {
@@ -474,9 +528,14 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                   try { specs = JSON.parse(editing.specifications || "[]"); } catch {}
                   return specs.map((s, i) => {
                     const update = (key: string, val: string) => {
-                      const c = [...specs];
-                      c[i] = { ...c[i], [key]: val };
-                      setEditing({ ...editing, specifications: JSON.stringify(c) });
+                      setEditing(prev => {
+                        if (!prev) return prev;
+                        let c: {group: string; label: string; value: string}[] = [];
+                        try { c = JSON.parse(prev.specifications || "[]"); } catch {}
+                        c = [...c];
+                        c[i] = { ...c[i], [key]: val };
+                        return { ...prev, specifications: JSON.stringify(c) };
+                      });
                     };
                     return (
                       <div key={i} className="flex gap-2 items-center">
@@ -487,14 +546,70 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                         <input value={s.value} onChange={e => update("value", e.target.value)} placeholder="Dəyər"
                           className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-xs outline-none focus:border-[var(--brand)]" />
                         <button type="button" onClick={() => {
-                          const c = specs.filter((_, j) => j !== i);
-                          setEditing({ ...editing, specifications: JSON.stringify(c) });
+                          setEditing(prev => {
+                            if (!prev) return prev;
+                            let c: {group: string; label: string; value: string}[] = [];
+                            try { c = JSON.parse(prev.specifications || "[]"); } catch {}
+                            return { ...prev, specifications: JSON.stringify(c.filter((_, j) => j !== i)) };
+                          });
                         }} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10">✕</button>
                       </div>
                     );
                   });
                 })()}
               </div>
+
+              {/* Colors */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Rəng variantları</p>
+                  <button type="button" onClick={() => {
+                    setEditing(prev => {
+                      if (!prev) return prev;
+                      const c: {name: string; hex: string}[] = JSON.parse(prev.colors || "[]");
+                      return { ...prev, colors: JSON.stringify([...c, { name: "", hex: "#14b8a6" }]) };
+                    });
+                  }} className="rounded-lg border border-border px-2 py-1 text-xs font-semibold hover:bg-secondary">+ Rəng əlavə et</button>
+                </div>
+                {(() => {
+                  const cols: {name: string; hex: string}[] = JSON.parse(editing.colors || "[]");
+                  if (cols.length === 0) return <p className="text-xs text-muted-foreground">Rəng yoxdur.</p>;
+                  return cols.map((col, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input type="color" value={col.hex}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setEditing(prev => {
+                            if (!prev) return prev;
+                            const c: {name: string; hex: string}[] = JSON.parse(prev.colors || "[]");
+                            c[i] = { ...c[i], hex: val };
+                            return { ...prev, colors: JSON.stringify(c) };
+                          });
+                        }}
+                        className="h-10 w-12 cursor-pointer rounded-lg border border-border p-0.5" />
+                      <input value={col.name} placeholder="Rəng adı (Qri, Krem, Ceviz...)"
+                        onChange={e => {
+                          const val = e.target.value;
+                          setEditing(prev => {
+                            if (!prev) return prev;
+                            const c: {name: string; hex: string}[] = JSON.parse(prev.colors || "[]");
+                            c[i] = { ...c[i], name: val };
+                            return { ...prev, colors: JSON.stringify(c) };
+                          });
+                        }}
+                        className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[var(--brand)]" />
+                      <button type="button" onClick={() => {
+                        setEditing(prev => {
+                          if (!prev) return prev;
+                          const c: {name: string; hex: string}[] = JSON.parse(prev.colors || "[]");
+                          return { ...prev, colors: JSON.stringify(c.filter((_, j) => j !== i)) };
+                        });
+                      }} className="rounded-lg p-1.5 text-destructive hover:bg-destructive/10">✕</button>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
 
             <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
               <button onClick={() => setEditing(null)} className="rounded-xl border border-border px-5 py-2.5 font-medium hover:bg-secondary transition-colors">Ləğv et</button>

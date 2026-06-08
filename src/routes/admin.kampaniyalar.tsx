@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { api, getImageUrl, type Campaign } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, ImageIcon, Calendar } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Calendar } from "lucide-react";
+import { ImageCropUploader } from "@/components/ImageCropUploader";
 
 export const Route = createFileRoute("/admin/kampaniyalar")({
   component: CampaignsAdmin,
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/admin/kampaniyalar")({
 function CampaignsAdmin() {
   const [items, setItems] = useState<Campaign[]>([]);
   const [editing, setEditing] = useState<Partial<Campaign> | null>(null);
-  const [uploading, setUploading] = useState(false);
+
 
   const load = async () => {
     api.getCampaigns().then(setItems).catch(() => {});
@@ -53,20 +54,6 @@ function CampaignsAdmin() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const url = await api.uploadFile(file);
-      setEditing((prev) => prev ? { ...prev, image: url } : prev);
-      toast.success("Şəkil yükləndi");
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const isExpired = (c: Campaign) => c.end_date ? new Date(c.end_date) < new Date() : false;
 
@@ -151,19 +138,16 @@ function CampaignsAdmin() {
                   <input type="date" className={inp} value={editing.end_date ?? ""} onChange={(e) => setEditing({ ...editing, end_date: e.target.value || undefined })} />
                 </Field>
               </div>
-              <Field label="Şəkil URL">
-                <input className={inp} value={editing.image ?? ""} onChange={(e) => setEditing({ ...editing, image: e.target.value })} placeholder="https://..." />
+              <Field label="Link (klik olunanda keçid)">
+                <input className={inp} value={editing.link ?? ""} onChange={(e) => setEditing({ ...editing, link: e.target.value })} placeholder="Məs: /kateqoriya/paltaryuyanlar" />
               </Field>
-              <Field label="və ya şəkil yüklə">
-                <label className="flex items-center gap-2 cursor-pointer rounded-xl border-2 border-dashed border-border px-4 py-3 hover:border-[var(--brand)] transition-colors">
-                  <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">{uploading ? "Yüklənir..." : "Fayl seç"}</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
-                </label>
+              <Field label="Şəkil">
+                <ImageCropUploader
+                  ratio={16 / 9}
+                  value={getImageUrl(editing.image ?? "") ?? ""}
+                  onChange={(url) => setEditing({ ...editing, image: url })}
+                />
               </Field>
-              {getImageUrl(editing.image) && (
-                <img src={getImageUrl(editing.image)!} alt="" className="h-32 w-full rounded-xl object-cover border border-border" />
-              )}
               <label className="flex items-center gap-3 cursor-pointer">
                 <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}
                   className={`relative h-6 w-11 rounded-full transition-colors ${editing.is_active ? "bg-[var(--brand)]" : "bg-secondary"}`}>

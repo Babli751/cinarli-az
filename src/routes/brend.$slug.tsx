@@ -46,7 +46,7 @@ function BrandPage() {
 
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">Çınarlı</Link>
+          <Link to="/" className="hover:text-foreground">Manqo</Link>
           <ChevronRight className="h-3 w-3" />
           {selectedCat ? (
             <>
@@ -119,7 +119,7 @@ function BrandPage() {
                     })();
                     const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
                     const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
-                    const months = p.credit_months || 24;
+                    const months = p.credit_months || 12;
                     return (
                       <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
                         {discountPct > 0 && (

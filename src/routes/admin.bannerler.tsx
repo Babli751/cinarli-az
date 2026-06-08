@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { api, getImageUrl, type Banner } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Trash2, ImageIcon, ChevronUp, ChevronDown } from "lucide-react";
+import { Plus, Trash2, ImageIcon, ChevronUp, ChevronDown, X } from "lucide-react";
+import { ImageCropUploader } from "@/components/ImageCropUploader";
 
 export const Route = createFileRoute("/admin/bannerler")({
   component: BannersAdmin,
@@ -10,7 +11,8 @@ export const Route = createFileRoute("/admin/bannerler")({
 
 function BannersAdmin() {
   const [items, setItems] = useState<Banner[]>([]);
-  const [uploading, setUploading] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState("");
 
   const load = () => api.getBannersAll().then(setItems).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -38,17 +40,19 @@ function BannersAdmin() {
     load();
   };
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
+  const handleCropDone = async (url: string) => {
+    setPendingUrl(url);
+  };
+
+  const confirmAdd = async () => {
+    if (!pendingUrl) return;
     try {
-      const url = await api.uploadFile(file);
-      await api.createBanner({ image: url });
+      await api.createBanner({ image: pendingUrl });
       toast.success("Banner əlavə edildi");
+      setAdding(false);
+      setPendingUrl("");
       load();
     } catch (err: any) { toast.error(err.message); }
-    finally { setUploading(false); e.target.value = ""; }
   };
 
   return (
@@ -58,18 +62,39 @@ function BannersAdmin() {
           <h1 className="text-2xl font-black md:text-3xl">Bannerlər</h1>
           <p className="text-muted-foreground">{items.length} banner · Ana səhifədə dönən göstərilir</p>
         </div>
-        <label className={`flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 text-sm ${uploading ? "opacity-60 pointer-events-none" : ""}`}>
-          {uploading ? "Yüklənir..." : <><Plus className="h-4 w-4" /> Şəkil əlavə et</>}
-          <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
-        </label>
+        <button onClick={() => { setAdding(true); setPendingUrl(""); }}
+          className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-4 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 text-sm">
+          <Plus className="h-4 w-4" /> Şəkil əlavə et
+        </button>
       </div>
 
+      {adding && (
+        <div className="mt-6 rounded-2xl border border-border bg-background p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="font-semibold">Yeni banner</p>
+            <button onClick={() => { setAdding(false); setPendingUrl(""); }} className="rounded-lg p-1.5 hover:bg-secondary"><X className="h-4 w-4" /></button>
+          </div>
+          <ImageCropUploader
+            ratio={16 / 9}
+            value={pendingUrl}
+            onChange={handleCropDone}
+            label="Banner şəkli yüklə (tövsiyə: 1200×675 px)"
+          />
+          {pendingUrl && (
+            <button onClick={confirmAdd}
+              className="w-full rounded-xl bg-[var(--brand)] px-4 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 text-sm">
+              Banneri əlavə et
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="mt-6 space-y-3">
-        {items.length === 0 && (
+        {items.length === 0 && !adding && (
           <div className="rounded-2xl border border-dashed border-border py-16 text-center text-muted-foreground">
             <ImageIcon className="mx-auto mb-3 h-10 w-10 opacity-30" />
             <p>Hələ banner yoxdur. Şəkil yükləyin.</p>
-            <p className="mt-1 text-xs">Tövsiyə: 1200×400 px, geniş format</p>
+            <p className="mt-1 text-xs">Tövsiyə: 1200×675 px, 16:9 format</p>
           </div>
         )}
         {items.map((b, idx) => {

@@ -4,7 +4,7 @@ import { PageShell } from "@/components/SiteLayout";
 import { api, getImageUrl, type Product } from "@/lib/api";
 
 export const Route = createFileRoute("/outlet")({
-  head: () => ({ meta: [{ title: "Outlet — Çınarlı" }, { name: "description", content: "Anbar boşaltma və outlet məhsulları." }] }),
+  head: () => ({ meta: [{ title: "Outlet — Manqo" }, { name: "description", content: "Anbar boşaltma və outlet məhsulları." }] }),
   component: OutletPage,
 });
 

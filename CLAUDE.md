@@ -8,7 +8,7 @@ Azerbaycanca online mebel mağazası. TanStack Router SPA + Hono REST API + SQLi
 - **Backend**: Hono (Node.js) + better-sqlite3 + JWT auth
 - **Build**: Vite (plain, Lovable/Cloudflare-siz)
 - **Deploy**: DigitalOcean VPS (167.172.191.202)
-- **Domain**: https://chinarli.store (SSL — Let's Encrypt, avtomatik yenilənir)
+- **Domain**: https://manqo.az (SSL — Let's Encrypt, avtomatik yenilənir)
 
 ---
 
@@ -63,7 +63,7 @@ npm run server
 - **Server IP**: 167.172.191.202
 - **SSH şifrəsi**: Fab1@n2027Yk8nQ
 - **SSH**: `sshpass -p 'Fab1@n2027Yk8nQ' ssh -o StrictHostKeyChecking=no -o PubkeyAuthentication=no root@167.172.191.202`
-- **Domain**: https://chinarli.store
+- **Domain**: https://manqo.az
 - **Frontend fayl yeri**: `/var/www/cinarli-frontend/`
 - **API fayl yeri**: `/var/www/cinarli-api/`
 - **Server DB yeri**: `/var/www/cinarli-api/data.sqlite` — TOXUNMA
@@ -74,7 +74,7 @@ npm run server
 ## Digər proyektlər eyni serverdə var — port 80-a toxunma!
 
 ## Admin Panel
-- **URL**: https://chinarli.store/admin
+- **URL**: https://manqo.az/admin
 - **Email**: admin@cinarli.az
 - **Şifrə**: Admin1234!
 
@@ -83,7 +83,7 @@ npm run server
 - `POST /api/auth/register` — qeydiyyat
 - `GET /api/auth/me` — cari istifadəçi (Bearer token)
 - `PUT /api/auth/profile` — profil/şifrə yenilə (auth)
-- `GET/POST/PUT/DELETE /api/categories`
+- `GET/POST/PUT/DELETE /api/categories` — `featured_product_id` sütunu var (banner üçün)
 - `GET/POST/PUT/DELETE /api/products`
 - `GET /api/products/featured` — həftənin teklifi (+ _until, _discount, _note)
 - `GET /api/products/popular` — populyar məhsullar
@@ -98,10 +98,12 @@ npm run server
 - `GET/POST/PUT/DELETE /api/me/addresses` — ünvanlar (auth)
 - `GET /api/users`, `PUT /api/users/:id/role`
 - `GET /api/stats` — dashboard statistikası
-- `POST /api/upload` — şəkil yükləmə (multipart/form-data)
+- `POST /api/upload` — şəkil yükləmə (multipart/form-data, max 20MB, bütün formatlar)
 - `GET/POST/PUT/DELETE /api/stores` — mağazalar
 - `GET /api/featured-settings` — həftənin teklifi parametrləri (admin)
 - `PUT /api/featured-settings` — həftənin teklifini yenilə (admin)
+- `GET /api/credit-companies/active` — aktiv kredit şirkətləri (public)
+- `GET/POST/PUT/DELETE /api/credit-companies` — kredit şirkətləri CRUD (admin)
 
 ## Fayl Strukturu
 ```
@@ -111,52 +113,67 @@ server/
   uploads/     — yüklənmiş şəkillər (serverə göndərilmir)
 
 src/
-  lib/api.ts       — frontend API client + bütün tiplər
+  lib/api.ts       — frontend API client + bütün tiplər (CreditCompany, CreditPlan interfeysləri var)
   hooks/useAuth.ts — auth hook (JWT, localStorage) — setUser export edir
+  hooks/useCart.ts — cart hook (CartItem: id,name,price,image,qty,credit_months)
+  components/
+    AdminLayout.tsx  — Admin sidebar nav (CreditCard ikonu ilə "Kredit şirkətləri" linki var)
+    CategoryIcon.tsx — SVG ikonları slug-a görə seçir
+    SpinWheel.tsx    — Şans çarxı komponenti (localStorage ilə)
   routes/
     __root.tsx                  — SPA root (SSR yoxdur)
-    index.tsx                   — Ana səhifə (hero, featured, carousel)
+    index.tsx                   — Ana səhifə (hero, featured, carousel, brand_slug göstərilir)
     admin.tsx                   — Admin layout wrapper (Outlet)
-    admin.index.tsx             — Dashboard
-    admin.mehsullar.tsx         — Məhsullar (populyar/çox satılan toggle var)
-    admin.kateqoriyalar.tsx     — Kateqoriyalar (ana + alt, auto-slug, auto-icon)
+    admin.index.tsx             — Dashboard (AZ visitor stats, hourly chart)
+    admin.mehsullar.tsx         — Məhsullar (components functional update ilə, colors editor, specs editor)
+    admin.kateqoriyalar.tsx     — Kateqoriyalar (featured_product_id banner seçimi var)
     admin.kampaniyalar.tsx      — Kampaniyalar
-    admin.heftenin-teklifi.tsx  — Həftənin teklifi (məhsul seç, deadline, endirim)
+    admin.heftenin-teklifi.tsx  — Həftənin teklifi
     admin.sifarisler.tsx        — Sifarişlər
     admin.magazalar.tsx         — Mağazalar CRUD
+    admin.brendler.tsx          — Brendlər CRUD
+    admin.bannerler.tsx         — Bannerlər CRUD
+    admin.kreditler.tsx         — Kredit şirkətləri CRUD (plans JSON: [{months,rate,label}])
     admin.istifadeciler.tsx     — İstifadəçilər
-    kabinet.tsx                 — Şəxsi kabinet (5 tab: profil/sifarişlər/bəyəndiklərim/müqayisə/ünvanlar)
-    magazalar.tsx               — Mağazalar siyahısı (DB-dən)
+    kabinet.tsx                 — Şəxsi kabinet
+    magazalar.tsx               — Mağazalar siyahısı
     kampaniyalar.tsx            — Kampaniyalar səhifəsi
-    kateqoriya.$slug.tsx        — Kateqoriya səhifəsi
-    mehsul.$slug.tsx            — Məhsul səhifəsi (slug = product ID)
-    privacy.tsx                 — Məxfilik siyasəti
-    terms.tsx                   — İstifadə qaydaları
-    korporativ.tsx              — Korporativ satışlar
-    elaqe.tsx                   — Əlaqə
-    haqqimizda.tsx              — Haqqımızda
+    kateqoriya.$slug.tsx        — Kateqoriya səhifəsi (top-level=subcat grid+ikonlar, banner, subfilter chips)
+    mehsul.$slug.tsx            — Məhsul səhifəsi (InlineCredit, CreditModal DB-dən, ColorSwatches, ProductTabs)
+    mehsullar.$filter.tsx       — Filter catalog (popular/new/bestseller/discount)
+    privacy.tsx / terms.tsx / korporativ.tsx / elaqe.tsx / haqqimizda.tsx
 ```
 
 ## DB Cədvəlləri
 - `users` — istifadəçilər
-- `categories` — kateqoriyalar (parent_id ilə hierarxiya)
-- `products` — məhsullar (is_featured, most_sold, is_popular sütunları var)
+- `categories` — kateqoriyalar (parent_id hierarxiya, featured_product_id banner üçün)
+- `products` — məhsullar (sale_price, extra_price, components JSON, specifications JSON, colors JSON, in_stock override)
 - `campaigns` — kampaniyalar
 - `orders` — sifarişlər (user_id sütunu var)
 - `stores` — mağazalar
-- `featured_settings` — həftənin teklifi parametrləri (product_id, until, discount, note)
+- `brands` — brendlər (logo, slug)
+- `banners` — bannerlər (image, position, is_active)
+- `featured_settings` — həftənin teklifi (product_id, until, discount, note)
 - `wishlists` — bəyəndiklərim (user_id + product_id, UNIQUE)
 - `compares` — müqayisə (user_id + product_id, max 4)
 - `user_addresses` — istifadəçi ünvanları (is_default dəstəklənir)
+- `visitor_logs` — ziyarətçi loqları (path, user_agent, hour, country_code)
+- `credit_companies` — kredit şirkətləri (name, logo, plans JSON, is_active, position)
 
 ## Vacib Qeydlər
 - Məhsul URL-i ID əsaslıdır: `/mehsul/42` (slug = id)
 - Admin panel TanStack Router layout pattern: `admin.tsx` = layout + `<Outlet />`, `admin.index.tsx` = dashboard
 - JWT secret: `cinarli_secret_2024`
 - Node v20 serverdə — `--experimental-strip-types` işləmir, `npx tsx` istifadə et
-- `.env.production` içində `VITE_API_URL=https://chinarli.store` (nginx `/api/` proxy edir → localhost:3001)
+- `.env.production` içində `VITE_API_URL=https://manqo.az` (nginx `/api/` proxy edir → localhost:3001)
 - SSH key ilə giriş olmur — sshpass + şifrə istifadə et, `-o PubkeyAuthentication=no` flag mütləqdir
 - nginx reload lazım olsa: `systemctl reload nginx`
+- nginx `client_max_body_size 20M` konfiqurə edilib (PNG upload üçün)
+- Rəng sistemi: `oklch()` → `hex` çevrildi (köhnə Chrome dəstəyi üçün), `₼` → `AZN`
+- SSH push üçün: `ssh-add ~/.ssh/id_ed25519_babli751` + remote `git@github-babli:Babli751/cinarli-az.git`
+- `components` sahəsi admin formada functional `setEditing(prev=>...)` pattern istifadə edir (stale closure bug fix)
+- Kredit şirkətləri admin-dən əlavə edilir, `CreditModal` DB-dən oxuyur (hardcode `BANKS` yoxdur)
+- Qiymət priority: `extra_price → sale_price → old_price > price → discount → price`
 
 ## DB Admin User Seed
 `server/db.ts` ilk işə salındığında `admin@cinarli.az` / `Admin1234!` yaradır (users cədvəli boşdursa).

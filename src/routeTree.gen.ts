@@ -25,6 +25,7 @@ import { Route as ElaqeRouteImport } from './routes/elaqe'
 import { Route as CatdirilmaRouteImport } from './routes/catdirilma'
 import { Route as BeyendimRouteImport } from './routes/beyendim'
 import { Route as AylikOdenisRouteImport } from './routes/aylik-odenis'
+import { Route as AxtarRouteImport } from './routes/axtar'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -34,8 +35,10 @@ import { Route as MehsulSlugRouteImport } from './routes/mehsul.$slug'
 import { Route as KateqoriyaSlugRouteImport } from './routes/kateqoriya.$slug'
 import { Route as BrendSlugRouteImport } from './routes/brend.$slug'
 import { Route as AdminSifarislerRouteImport } from './routes/admin.sifarisler'
+import { Route as AdminPromokodlarRouteImport } from './routes/admin.promokodlar'
 import { Route as AdminMehsullarRouteImport } from './routes/admin.mehsullar'
 import { Route as AdminMagazalarRouteImport } from './routes/admin.magazalar'
+import { Route as AdminKreditlerRouteImport } from './routes/admin.kreditler'
 import { Route as AdminKateqoriyalarRouteImport } from './routes/admin.kateqoriyalar'
 import { Route as AdminKampaniyalarRouteImport } from './routes/admin.kampaniyalar'
 import { Route as AdminIstifadecilerRouteImport } from './routes/admin.istifadeciler'
@@ -123,6 +126,11 @@ const AylikOdenisRoute = AylikOdenisRouteImport.update({
   path: '/aylik-odenis',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AxtarRoute = AxtarRouteImport.update({
+  id: '/axtar',
+  path: '/axtar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -168,6 +176,11 @@ const AdminSifarislerRoute = AdminSifarislerRouteImport.update({
   path: '/sifarisler',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPromokodlarRoute = AdminPromokodlarRouteImport.update({
+  id: '/promokodlar',
+  path: '/promokodlar',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMehsullarRoute = AdminMehsullarRouteImport.update({
   id: '/mehsullar',
   path: '/mehsullar',
@@ -176,6 +189,11 @@ const AdminMehsullarRoute = AdminMehsullarRouteImport.update({
 const AdminMagazalarRoute = AdminMagazalarRouteImport.update({
   id: '/magazalar',
   path: '/magazalar',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminKreditlerRoute = AdminKreditlerRouteImport.update({
+  id: '/kreditler',
+  path: '/kreditler',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminKateqoriyalarRoute = AdminKateqoriyalarRouteImport.update({
@@ -213,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/axtar': typeof AxtarRoute
   '/aylik-odenis': typeof AylikOdenisRoute
   '/beyendim': typeof BeyendimRoute
   '/catdirilma': typeof CatdirilmaRoute
@@ -235,8 +254,10 @@ export interface FileRoutesByFullPath {
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
   '/admin/kampaniyalar': typeof AdminKampaniyalarRoute
   '/admin/kateqoriyalar': typeof AdminKateqoriyalarRoute
+  '/admin/kreditler': typeof AdminKreditlerRoute
   '/admin/magazalar': typeof AdminMagazalarRoute
   '/admin/mehsullar': typeof AdminMehsullarRoute
+  '/admin/promokodlar': typeof AdminPromokodlarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
   '/brend/$slug': typeof BrendSlugRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
@@ -247,6 +268,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/axtar': typeof AxtarRoute
   '/aylik-odenis': typeof AylikOdenisRoute
   '/beyendim': typeof BeyendimRoute
   '/catdirilma': typeof CatdirilmaRoute
@@ -269,8 +291,10 @@ export interface FileRoutesByTo {
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
   '/admin/kampaniyalar': typeof AdminKampaniyalarRoute
   '/admin/kateqoriyalar': typeof AdminKateqoriyalarRoute
+  '/admin/kreditler': typeof AdminKreditlerRoute
   '/admin/magazalar': typeof AdminMagazalarRoute
   '/admin/mehsullar': typeof AdminMehsullarRoute
+  '/admin/promokodlar': typeof AdminPromokodlarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
   '/brend/$slug': typeof BrendSlugRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
@@ -283,6 +307,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
+  '/axtar': typeof AxtarRoute
   '/aylik-odenis': typeof AylikOdenisRoute
   '/beyendim': typeof BeyendimRoute
   '/catdirilma': typeof CatdirilmaRoute
@@ -305,8 +330,10 @@ export interface FileRoutesById {
   '/admin/istifadeciler': typeof AdminIstifadecilerRoute
   '/admin/kampaniyalar': typeof AdminKampaniyalarRoute
   '/admin/kateqoriyalar': typeof AdminKateqoriyalarRoute
+  '/admin/kreditler': typeof AdminKreditlerRoute
   '/admin/magazalar': typeof AdminMagazalarRoute
   '/admin/mehsullar': typeof AdminMehsullarRoute
+  '/admin/promokodlar': typeof AdminPromokodlarRoute
   '/admin/sifarisler': typeof AdminSifarislerRoute
   '/brend/$slug': typeof BrendSlugRoute
   '/kateqoriya/$slug': typeof KateqoriyaSlugRoute
@@ -320,6 +347,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/axtar'
     | '/aylik-odenis'
     | '/beyendim'
     | '/catdirilma'
@@ -342,8 +370,10 @@ export interface FileRouteTypes {
     | '/admin/istifadeciler'
     | '/admin/kampaniyalar'
     | '/admin/kateqoriyalar'
+    | '/admin/kreditler'
     | '/admin/magazalar'
     | '/admin/mehsullar'
+    | '/admin/promokodlar'
     | '/admin/sifarisler'
     | '/brend/$slug'
     | '/kateqoriya/$slug'
@@ -354,6 +384,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/axtar'
     | '/aylik-odenis'
     | '/beyendim'
     | '/catdirilma'
@@ -376,8 +407,10 @@ export interface FileRouteTypes {
     | '/admin/istifadeciler'
     | '/admin/kampaniyalar'
     | '/admin/kateqoriyalar'
+    | '/admin/kreditler'
     | '/admin/magazalar'
     | '/admin/mehsullar'
+    | '/admin/promokodlar'
     | '/admin/sifarisler'
     | '/brend/$slug'
     | '/kateqoriya/$slug'
@@ -389,6 +422,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auth'
+    | '/axtar'
     | '/aylik-odenis'
     | '/beyendim'
     | '/catdirilma'
@@ -411,8 +445,10 @@ export interface FileRouteTypes {
     | '/admin/istifadeciler'
     | '/admin/kampaniyalar'
     | '/admin/kateqoriyalar'
+    | '/admin/kreditler'
     | '/admin/magazalar'
     | '/admin/mehsullar'
+    | '/admin/promokodlar'
     | '/admin/sifarisler'
     | '/brend/$slug'
     | '/kateqoriya/$slug'
@@ -425,6 +461,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
+  AxtarRoute: typeof AxtarRoute
   AylikOdenisRoute: typeof AylikOdenisRoute
   BeyendimRoute: typeof BeyendimRoute
   CatdirilmaRoute: typeof CatdirilmaRoute
@@ -561,6 +598,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AylikOdenisRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/axtar': {
+      id: '/axtar'
+      path: '/axtar'
+      fullPath: '/axtar'
+      preLoaderRoute: typeof AxtarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -624,6 +668,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSifarislerRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/promokodlar': {
+      id: '/admin/promokodlar'
+      path: '/promokodlar'
+      fullPath: '/admin/promokodlar'
+      preLoaderRoute: typeof AdminPromokodlarRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/mehsullar': {
       id: '/admin/mehsullar'
       path: '/mehsullar'
@@ -636,6 +687,13 @@ declare module '@tanstack/react-router' {
       path: '/magazalar'
       fullPath: '/admin/magazalar'
       preLoaderRoute: typeof AdminMagazalarRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/kreditler': {
+      id: '/admin/kreditler'
+      path: '/kreditler'
+      fullPath: '/admin/kreditler'
+      preLoaderRoute: typeof AdminKreditlerRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/kateqoriyalar': {
@@ -690,8 +748,10 @@ interface AdminRouteChildren {
   AdminIstifadecilerRoute: typeof AdminIstifadecilerRoute
   AdminKampaniyalarRoute: typeof AdminKampaniyalarRoute
   AdminKateqoriyalarRoute: typeof AdminKateqoriyalarRoute
+  AdminKreditlerRoute: typeof AdminKreditlerRoute
   AdminMagazalarRoute: typeof AdminMagazalarRoute
   AdminMehsullarRoute: typeof AdminMehsullarRoute
+  AdminPromokodlarRoute: typeof AdminPromokodlarRoute
   AdminSifarislerRoute: typeof AdminSifarislerRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
@@ -703,8 +763,10 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIstifadecilerRoute: AdminIstifadecilerRoute,
   AdminKampaniyalarRoute: AdminKampaniyalarRoute,
   AdminKateqoriyalarRoute: AdminKateqoriyalarRoute,
+  AdminKreditlerRoute: AdminKreditlerRoute,
   AdminMagazalarRoute: AdminMagazalarRoute,
   AdminMehsullarRoute: AdminMehsullarRoute,
+  AdminPromokodlarRoute: AdminPromokodlarRoute,
   AdminSifarislerRoute: AdminSifarislerRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
@@ -715,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
+  AxtarRoute: AxtarRoute,
   AylikOdenisRoute: AylikOdenisRoute,
   BeyendimRoute: BeyendimRoute,
   CatdirilmaRoute: CatdirilmaRoute,
