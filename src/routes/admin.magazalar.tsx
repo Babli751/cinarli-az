@@ -95,6 +95,15 @@ function StoresAdmin() {
               <Field label="İş saatları">
                 <input className={inp} placeholder="10:00 — 22:00" value={editing.hours ?? ""} onChange={(e) => setEditing({ ...editing, hours: e.target.value })} />
               </Field>
+              <Field label="Enlik (lat)">
+                <input className={inp} type="number" step="0.0001" placeholder="məs: 40.4093" value={editing.lat ?? ""} onChange={(e) => setEditing({ ...editing, lat: e.target.value ? Number(e.target.value) : undefined })} />
+              </Field>
+              <Field label="Uzunluq (lng)">
+                <input className={inp} type="number" step="0.0001" placeholder="məs: 49.8671" value={editing.lng ?? ""} onChange={(e) => setEditing({ ...editing, lng: e.target.value ? Number(e.target.value) : undefined })} />
+              </Field>
+              <div className="col-span-2 rounded-xl bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+                💡 Google Maps-dən koordinat: mağazanı sağ klik → "Bu nədir?" → rəqəmləri köçür
+              </div>
             </div>
             <div className="flex justify-end gap-3 border-t border-border px-6 py-4">
               <button onClick={() => setEditing(null)} className="rounded-xl border border-border px-5 py-2.5 font-medium hover:bg-secondary">Ləğv et</button>

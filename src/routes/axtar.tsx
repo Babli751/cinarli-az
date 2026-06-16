@@ -21,7 +21,7 @@ function calcActivePrice(p: Product) {
 function ProductImg({ p }: { p: Product }) {
   const url = getImageUrl(p.image);
   if (!url) return <div className="h-full w-full flex items-center justify-center text-3xl bg-secondary/30">🛋️</div>;
-  return <img src={url} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />;
+  return <img src={url} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />;
 }
 
 function SearchPage() {

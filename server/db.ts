@@ -211,6 +211,10 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS product_reviews (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 )`); } catch {}
 
+try { db.exec("ALTER TABLE credit_companies ADD COLUMN type TEXT DEFAULT 'credit'"); } catch {}
+try { db.exec("ALTER TABLE stores ADD COLUMN lat REAL DEFAULT NULL"); } catch {}
+try { db.exec("ALTER TABLE stores ADD COLUMN lng REAL DEFAULT NULL"); } catch {}
+
 // Seed admin if no users exist
 const userCount = (db.prepare("SELECT COUNT(*) as c FROM users").get() as { c: number }).c;
 if (userCount === 0) {

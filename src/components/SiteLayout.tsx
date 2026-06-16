@@ -118,24 +118,8 @@ export function SiteHeader() {
   return (
     <>
       {/* Announcement bar */}
-      <div className="w-full overflow-hidden bg-[var(--brand)] py-2 text-white">
-        <div className="flex animate-marquee gap-16 whitespace-nowrap text-xs font-semibold sm:text-sm">
-          {[
-            "🔥 24 aya faizsiz kredit",
-            "🚚 Sürətli çatdırılma",
-            "✅ Rəsmi zəmanət",
-            "💳 Birbank · Tamkart ilə hissəli ödəniş",
-            "🎁 Endirimli məhsullar hər gün",
-          ].concat([
-            "🔥 24 aya faizsiz kredit",
-            "🚚 Sürətli çatdırılma",
-            "✅ Rəsmi zəmanət",
-            "💳 Birbank · Tamkart ilə hissəli ödəniş",
-            "🎁 Endirimli məhsullar hər gün",
-          ]).map((t, i) => (
-            <span key={i}>{t}</span>
-          ))}
-        </div>
+      <div className="w-full py-2.5 text-center" style={{background: "linear-gradient(90deg, #1e293b 0%, #0f4c81 50%, #1e293b 100%)"}}>
+        <span className="text-base font-black uppercase tracking-widest text-yellow-400">★ Bizdən Sərfəlisi Yoxdur ★</span>
       </div>
 
       {/* Top bar — desktop only */}

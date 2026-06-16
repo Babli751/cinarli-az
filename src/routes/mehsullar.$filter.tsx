@@ -104,14 +104,22 @@ function ProductCard({ p }: { p: Product }) {
       className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
       {discountPct > 0 && (
         <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
-          <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow">−{discountPct}%</div>
-          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} AZN</div>
+          <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-xs font-bold text-yellow-900 shadow">−{discountPct}%</div>
+          <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-[10px] font-semibold text-yellow-900 shadow">−{savingAmt.toFixed(0)} AZN</div>
         </div>
       )}
-      <div className="aspect-[4/3] overflow-hidden bg-white">
+      <div className="relative aspect-[4/3] overflow-hidden bg-white">
         {url
           ? <img src={url} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />
           : <div className="flex h-full w-full items-center justify-center text-5xl">{p.image || "📦"}</div>}
+        {(p.credit_months == null || p.credit_months > 0) && (
+          <div className="absolute left-2 bottom-2 z-10">
+            <div className="rounded-xl bg-[var(--brand)] text-white text-center px-2 py-1 leading-tight shadow-lg">
+              <div className="text-[11px] font-black">{p.credit_months || 24} AYA</div>
+              <div className="text-[9px] font-bold">FAİZSİZ</div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col p-3">
         
@@ -127,11 +135,8 @@ function ProductCard({ p }: { p: Product }) {
           <span className="text-xl font-black">{activePrice} AZN</span>
           {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} AZN</span>}
         </div>
-        {savingAmt > 0 && (
-          <div className="text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(0)} AZN qənaət</div>
-        )}
-        <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-[var(--brand)]">
-          <Zap className="h-3 w-3" />{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay
+        <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-yellow-500 truncate">
+          <Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay</span>
         </div>
       </div>
     </Link>

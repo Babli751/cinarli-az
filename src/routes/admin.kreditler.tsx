@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Plus, Trash2, X, GripVertical } from "lucide-react";
-import { api, type CreditCompany, type CreditPlan } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2, X, GripVertical, Upload } from "lucide-react";
+import { api, getImageUrl, type CreditCompany, type CreditPlan } from "@/lib/api";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/kreditler")({
@@ -17,6 +17,19 @@ function CreditCompaniesPage() {
   const [companies, setCompanies] = useState<CreditCompany[]>([]);
   const [editing, setEditing] = useState<Partial<CreditCompany> & { plans: CreditPlan[] } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+    setUploading(true);
+    try {
+      const url = await api.uploadFile(file);
+      setEditing(prev => prev ? { ...prev, logo: url } : prev);
+    } catch { toast.error("Yükləmə xətası"); }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = ""; }
+  };
 
   const load = () => api.getCreditCompaniesAll().then(setCompanies).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -74,9 +87,13 @@ function CreditCompaniesPage() {
         )}
         {companies.map(c => {
           const plans = parsePlans(c.plans);
+          const logoUrl = c.logo ? getImageUrl(c.logo) : null;
           return (
             <div key={c.id} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
               <GripVertical className="h-5 w-5 text-muted-foreground/40 flex-shrink-0" />
+              {logoUrl
+                ? <img src={logoUrl} alt={c.name} className="h-12 w-24 flex-shrink-0 rounded-xl border border-border bg-white object-cover" />
+                : <div className="h-12 w-24 flex-shrink-0 rounded-xl border border-dashed border-border bg-secondary flex items-center justify-center text-xs text-muted-foreground">Logo</div>}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="font-bold">{c.name}</span>
@@ -117,6 +134,42 @@ function CreditCompaniesPage() {
               <div>
                 <label className="mb-1.5 block text-sm font-medium">Şirkət adı *</label>
                 <input className={inp} value={editing.name ?? ""} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="məs: Bircard" />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Logo</label>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
+                <div className="flex items-center gap-3">
+                  {editing.logo
+                    ? <img src={getImageUrl(editing.logo) ?? undefined} alt="logo" className="h-12 w-24 object-contain rounded-xl border border-border bg-secondary" />
+                    : <div className="h-12 w-24 rounded-xl border border-dashed border-border bg-secondary flex items-center justify-center text-xs text-muted-foreground">Logo yox</div>}
+                  <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                    className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium hover:bg-secondary disabled:opacity-50">
+                    <Upload className="h-4 w-4" />
+                    {uploading ? "Yüklənir..." : "Şəkil seç"}
+                  </button>
+                  {editing.logo && (
+                    <button type="button" onClick={() => setEditing(prev => prev ? { ...prev, logo: "" } : prev)}
+                      className="rounded-xl border border-destructive/30 p-2 text-destructive hover:bg-destructive/10">
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Tip seçimi */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Növ</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setEditing({ ...editing, type: "credit" })}
+                    className={`flex-1 rounded-xl border-2 py-2.5 text-sm font-semibold transition ${(editing.type ?? "credit") === "credit" ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                    💳 Kredit şirkəti
+                  </button>
+                  <button type="button" onClick={() => setEditing({ ...editing, type: "nisye" })}
+                    className={`flex-1 rounded-xl border-2 py-2.5 text-sm font-semibold transition ${editing.type === "nisye" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-border hover:bg-secondary"}`}>
+                    🤝 Nisyə al
+                  </button>
+                </div>
               </div>
 
               <label className="flex items-center gap-3 cursor-pointer">

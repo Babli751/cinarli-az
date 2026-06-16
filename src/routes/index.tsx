@@ -115,7 +115,7 @@ function Index() {
         </div>
 
         {/* Featured — compact irshad.az style */}
-        <div className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm flex flex-col group/featured">
+        <div className="relative overflow-hidden rounded-2xl bg-card shadow-sm flex flex-col group/featured animate-manqo-border">
           <div className="flex items-center justify-between bg-[var(--accent-orange)] px-4 py-2.5">
             <div className="flex items-center gap-2">
               <span className="text-base">★</span>
@@ -235,7 +235,7 @@ function Index() {
                   return (
                     <div key={b.id} className="w-full flex-shrink-0">
                       {url
-                        ? <div className="w-full aspect-[3/1] sm:aspect-[4/1] overflow-hidden rounded-2xl"><img src={url} alt="" className="w-full h-full object-cover block" /></div>
+                        ? <div className="w-full overflow-hidden rounded-2xl"><img src={url} alt="" className="w-full h-auto block" /></div>
                         : <div className="h-48 bg-secondary rounded-2xl" />}
                     </div>
                   );
@@ -469,16 +469,24 @@ function ProductCard({ p }: { p: Product }) {
       className="group relative flex flex-col overflow-hidden rounded-xl md:rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
       {discountPct > 0 && (
         <div className="absolute right-2 top-2 md:right-3 md:top-3 z-10 flex flex-col items-end gap-1">
-          <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white shadow-md">−{discountPct}%</div>
-          <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[10px] font-semibold text-white shadow-md">−{savingAmt.toFixed(0)} AZN</div>
+          <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-xs font-bold text-yellow-900 shadow-md">−{discountPct}%</div>
+          <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-[10px] font-semibold text-yellow-900 shadow-md">−{savingAmt.toFixed(0)} AZN</div>
         </div>
       )}
       <div className="absolute left-2 top-2 md:left-3 md:top-3 z-10 hidden md:flex flex-col gap-2">
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Heart className="h-4 w-4" /></button>
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
       </div>
-      <div className="aspect-[4/3] overflow-hidden bg-white">
-        <ProductImg p={p} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
+      <div className="relative aspect-[4/3] overflow-hidden bg-white flex items-center justify-center">
+        <ProductImg p={p} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        {(p.credit_months == null || p.credit_months > 0) && (
+          <div className="absolute left-2 bottom-2 z-10">
+            <div className="rounded-xl bg-[var(--brand)] text-white text-center px-2 py-1 leading-tight shadow-lg">
+              <div className="text-[11px] font-black">{p.credit_months || 24} AYA</div>
+              <div className="text-[9px] font-bold">FAİZSİZ</div>
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col p-3 md:p-4">
         
@@ -494,18 +502,13 @@ function ProductCard({ p }: { p: Product }) {
           <span className="text-xl md:text-2xl font-black">{activePrice} AZN</span>
           {originalPrice && <span className="text-xs md:text-sm text-muted-foreground line-through">{originalPrice} AZN</span>}
         </div>
-        {savingAmt > 0 && (
-          <div className="mt-0.5 text-xs font-semibold text-[var(--accent-orange)]">
-            {savingAmt.toFixed(2)} AZN qənaət · -{discountPct}%
-          </div>
-        )}
         {(p.ideal_credit_months ?? 0) > 0 ? (
-          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
-            <Zap className="h-3 w-3" />{p.ideal_credit_months} aya kredit · {Math.ceil(activePrice * (1 + 0.176) / (p.ideal_credit_months || 12))} AZN/ay
+          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-yellow-500 truncate">
+            <Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{p.ideal_credit_months} aya kredit · {Math.ceil(activePrice * (1 + 0.176) / (p.ideal_credit_months || 12))} AZN/ay</span>
           </div>
         ) : months > 0 ? (
-          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
-            <Zap className="h-3 w-3" />{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay
+          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-yellow-500 truncate">
+            <Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay</span>
           </div>
         ) : null}
         {(p.stock > 0 || p.in_stock === 1) && (

@@ -110,7 +110,7 @@ function CategoryPage() {
         </nav>
         <h1 className="mt-2 text-2xl font-bold md:mt-3 md:text-3xl">{cat?.name ?? slug}</h1>
 
-        {/* Cheapest monthly payment banner */}
+        {/* Featured product banner */}
         {(() => {
           if (allProducts.length === 0) return null;
           const slugsInScope = isParent
@@ -118,7 +118,6 @@ function CategoryPage() {
             : [slug];
           const pool = allProducts.filter(p => slugsInScope.includes(p.category_slug ?? ""));
           if (pool.length === 0) return null;
-          // use admin-pinned product if set, else cheapest monthly
           const pinned = cat?.featured_product_id
             ? allProducts.find(p => p.id === cat.featured_product_id)
             : null;
@@ -135,7 +134,38 @@ function CategoryPage() {
               className="mt-3 flex items-center gap-4 rounded-2xl border border-[var(--brand)]/30 bg-gradient-to-r from-[var(--brand)]/5 to-transparent px-4 py-3 hover:border-[var(--brand)]/60 transition-colors">
               {url && <img src={url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-contain bg-white" />}
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">Bu kateqoriyada ən ucuz aylıq ödəniş:</p>
+                <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
+              </div>
+              <div className="flex-shrink-0 text-right">
+                <p className="text-xs text-muted-foreground">ayda cəmi</p>
+                <p className="rounded-xl border-2 border-[var(--brand)] px-3 py-1 text-lg font-black text-[var(--brand)]">{cheapest.monthly.toFixed(2)} AZN</p>
+              </div>
+            </Link>
+          );
+        })()}        {/* Featured product banner */}
+        {(() => {
+          if (allProducts.length === 0) return null;
+          const slugsInScope = isParent
+            ? [slug, ...subCats.map(c => c.slug)]
+            : [slug];
+          const pool = allProducts.filter(p => slugsInScope.includes(p.category_slug ?? ""));
+          if (pool.length === 0) return null;
+          const pinned = cat?.featured_product_id
+            ? allProducts.find(p => p.id === cat.featured_product_id)
+            : null;
+          const calcMonthly = (p: typeof pool[0]) => {
+            const ap = p.extra_price ?? p.sale_price ?? (p.old_price && p.old_price > p.price ? p.price : p.discount > 0 ? Math.round(p.price * (1 - p.discount / 100)) : p.price);
+            return { p, monthly: Math.ceil(ap / (p.credit_months || 12) * 100) / 100 };
+          };
+          const cheapest = pinned
+            ? calcMonthly(pinned)
+            : calcMonthly(pool[Math.floor(Math.random() * pool.length)]);
+          const url = getImageUrl(cheapest.p.image);
+          return (
+            <Link to="/mehsul/$slug" params={{ slug: String(cheapest.p.id) }}
+              className="mt-3 flex items-center gap-4 rounded-2xl border border-[var(--brand)]/30 bg-gradient-to-r from-[var(--brand)]/5 to-transparent px-4 py-3 hover:border-[var(--brand)]/60 transition-colors">
+              {url && <img src={url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-contain bg-white" />}
+              <div className="flex-1 min-w-0">
                 <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
               </div>
               <div className="flex-shrink-0 text-right">
@@ -285,16 +315,24 @@ function CategoryPage() {
                   <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
                     {discountPct > 0 && (
                       <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1 md:right-3 md:top-3">
-                        <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-[10px] font-bold text-white shadow-md md:text-xs">−{discountPct}%</div>
-                        <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow-md md:text-[10px]">−{savingAmt.toFixed(0)} AZN</div>
+                        <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow-md md:text-xs">−{discountPct}%</div>
+                        <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-[9px] font-semibold text-yellow-900 shadow-md md:text-[10px]">−{savingAmt.toFixed(0)} AZN</div>
                       </div>
                     )}
                     <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 md:left-3 md:top-3 md:gap-2">
                       <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Heart className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                       <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)] md:h-8 md:w-8"><Scale className="h-3.5 w-3.5 md:h-4 md:w-4" /></button>
                     </div>
-                    <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-[4/3] overflow-hidden bg-white block">
+                    <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="relative aspect-[4/3] overflow-hidden bg-white block">
                       <ProductImg p={p} />
+                      {(p.credit_months == null || p.credit_months > 0) && (
+                        <div className="absolute left-2 bottom-2 z-10">
+                          <div className="rounded-xl bg-[var(--brand)] text-white text-center px-2 py-1 leading-tight shadow-lg">
+                            <div className="text-[11px] font-black">{p.credit_months || 24} AYA</div>
+                            <div className="text-[9px] font-bold">FAİZSİZ</div>
+                          </div>
+                        </div>
+                      )}
                     </Link>
                     <div className="flex flex-1 flex-col p-3 md:p-4">
                       
@@ -303,10 +341,7 @@ function CategoryPage() {
                         <span className="text-base font-black md:text-xl">{activePrice} AZN</span>
                         {originalPrice && <span className="text-xs text-muted-foreground line-through md:text-sm">{originalPrice} AZN</span>}
                       </div>
-                      {savingAmt > 0 && (
-                        <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} AZN qənaət · -{discountPct}%</div>
-                      )}
-                      <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)] md:text-xs"><Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz" : ""} {months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay</div>
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-yellow-500 md:text-xs truncate"><Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {(Math.ceil(activePrice / months * 100) / 100).toFixed(2)} AZN/ay</span></div>
                       <button className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:mt-3 md:py-2 md:text-sm">
                         Səbətə əlavə et
                       </button>

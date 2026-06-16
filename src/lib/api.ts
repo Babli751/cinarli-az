@@ -13,6 +13,7 @@ export interface CreditCompany {
   plans: CreditPlan[] | string;
   is_active: number;
   position: number;
+  type?: "credit" | "nisye";
 }
 
 export function getImageUrl(image: string | undefined | null): string | null {
@@ -306,6 +307,8 @@ export interface Store {
   address: string;
   phone: string;
   hours: string;
+  lat?: number | null;
+  lng?: number | null;
   created_at?: string;
 }
 

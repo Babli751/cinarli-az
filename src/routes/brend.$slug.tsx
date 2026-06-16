@@ -124,8 +124,8 @@ function BrandPage() {
                       <article key={p.id} className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-xl">
                         {discountPct > 0 && (
                           <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
-                            <div className="rounded-lg bg-[var(--accent-orange)] px-2 py-0.5 text-[10px] font-bold text-white shadow">−{discountPct}%</div>
-                            <div className="rounded-lg bg-[var(--accent-orange)]/90 px-2 py-0.5 text-[9px] font-semibold text-white shadow">−{savingAmt.toFixed(0)} AZN</div>
+                            <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-[10px] font-bold text-yellow-900 shadow">−{discountPct}%</div>
+                            <div className="rounded-lg bg-yellow-400 px-2 py-0.5 text-[9px] font-semibold text-yellow-900 shadow">−{savingAmt.toFixed(0)} AZN</div>
                           </div>
                         )}
                         <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5">
@@ -133,7 +133,7 @@ function BrandPage() {
                           <button className="grid h-7 w-7 place-items-center rounded-full bg-white/90 shadow hover:text-[var(--brand)]"><Scale className="h-3.5 w-3.5" /></button>
                         </div>
                         <Link to="/mehsul/$slug" params={{ slug: String(p.id) }} className="aspect-[4/3] overflow-hidden bg-white block">
-                          {img ? <img src={img} alt={p.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" loading="lazy" />
+                          {img ? <img src={img} alt={p.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
                             : <div className="flex h-full items-center justify-center text-5xl">{p.image || "📦"}</div>}
                         </Link>
                         <div className="flex flex-1 flex-col p-3">
@@ -142,11 +142,8 @@ function BrandPage() {
                             <span className="text-base font-black">{activePrice} AZN</span>
                             {originalPrice && <span className="text-xs text-muted-foreground line-through">{originalPrice} AZN</span>}
                           </div>
-                          {savingAmt > 0 && (
-                            <div className="mt-0.5 text-[10px] font-semibold text-[var(--accent-orange)]">{savingAmt.toFixed(2)} AZN qənaət · -{discountPct}%</div>
-                          )}
-                          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[var(--brand)]">
-                            <Zap className="h-3 w-3" /> {p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} AZN/ay
+                          <div className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-yellow-500 truncate">
+                            <Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} AZN/ay</span>
                           </div>
                           <button onClick={() => addItem({ id: p.id, name: p.name, price: activePrice, image: p.image })}
                             className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90">

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Trash2, Plus, Minus, ShoppingCart, X } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart, X, CreditCard, DoorOpen, Calendar, Handshake } from "lucide-react";
 import { PageShell } from "@/components/SiteLayout";
 import { useCart } from "@/hooks/useCart";
 import { getImageUrl, api } from "@/lib/api";
@@ -25,7 +25,7 @@ function CartPage() {
   const { items, removeItem, updateQty, clearCart, total } = useCart();
   const [orderModal, setOrderModal] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
-  const [paymentType, setPaymentType] = useState<"cash" | "credit">("cash");
+  const [paymentType, setPaymentType] = useState<"card" | "cash" | "credit" | "nisye">("card");
   const [busy, setBusy] = useState(false);
   const [couponCode] = useState(() => localStorage.getItem(COUPON_KEY) ?? "");
   const [couponInput, setCouponInput] = useState("");
@@ -78,7 +78,7 @@ function CartPage() {
         items: JSON.stringify(items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))),
         status: "pending",
         payment_type: paymentType,
-        credit_months: paymentType === "credit" ? avgMonths : undefined,
+        credit_months: paymentType === "credit" || paymentType === "nisye" ? avgMonths : undefined,
         promo_code: promoResult ? promoResult.label : "",
         promo_discount: promoResult ? promoResult.discount : 0,
       });
@@ -115,30 +115,32 @@ function CartPage() {
           {items.map((item) => {
             const url = getImageUrl(item.image);
             return (
-              <div key={item.id} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
-                <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-secondary/30">
-                  {url
-                    ? <img src={url} alt={item.name} className="h-full w-full object-contain" />
-                    : <div className="flex h-full w-full items-center justify-center text-3xl">{item.image || "📦"}</div>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold line-clamp-2 text-sm">{item.name}</p>
-                  <div className="mt-1 font-black text-[var(--brand)]">{item.price} AZN</div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button onClick={() => updateQty(item.id, item.qty - 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary">
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <span className="w-8 text-center font-semibold">{item.qty}</span>
-                  <button onClick={() => updateQty(item.id, item.qty + 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary">
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <div className="flex-shrink-0 text-right">
-                  <div className="font-black">{item.price * item.qty} AZN</div>
-                  <button onClick={() => removeItem(item.id)} className="mt-1 text-destructive hover:opacity-70">
+              <div key={item.id} className="rounded-2xl border border-border bg-card p-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-18 w-18 flex-shrink-0 overflow-hidden rounded-xl bg-secondary/30" style={{width:72,height:72}}>
+                    {url
+                      ? <img src={url} alt={item.name} className="h-full w-full object-contain" />
+                      : <div className="flex h-full w-full items-center justify-center text-3xl">{item.image || "📦"}</div>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold line-clamp-2 text-sm leading-snug">{item.name}</p>
+                    <div className="mt-1 font-black text-[var(--brand)] text-base">{item.price} AZN</div>
+                  </div>
+                  <button onClick={() => removeItem(item.id)} className="flex-shrink-0 text-muted-foreground hover:text-destructive transition-colors p-1">
                     <Trash2 className="h-4 w-4" />
                   </button>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => updateQty(item.id, item.qty - 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary">
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-8 text-center font-semibold">{item.qty}</span>
+                    <button onClick={() => updateQty(item.id, item.qty + 1)} className="grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary">
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <div className="font-black text-base">{item.price * item.qty} AZN</div>
                 </div>
               </div>
             );
@@ -241,12 +243,18 @@ function CartPage() {
                   onChange={e => setForm({ ...form, address: e.target.value })} />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium">Ödəniş növü</label>
+                <label className="mb-1.5 block text-sm font-medium">Ödəniş üsulu</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {(["cash", "credit"] as const).map(t => (
-                    <button key={t} type="button" onClick={() => setPaymentType(t)}
-                      className={`rounded-xl border py-2.5 text-sm font-semibold transition-colors ${paymentType === t ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:bg-secondary"}`}>
-                      {t === "cash" ? "💵 Nağd" : "💳 Kredit"}
+                  {([
+                    { key: "card",   Icon: CreditCard, label: "Kartla ödə" },
+                    { key: "cash",   Icon: DoorOpen,   label: "Qapıda ödə" },
+                    { key: "credit", Icon: Calendar,   label: "Taksitlə alıram" },
+                    { key: "nisye",  Icon: Handshake,  label: "Nisyə alıram" },
+                  ] as const).map(({ key, Icon, label }) => (
+                    <button key={key} type="button" onClick={() => setPaymentType(key)}
+                      className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition-colors ${paymentType === key ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                      <Icon className="h-5 w-5" />
+                      {label}
                     </button>
                   ))}
                 </div>

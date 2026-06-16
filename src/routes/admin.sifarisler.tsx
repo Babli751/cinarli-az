@@ -145,7 +145,14 @@ function OrdersAdmin() {
               <Row k="Müştəri" v={open.customer_name} />
               <Row k="Telefon" v={open.phone} />
               <Row k="Ünvan" v={open.address || "—"} />
-              <Row k="Ödəniş növü" v={(open as any).payment_type === "credit" ? `💳 Kredit${(open as any).credit_months ? ` (${(open as any).credit_months} ay)` : ""}` : "💵 Nağd"} />
+              <Row k="Ödəniş növü" v={(() => {
+                const pt = (open as any).payment_type;
+                const cm = (open as any).credit_months;
+                if (pt === "card") return "💳 Kartla ödə";
+                if (pt === "credit") return `📅 Taksitlə alıram${cm ? ` (${cm} ay)` : ""}`;
+                if (pt === "nisye") return `🤝 Nisyə alıram${cm ? ` (${cm} ay)` : ""}`;
+                return "🚪 Qapıda ödə";
+              })()} />
               {(open as any).promo_code && <Row k="Promokod" v={`${(open as any).promo_code} (−${(open as any).promo_discount} AZN)`} />}
               <Row k="Qeydlər" v={open.notes || "—"} />
               <div className="mt-4">

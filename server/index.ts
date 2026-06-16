@@ -588,8 +588,16 @@ app.post("/api/upload", authMiddleware, adminMiddleware, async (c) => {
         const meta = await img.metadata();
         const w = meta.width || 800;
         const h = meta.height || 600;
+        // zoom 5%: resize to 105% then crop back to original
+        const zoomedW = Math.round(w * 1.05);
+        const zoomedH = Math.round(h * 1.05);
+        const left = Math.round((zoomedW - w) / 2);
+        const top = Math.round((zoomedH - h) / 2);
+        const zoomed = await sharp(filePath)
+          .resize(zoomedW, zoomedH, { fit: "fill" })
+          .extract({ left, top, width: w, height: h })
+          .toBuffer();
         const fontSize = Math.max(16, Math.round(w * 0.045));
-        const padding = Math.round(fontSize * 0.6);
         const text = "manqo.az";
         const svgWatermark = Buffer.from(
           `<svg width="${w}" height="${h}">
@@ -598,7 +606,7 @@ app.post("/api/upload", authMiddleware, adminMiddleware, async (c) => {
           </svg>`
         );
         const tmpPath = filePath + "_wm.jpg";
-        await img.composite([{ input: svgWatermark, blend: "over" }]).toFile(tmpPath);
+        await sharp(zoomed).composite([{ input: svgWatermark, blend: "over" }]).toFile(tmpPath);
         fs.renameSync(tmpPath, filePath);
       } catch (_) {}
       const url = `/uploads/${req.file.filename}`;
@@ -656,16 +664,16 @@ app.get("/api/credit-companies/active", (c) => {
 app.post("/api/credit-companies", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const plans = Array.isArray(b.plans) ? JSON.stringify(b.plans) : "[]";
-  const r = db.prepare("INSERT INTO credit_companies (name, logo, plans, is_active, position) VALUES (?,?,?,?,?)").run(
-    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0
+  const r = db.prepare("INSERT INTO credit_companies (name, logo, plans, is_active, position, type) VALUES (?,?,?,?,?,?)").run(
+    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, b.type || "credit"
   );
   return c.json({ id: r.lastInsertRowid });
 });
 app.put("/api/credit-companies/:id", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const plans = Array.isArray(b.plans) ? JSON.stringify(b.plans) : "[]";
-  db.prepare("UPDATE credit_companies SET name=?,logo=?,plans=?,is_active=?,position=? WHERE id=?").run(
-    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, c.req.param("id")
+  db.prepare("UPDATE credit_companies SET name=?,logo=?,plans=?,is_active=?,position=?,type=? WHERE id=?").run(
+    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, b.type || "credit", c.req.param("id")
   );
   return c.json({ ok: true });
 });
@@ -681,16 +689,16 @@ app.get("/api/stores", (c) => {
 
 app.post("/api/stores", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  const result = db.prepare("INSERT INTO stores (city, name, address, phone, hours) VALUES (?, ?, ?, ?, ?)").run(
-    b.city || "", b.name, b.address || "", b.phone || "*0171", b.hours || "10:00 — 22:00"
+  const result = db.prepare("INSERT INTO stores (city, name, address, phone, hours, lat, lng) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+    b.city || "", b.name, b.address || "", b.phone || "*0171", b.hours || "10:00 — 22:00", b.lat ?? null, b.lng ?? null
   );
   return c.json({ id: result.lastInsertRowid });
 });
 
 app.put("/api/stores/:id", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
-  db.prepare("UPDATE stores SET city=?, name=?, address=?, phone=?, hours=? WHERE id=?").run(
-    b.city || "", b.name, b.address || "", b.phone || "*0171", b.hours || "10:00 — 22:00", c.req.param("id")
+  db.prepare("UPDATE stores SET city=?, name=?, address=?, phone=?, hours=?, lat=?, lng=? WHERE id=?").run(
+    b.city || "", b.name, b.address || "", b.phone || "*0171", b.hours || "10:00 — 22:00", b.lat ?? null, b.lng ?? null, c.req.param("id")
   );
   return c.json({ ok: true });
 });

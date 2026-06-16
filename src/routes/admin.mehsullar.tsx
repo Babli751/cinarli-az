@@ -338,16 +338,17 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               <div className="rounded-xl border border-border p-4 space-y-3">
                 <div className="text-sm font-semibold">Kredit şərtləri</div>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Kredit müddəti (ay)">
-                    <select className={inp} value={editing.credit_months ?? 12} onChange={(e) => setEditing({ ...editing, credit_months: Number(e.target.value) })}>
-                      <option value={0}>❌ Kredit yoxdur</option>
-                      <option value={3}>3 ay</option>
-                      <option value={6}>6 ay</option>
-                      <option value={9}>9 ay</option>
-                      <option value={12}>12 ay</option>
-                      <option value={15}>15 ay</option>
-                      <option value={18}>18 ay</option>
-                      <option value={24}>24 ay</option>
+                  <Field label="Faizsiz kredit limiti (ay)">
+                    <select className={inp} value={editing.credit_months ?? 0} onChange={(e) => setEditing({ ...editing, credit_months: Number(e.target.value) })}>
+                      <option value={0}>— Məhdudiyyət yoxdur (şirkət şərtlərinə görə)</option>
+                      <option value={3}>3 aya kimi faizsiz</option>
+                      <option value={6}>6 aya kimi faizsiz</option>
+                      <option value={9}>9 aya kimi faizsiz</option>
+                      <option value={12}>12 aya kimi faizsiz</option>
+                      <option value={15}>15 aya kimi faizsiz</option>
+                      <option value={18}>18 aya kimi faizsiz</option>
+                      <option value={24}>24 aya kimi faizsiz</option>
+                      <option value={36}>36 aya kimi faizsiz</option>
                     </select>
                   </Field>
                   <Field label="Növ">
@@ -381,57 +382,6 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                     <option value={24}>24 aya komissiyasız</option>
                   </select>
                 </Field>
-              </div>
-
-              {/* İdeal Kredit */}
-              <div className="rounded-xl border border-border p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold">İdeal Kredit</div>
-                  <span className="text-xs text-muted-foreground">Standart B cədvəli</span>
-                </div>
-                <Field label="Kartda göstəriləcək kredit müddəti">
-                  <select className={inp} value={editing.ideal_credit_months ?? 0}
-                    onChange={(e) => setEditing({ ...editing, ideal_credit_months: Number(e.target.value) })}>
-                    <option value={0}>Göstərmə</option>
-                    <option value={3}>3 ay</option>
-                    <option value={6}>6 ay</option>
-                    <option value={9}>9 ay</option>
-                    <option value={12}>12 ay</option>
-                    <option value={15}>15 ay</option>
-                    <option value={18}>18 ay</option>
-                  </select>
-                </Field>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div onClick={() => setEditing({ ...editing, commission_free: editing.commission_free ? 0 : 1 })}
-                    className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${editing.commission_free ? "bg-[var(--brand)]" : "bg-secondary"}`}>
-                    <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${editing.commission_free ? "translate-x-5" : "translate-x-0.5"}`} />
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">Komissiasız kredit</div>
-                    <div className="text-xs text-muted-foreground">Açıqdırsa — komissiya xəbərdarlığı göstərilmir</div>
-                  </div>
-                </label>
-                {editing.ideal_credit_months && editing.ideal_credit_months > 0 && editing.price ? (
-                  (() => {
-                    const IDEAL: Record<number, { deducted: number; added: number }> = {
-                      3: { deducted: 10, added: 11.1 }, 6: { deducted: 15, added: 17.6 },
-                      9: { deducted: 19, added: 23.5 }, 12: { deducted: 24, added: 31.6 },
-                      15: { deducted: 27, added: 37.0 }, 18: { deducted: 31, added: 44.9 },
-                    };
-                    const row = IDEAL[editing.ideal_credit_months!];
-                    if (!row) return null;
-                    const base = editing.sale_price ?? editing.extra_price ?? editing.price!;
-                    const total = Math.ceil(base * (1 + row.added / 100));
-                    const monthly = Math.ceil(total / editing.ideal_credit_months!);
-                    return (
-                      <div className="rounded-lg bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
-                        {editing.ideal_credit_months} ay → aylıq <span className="font-bold text-foreground">{monthly} AZN</span>,
-                        cəmi <span className="font-semibold text-foreground">{total} AZN</span>
-                        {" "}(+{row.added}% = +{(total - base).toFixed(0)} AZN)
-                      </div>
-                    );
-                  })()
-                ) : null}
               </div>
 
               {/* Dəst komponentləri */}
@@ -486,24 +436,26 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 })()}
               </div>
 
-              <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-border px-4 py-3 hover:bg-secondary/30 transition-colors">
-                <div onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}
-                  className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${editing.is_active ? "bg-green-500" : "bg-secondary"}`}>
-                  <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${editing.is_active ? "translate-x-5" : "translate-x-0.5"}`} />
+              <label onClick={() => setEditing({ ...editing, is_active: editing.is_active ? 0 : 1 })}
+                className={`flex items-center gap-3 cursor-pointer rounded-xl border-2 px-4 py-3 transition-all ${editing.is_active ? "border-green-500 bg-green-50" : "border-red-300 bg-red-50"}`}>
+                <div className={`relative h-7 w-13 rounded-full transition-colors flex-shrink-0 ${editing.is_active ? "bg-green-500" : "bg-red-400"}`}
+                  style={{width: 52}}>
+                  <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${editing.is_active ? "translate-x-6" : "translate-x-0.5"}`} />
                 </div>
                 <div>
-                  <div className={`text-sm font-semibold ${editing.is_active ? "text-green-600" : "text-muted-foreground"}`}>
-                    {editing.is_active ? "✓ Aktiv" : "Passiv"} — saytda görünsün
+                  <div className={`text-sm font-bold ${editing.is_active ? "text-green-700" : "text-red-600"}`}>
+                    {editing.is_active ? "✓ Aktiv — saytda görünür" : "✗ Passiv — saytda görünmür"}
                   </div>
                 </div>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer rounded-xl border border-border px-4 py-3 hover:bg-secondary/30 transition-colors">
-                <div onClick={() => setEditing({ ...editing, in_stock: editing.in_stock === 1 ? null : 1 })}
-                  className={`relative h-6 w-11 rounded-full transition-colors flex-shrink-0 ${editing.in_stock === 1 ? "bg-green-500" : "bg-secondary"}`}>
-                  <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${editing.in_stock === 1 ? "translate-x-5" : "translate-x-0.5"}`} />
+              <label onClick={() => setEditing({ ...editing, in_stock: editing.in_stock === 1 ? null : 1 })}
+                className={`flex items-center gap-3 cursor-pointer rounded-xl border-2 px-4 py-3 transition-all ${editing.in_stock === 1 ? "border-green-500 bg-green-50" : "border-border bg-background"}`}>
+                <div className={`relative h-7 rounded-full transition-colors flex-shrink-0 ${editing.in_stock === 1 ? "bg-green-500" : "bg-secondary"}`}
+                  style={{width: 52}}>
+                  <div className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow-md transition-transform ${editing.in_stock === 1 ? "translate-x-6" : "translate-x-0.5"}`} />
                 </div>
                 <div>
-                  <div className={`text-sm font-semibold ${editing.in_stock === 1 ? "text-green-600" : "text-muted-foreground"}`}>
+                  <div className={`text-sm font-bold ${editing.in_stock === 1 ? "text-green-700" : "text-muted-foreground"}`}>
                     {editing.in_stock === 1 ? "✓ Stokda var (məcburi)" : "Stokda var (məcburi) — söndülü"}
                   </div>
                   <div className="text-xs text-muted-foreground">Stok sayı 0 olsa belə "Stokda var" görsənsin</div>

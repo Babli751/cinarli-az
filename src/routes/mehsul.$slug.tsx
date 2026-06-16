@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Heart, Scale, Share2, Truck, ShieldCheck, Store,
   ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
   ChevronLeft, ChevronRight as ChevronRightIcon, X as XIcon, Check,
+  ChevronDown, Plus,
 } from "lucide-react";
-import { api, getImageUrl, type Product, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Category, type CreditCompany } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -15,6 +16,11 @@ export const Route = createFileRoute("/mehsul/$slug")({
   component: ProductPage,
 });
 
+const parsePlans = (raw: import("@/lib/api").CreditPlan[] | string): import("@/lib/api").CreditPlan[] => {
+  if (Array.isArray(raw)) return raw;
+  try { return JSON.parse(raw as string); } catch { return []; }
+};
+
 function ProductPage() {
   const { slug } = Route.useParams();
   const { user, login, register } = useAuth();
@@ -22,7 +28,7 @@ function ProductPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
-  const [creditCompanies, setCreditCompanies] = useState<import("@/lib/api").CreditCompany[]>([]);
+  const [creditCompanies, setCreditCompanies] = useState<CreditCompany[]>([]);
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
@@ -39,6 +45,11 @@ function ProductPage() {
   const [loginModal, setLoginModal] = useState(false);
   const [selectedComps, setSelectedComps] = useState<Set<number>>(new Set());
   const [selectedColor, setSelectedColor] = useState<{name: string; hex: string} | null>(null);
+  const [mobileSheet, setMobileSheet] = useState<"quick" | "credit" | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [avgRatingTop, setAvgRatingTop] = useState(0);
+  const [creditSelectedMonths, setCreditSelectedMonths] = useState(12); // used in mobile sheet
+  const [downPayment, setDownPayment] = useState(0);
   const [loginForm, setLoginForm] = useState({ email: "", password: "" });
   const [loginBusy, setLoginBusy] = useState(false);
   const [loginTab, setLoginTab] = useState<"login" | "register">("login");
@@ -63,7 +74,8 @@ function ProductPage() {
         });
       }
     }).catch(() => {});
-    api.getCreditCompanies().then(setCreditCompanies).catch(() => {});
+    api.getCreditCompanies().then(list => { setCreditCompanies(list); if (list.length > 0) { const p = parsePlans(list[0].plans); setCreditSelectedMonths(p[0]?.months ?? 12); } }).catch(() => {});
+    api.getProductReviews(Number(slug)).then(r => { setReviewCount(r.length); setAvgRatingTop(r.length ? r.reduce((s, x) => s + x.rating, 0) / r.length : 0); }).catch(() => {});
   }, [slug]);
 
   const allImages: string[] = (() => {
@@ -206,7 +218,6 @@ function ProductPage() {
     try { return JSON.parse(product.components || "[]"); } catch { return []; }
   })();
   const selectedCompsTotal = parsedComps.reduce((s, c, i) => s + (selectedComps.has(i) ? c.price : 0), 0);
-  const cartPrice = activePrice + selectedCompsTotal;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -225,35 +236,27 @@ function ProductPage() {
           <span className="text-foreground line-clamp-1">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 gap-4 lg:gap-8 lg:grid-cols-2">
-          {/* Image */}
-          <div className="flex flex-col gap-3">
-            {/* Main image */}
-            <div
-              className="relative overflow-hidden rounded-2xl border border-border bg-secondary/20 aspect-square flex items-center justify-center cursor-zoom-in"
-              onClick={() => currentUrl && setLightbox(true)}
-            >
+        <div className="grid grid-cols-1 gap-6 lg:gap-10 lg:grid-cols-[1fr_420px] lg:items-start">
+
+          {/* ── LEFT: şəkil bloku ── */}
+          <div className="space-y-3">
+            {/* Ana şəkil */}
+            <div className="relative overflow-hidden rounded-2xl border border-border bg-white cursor-zoom-in"
+              onClick={() => currentUrl && setLightbox(true)}>
               {currentUrl
-                ? <img src={currentUrl} alt={product.name} className="h-full w-full object-contain" />
-                : <span className="text-8xl">{product.image || "📦"}</span>}
-              {(() => {
-                const origP = (() => {
-                  if (product.extra_price != null) return product.price;
-                  if (product.sale_price != null) return product.price;
-                  if (product.old_price && product.old_price > product.price) return product.old_price;
-                  if (product.discount > 0) return product.price;
-                  return null as number | null;
-                })();
-                const discountPct = origP ? Math.round((1 - activePrice / origP) * 100) : 0;
-                const savingAmt = origP ? (origP - activePrice) : 0;
-                if (!discountPct) return null;
-                return (
-                  <div className="absolute right-3 top-3 z-10 flex flex-col items-end gap-1.5">
-                    <div className="rounded-xl bg-[var(--accent-orange)] px-3 py-1 text-sm font-bold text-white shadow-lg">−{discountPct}%</div>
-                    <div className="rounded-xl bg-[var(--accent-orange)]/90 px-3 py-1 text-xs font-semibold text-white shadow-lg">−{savingAmt.toFixed(0)} AZN</div>
+                ? <img src={currentUrl} alt={product.name} className="w-full h-auto block" />
+                : <div className="flex h-64 w-full items-center justify-center text-8xl">{product.image || "📦"}</div>}
+              {/* Kredit badge sol üst */}
+              {(product.credit_months == null || product.credit_months > 0) && (
+                <div className="absolute left-3 top-3 z-10">
+                  <div className="flex flex-col items-center justify-center rounded-2xl bg-[var(--brand)] text-white shadow-lg text-center leading-tight px-3 py-2 gap-0.5">
+                    <span className="text-lg font-black leading-none">{product.credit_months || 24} AYA</span>
+                    <span className="text-[11px] font-bold tracking-wide">FAİZSİZ</span>
+                    <span className="text-[10px] opacity-80">BÖLMƏ İMKANI</span>
                   </div>
-                );
-              })()}
+                </div>
+              )}
+              {/* Sol/sağ ox */}
               {allImages.length > 1 && (
                 <>
                   <button onClick={(e) => { e.stopPropagation(); prevImg(); }}
@@ -264,82 +267,142 @@ function ProductPage() {
                     className="absolute right-2 top-1/2 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow hover:bg-white transition">
                     <ChevronRightIcon className="h-5 w-5" />
                   </button>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    {allImages.map((_, i) => (
-                      <button key={i} onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
-                        className={`h-1.5 rounded-full transition-all ${i === imgIdx ? "w-5 bg-white" : "w-1.5 bg-white/60"}`} />
-                    ))}
-                  </div>
                 </>
               )}
             </div>
-            {/* Thumbnails */}
+            {/* Thumbnail strip */}
             {allImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {allImages.map((img, i) => {
-                  const url = getImageUrl(img);
-                  return (
-                    <button key={i} onClick={() => setImgIdx(i)}
-                      className={`flex-shrink-0 h-16 w-16 overflow-hidden rounded-xl border-2 transition-colors ${i === imgIdx ? "border-[var(--brand)]" : "border-border hover:border-muted-foreground"}`}>
-                      {url
-                        ? <img src={url} alt="" className="h-full w-full object-contain" />
-                        : <div className="flex h-full w-full items-center justify-center text-xl">{img || "📦"}</div>}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2">
+                <button onClick={prevImg} className="flex-shrink-0 grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary transition">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <div className="flex flex-1 gap-2 overflow-x-auto pb-0.5 scrollbar-none">
+                  {allImages.map((img, i) => {
+                    const url = getImageUrl(img);
+                    return (
+                      <button key={i} onClick={() => setImgIdx(i)}
+                        className={`flex-shrink-0 h-16 w-16 overflow-hidden rounded-xl border-2 transition-colors ${i === imgIdx ? "border-[var(--brand)]" : "border-border hover:border-muted-foreground"}`}>
+                        {url ? <img src={url} alt="" className="h-full w-full object-contain" />
+                          : <div className="flex h-full w-full items-center justify-center text-lg">{img || "📦"}</div>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button onClick={nextImg} className="flex-shrink-0 grid h-8 w-8 place-items-center rounded-lg border border-border hover:bg-secondary transition">
+                  <ChevronRightIcon className="h-4 w-4" />
+                </button>
               </div>
             )}
+
+            {/* Desktop: şəklin altında ad, stok, qiymət, düymələr */}
+            <div className="hidden lg:block space-y-4 pt-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map(s => <Star key={s} className={`h-4 w-4 ${s <= Math.round(avgRatingTop) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30"}`} />)}
+                </div>
+                {reviewCount > 0 && <span className="text-sm font-semibold">{avgRatingTop.toFixed(1)}</span>}
+                <span className="text-sm text-muted-foreground">({reviewCount} rəy)</span>
+                <span className="ml-auto text-xs text-muted-foreground">Məhsul kodu: <strong>#{product.id}</strong></span>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${(product.stock > 0 || product.in_stock === 1) ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-600"}`}>
+                <Store className="h-3.5 w-3.5" />
+                {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
+              </span>
+              <h1 className="text-2xl font-bold leading-snug lg:text-3xl">{product.name}</h1>
+              {(() => {
+                type Color = { name: string; hex: string };
+                let cols: Color[] = [];
+                try { cols = JSON.parse(product.colors || "[]"); } catch {}
+                if (cols.length === 0) return null;
+                return <ColorSwatches colors={cols} selected={selectedColor} onSelect={setSelectedColor} />;
+              })()}
+              {(() => {
+                const originalPrice = (() => {
+                  if (product.extra_price != null) return product.price;
+                  if (product.sale_price != null) return product.price;
+                  if (product.old_price && product.old_price > product.price) return product.old_price;
+                  if (product.discount > 0) return product.price;
+                  return null as number | null;
+                })();
+                return (
+                  <div>
+                    {originalPrice && <div className="text-base text-muted-foreground line-through">{originalPrice} AZN</div>}
+                    <div className="text-4xl font-black">{activePrice} AZN</div>
+                    {originalPrice && <div className="mt-1 text-sm font-semibold text-green-600">Qənaət: {(originalPrice - activePrice).toFixed(0)} AZN</div>}
+                  </div>
+                );
+              })()}
+              <button onClick={() => {
+                const colorSuffix = selectedColor ? ` — ${selectedColor.name}` : "";
+                addItem({ id: product.id, name: product.name + colorSuffix, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 });
+                toast.success("Səbətə əlavə edildi");
+              }} className="w-full flex items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3.5 text-base font-bold text-white hover:opacity-90 transition">
+                <ShoppingCart className="h-5 w-5" /> Səbətə əlavə et
+              </button>
+            </div>
           </div>
 
           {/* Lightbox */}
           {lightbox && currentUrl && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-              onClick={() => setLightbox(false)}>
-              <button onClick={() => setLightbox(false)}
-                className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setLightbox(false)}>
+              <button onClick={() => setLightbox(false)} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
                 <XIcon className="h-5 w-5" />
               </button>
               {allImages.length > 1 && (
                 <>
-                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-4 top-1/2 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <ChevronLeft className="h-6 w-6" />
                   </button>
-                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                  <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-4 top-1/2 -translate-y-1/2 grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <ChevronRightIcon className="h-6 w-6" />
                   </button>
                 </>
               )}
-              <img src={currentUrl} alt={product.name}
-                onClick={(e) => e.stopPropagation()}
-                className="max-h-[90vh] max-w-full rounded-xl object-contain shadow-2xl" />
-              {allImages.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
-                  {imgIdx + 1} / {allImages.length}
-                </div>
-              )}
+              <img src={currentUrl} alt={product.name} onClick={(e) => e.stopPropagation()} className="max-h-[90vh] max-w-full rounded-xl object-contain shadow-2xl" />
+              {allImages.length > 1 && <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">{imgIdx + 1} / {allImages.length}</div>}
             </div>
           )}
 
-          {/* Info */}
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold md:text-3xl">{product.name}</h1>
+          {/* ── RIGHT: kredit + xidmətlər + dəst ── */}
+          <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
 
-            {/* Color swatches */}
+            {/* Reytinq + kod — mobil/tablet üçün (desktop sol sütunda göstərilir) */}
+            <div className="flex lg:hidden items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-0.5">
+                {[1,2,3,4,5].map(s => (
+                  <Star key={s} className={`h-4 w-4 ${s <= Math.round(avgRatingTop) ? "fill-amber-400 text-amber-400" : "fill-muted text-muted-foreground/30"}`} />
+                ))}
+              </div>
+              {reviewCount > 0 && <span className="text-sm font-semibold">{avgRatingTop.toFixed(1)}</span>}
+              <span className="text-sm text-muted-foreground">({reviewCount} rəy)</span>
+              <span className="ml-auto text-xs text-muted-foreground">Məhsul kodu: <strong>#{product.id}</strong></span>
+            </div>
+
+            {/* Stok badge — mobil/tablet */}
+            <div className="block lg:hidden">
+              <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${(product.stock > 0 || product.in_stock === 1) ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-600"}`}>
+                <Store className="h-3.5 w-3.5" />
+                {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
+              </span>
+            </div>
+
+            {/* Məhsul adı — mobil/tablet */}
+            <h1 className="block lg:hidden text-xl font-bold leading-snug">{product.name}</h1>
+
+            {/* Rənglər — mobil/tablet */}
             {(() => {
               type Color = { name: string; hex: string };
               let cols: Color[] = [];
               try { cols = JSON.parse(product.colors || "[]"); } catch {}
               if (cols.length === 0) return null;
-              return <ColorSwatches colors={cols} selected={selectedColor} onSelect={setSelectedColor} />;
+              return (
+                <div className="flex lg:hidden justify-start">
+                  <ColorSwatches colors={cols} selected={selectedColor} onSelect={setSelectedColor} />
+                </div>
+              );
             })()}
 
-            <div className="mt-2 flex items-center gap-2">
-              <div className="flex text-amber-400">{[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current md:h-4 md:w-4" />)}</div>
-              <span className="text-xs text-muted-foreground md:text-sm">5.0</span>
-            </div>
-
+            {/* Qiymət — mobil/tablet */}
             {(() => {
               const originalPrice = (() => {
                 if (product.extra_price != null) return product.price;
@@ -348,65 +411,134 @@ function ProductPage() {
                 if (product.discount > 0) return product.price;
                 return null as number | null;
               })();
-              const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
-              const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
-              const isFree = product.interest_free !== 0;
-              const hasCredit = product.credit_months == null ? true : product.credit_months > 0;
-              const commFreeMonths = product.commission_free_months ?? 0;
               return (
-                <>
-                  <div className="mt-3 flex items-baseline gap-2 flex-wrap md:mt-4 md:gap-3">
-                    <span className="text-3xl font-black md:text-4xl">{activePrice} AZN</span>
-                    {originalPrice && <span className="text-base text-muted-foreground line-through md:text-xl">{originalPrice} AZN</span>}
-                    {discountPct > 0 && (
-                      <span className="rounded-full bg-[var(--accent-orange)] px-2 py-0.5 text-xs font-bold text-white md:px-3 md:text-sm">−{discountPct}%</span>
-                    )}
+                <div className="block lg:hidden">
+                  {originalPrice && <div className="text-base text-muted-foreground line-through">{originalPrice} AZN</div>}
+                  <div className="text-3xl font-black">{activePrice} AZN</div>
+                  {originalPrice && <div className="mt-1 text-sm font-semibold text-green-600">Qənaət: {(originalPrice - activePrice).toFixed(0)} AZN</div>}
+                </div>
+              );
+            })()}
+
+            {/* Səbətə əlavə et + Paylaş/Müqayisə/Bəyən — mobil/tablet */}
+            <div className="flex lg:hidden items-center gap-2">
+              <button onClick={() => {
+                  if (selectedComps.size > 0) {
+                    parsedComps.forEach((comp, i) => { if (selectedComps.has(i)) addItem({ id: product.id * 10000 + i + 1, name: `${comp.name} (${product.name})`, price: comp.price, image: product.image, qty }); });
+                  } else {
+                    const colorSuffix = selectedColor ? ` — ${selectedColor.name}` : "";
+                    addItem({ id: product.id, name: product.name + colorSuffix, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 });
+                  }
+                  toast.success("Səbətə əlavə edildi");
+                }}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3.5 text-base font-bold text-white hover:opacity-90 transition">
+                <ShoppingCart className="h-5 w-5" /> Səbətə əlavə et
+              </button>
+              <button onClick={handleShare}
+                className="flex items-center gap-1.5 rounded-xl border border-border px-4 py-3.5 text-sm font-medium hover:bg-secondary transition">
+                {copied ? <Check className="h-4 w-4 text-green-600" /> : <Share2 className="h-4 w-4" />}
+                {copied ? "Kopyalandı" : "Paylaş"}
+              </button>
+              <button onClick={toggleCompare}
+                className={`grid h-12 w-12 place-items-center rounded-xl border transition-colors ${inCompare ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                <Scale className="h-5 w-5" />
+              </button>
+              <button onClick={toggleWishlist}
+                className={`grid h-12 w-12 place-items-center rounded-xl border transition-colors ${inWishlist ? "border-red-300 bg-red-50 text-red-500" : "border-border hover:bg-secondary"}`}>
+                <Heart className={`h-5 w-5 ${inWishlist ? "fill-red-500" : ""}`} />
+              </button>
+            </div>
+
+            {/* Bir kliklə al + Hissə-hissə ödə — desktop 2 kart */}
+            <div className="grid lg:grid grid-cols-2 gap-3">
+              <button onClick={() => setOrderModal(true)}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 hover:border-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/5 transition group">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary group-hover:bg-[var(--accent-orange)]/10">
+                  <MousePointerClick className="h-5 w-5 text-[var(--accent-orange)]" />
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-bold">Bir kliklə al</div>
+                  <div className="text-xs text-muted-foreground">Sürətli sifariş</div>
+                </div>
+              </button>
+              {(product.credit_months == null || product.credit_months > 0) && (
+                <button onClick={() => setCreditModal(true)}
+                  className="flex items-center gap-3 rounded-2xl border border-[var(--brand)] bg-[var(--brand)]/5 px-4 py-4 hover:bg-[var(--brand)]/10 transition">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--brand)]/10">
+                    <CreditCard className="h-5 w-5 text-[var(--brand)]" />
                   </div>
-                  {savingAmt > 0 && (
-                    <div className="mt-1 text-sm text-green-600 font-medium">
-                      {savingAmt.toFixed(0)} AZN qənaət
+                  <div className="text-left">
+                    <div className="text-sm font-bold">Hissə-hissə ödə</div>
+                    <div className="text-xs text-[var(--brand)] font-semibold">
+                      {(Math.ceil(activePrice / (product.credit_months || 12) * 100) / 100).toFixed(2)} AZN / {product.credit_months || 12} ay
                     </div>
-                  )}
-                  {commFreeMonths > 0 && (
-                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2">
-                      <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md border border-green-300 bg-white text-xs font-bold text-green-700">i</span>
-                      <span className="text-sm font-semibold text-green-800">{commFreeMonths} aya komissiyasız</span>
+                  </div>
+                </button>
+              )}
+            </div>
+
+            {/* Mobil: düymə bloku */}
+            <div className="md:hidden space-y-2">
+              <button onClick={() => setMobileSheet("quick")}
+                className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl border border-border bg-card active:bg-secondary transition">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary">
+                  <MousePointerClick className="h-5 w-5 text-[var(--accent-orange)]" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="text-sm font-bold">Bir kliklə al</div>
+                  <div className="text-xs text-muted-foreground">Sürətli sifariş</div>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              </button>
+              {(product.credit_months == null || product.credit_months > 0) && (
+                <button onClick={() => { setCreditSelectedMonths(product.credit_months || 12); setMobileSheet("credit"); }}
+                  className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl border border-border bg-card active:bg-secondary transition">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary">
+                    <CreditCard className="h-5 w-5 text-[var(--brand)]" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-bold">Hissə-hissə ödə</div>
+                    <div className="text-xs text-[var(--brand)] font-semibold">
+                      {(Math.ceil(activePrice / (product.credit_months || 12) * 100) / 100).toFixed(2)} AZN / {product.credit_months || 12} ay
                     </div>
-                  )}
-                  {hasCredit && creditCompanies.length > 0 && (() => {
-                    const creditMonths = product.credit_months || 12;
-                    const monthly = (Math.ceil(activePrice / creditMonths * 100) / 100).toFixed(2);
-                    return (
-                      <div className="mt-3 flex flex-col gap-2">
-                        {creditCompanies.map(co => {
-                          const logoUrl = getImageUrl(co.logo);
-                          return (
-                            <button key={co.id} onClick={() => setCreditModal(true)}
-                              className="flex items-center gap-3 rounded-2xl border-2 border-[var(--accent-orange)] bg-card px-4 py-3 text-left hover:bg-secondary/30 transition-colors">
-                              {logoUrl
-                                ? <img src={logoUrl} alt={co.name} className="h-10 w-20 flex-shrink-0 object-contain" />
-                                : <span className="w-20 flex-shrink-0 text-sm font-bold text-center">{co.name}</span>}
-                              <div>
-                                <div className="font-black text-base">{monthly} AZN × {creditMonths} ay</div>
-                                <div className="text-xs text-muted-foreground">{co.name} ilə {creditMonths} aya faizsiz ödə!</div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                  {hasCredit && <InlineCredit price={activePrice} isFree={isFree} onOpenCalc={() => setCreditModal(true)} />}
-                </>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </button>
+              )}
+            </div>
+
+            {/* Kredit şirkətləri carousel — desktop only */}
+            {(() => {
+              const hasCredit = product.credit_months == null ? true : product.credit_months > 0;
+              if (!hasCredit || creditCompanies.length === 0) return null;
+              return (
+                <div>
+                  <CreditCarousel companies={creditCompanies} price={activePrice} creditMonths={product.credit_months || 12} onOpen={() => setCreditModal(true)} />
+                </div>
               );
             })()}
 
 
+            {/* Xidmət kartları */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { icon: Truck, t: "Sürətli çatdırılma" },
+                { icon: ShieldCheck, t: "Rəsmi zəmanət" },
+                { icon: Store, t: "56 mağazada var" },
+              ].map(({ icon: Icon, t }) => (
+                <div key={t} className="flex flex-col items-center gap-1.5 rounded-xl border border-border p-3 text-center text-xs">
+                  <Icon className="h-5 w-5 text-[var(--brand)]" />
+                  {t}
+                </div>
+              ))}
+            </div>
+
+            {/* Dəst tərkibi */}
             {(() => {
               const comps = parsedComps;
               if (comps.length === 0) return null;
               return (
-                <div className="mt-4 rounded-2xl border border-border bg-secondary/20 overflow-hidden">
+                <div className="rounded-2xl border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border bg-secondary/40 flex items-center justify-between">
                     <p className="text-sm font-bold">Dəst tərkibi</p>
                     <span className="text-xs text-muted-foreground">İstədiyinizi seçin</span>
@@ -414,23 +546,12 @@ function ProductPage() {
                   <div className="divide-y divide-border">
                     {comps.map((c, i) => (
                       <div key={i} className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary/30 transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={selectedComps.has(i)}
-                          onChange={() => setSelectedComps(prev => {
-                            const next = new Set(prev);
-                            if (next.has(i)) next.delete(i); else next.add(i);
-                            return next;
-                          })}
-                          className="h-4 w-4 rounded accent-[var(--brand)] cursor-pointer flex-shrink-0"
-                        />
+                        <input type="checkbox" checked={selectedComps.has(i)}
+                          onChange={() => setSelectedComps(prev => { const next = new Set(prev); if (next.has(i)) next.delete(i); else next.add(i); return next; })}
+                          className="h-4 w-4 rounded accent-[var(--brand)] cursor-pointer flex-shrink-0" />
                         <span className="flex-1 text-sm">{c.name}</span>
                         <span className="text-sm font-semibold text-[var(--brand)] flex-shrink-0">{c.price} AZN</span>
-                        <button
-                          onClick={() => {
-                            addItem({ id: product.id * 10000 + i + 1, name: `${c.name} (${product.name})`, price: c.price, image: product.image, qty: 1 });
-                            toast.success(`${c.name} səbətə əlavə edildi`);
-                          }}
+                        <button onClick={() => { addItem({ id: product.id * 10000 + i + 1, name: `${c.name} (${product.name})`, price: c.price, image: product.image, qty: 1 }); toast.success(`${c.name} səbətə əlavə edildi`); }}
                           className="flex-shrink-0 rounded-lg border border-[var(--brand)] px-2 py-1 text-xs font-semibold text-[var(--brand)] hover:bg-[var(--brand)] hover:text-[var(--brand-foreground)] transition-colors">
                           + Səbətə
                         </button>
@@ -444,80 +565,6 @@ function ProductPage() {
                 </div>
               );
             })()}
-
-            <div className="mt-3 flex items-center gap-2">
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium md:text-sm ${(product.stock > 0 || product.in_stock === 1) ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
-                {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
-              </span>
-            </div>
-
-            {/* Qty + Actions */}
-            <div className="mt-4 flex items-center gap-2 md:mt-6 md:gap-3">
-              <div className="flex items-center rounded-xl border border-border">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-3 text-lg hover:bg-secondary rounded-l-xl md:px-4">−</button>
-                <span className="w-10 text-center font-semibold md:w-12">{qty}</span>
-                <button onClick={() => setQty(qty + 1)} className="px-3 py-3 text-lg hover:bg-secondary rounded-r-xl md:px-4">+</button>
-              </div>
-              <button onClick={() => {
-                  if (selectedComps.size > 0) {
-                    parsedComps.forEach((comp, i) => {
-                      if (selectedComps.has(i)) {
-                        addItem({ id: product.id * 10000 + i + 1, name: `${comp.name} (${product.name})`, price: comp.price, image: product.image, qty });
-                      }
-                    });
-                  } else {
-                    // no component selected → add base product
-                    const colorSuffix = selectedColor ? ` — ${selectedColor.name}` : "";
-                    addItem({ id: product.id, name: product.name + colorSuffix, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 });
-                  }
-                  toast.success("Səbətə əlavə edildi");
-                }}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--brand)] py-3 text-sm font-semibold text-[var(--brand-foreground)] hover:opacity-90 md:text-base">
-                <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" /> Səbətə əlavə et
-              </button>
-            </div>
-
-            <div className="mt-2 flex gap-2 md:mt-3">
-              <button onClick={() => setOrderModal(true)}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-[var(--accent-orange)] bg-[var(--accent-orange)]/5 py-2.5 text-xs font-semibold text-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/10 md:py-3 md:text-sm md:gap-2">
-                <MousePointerClick className="h-3.5 w-3.5 md:h-4 md:w-4" /> Bir kliklə al
-              </button>
-              {(product.credit_months == null || product.credit_months > 0) && (
-                <button onClick={() => setCreditModal(true)}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border py-2.5 text-xs font-medium hover:bg-secondary md:py-3 md:text-sm md:gap-2">
-                  <CreditCard className="h-3.5 w-3.5 md:h-4 md:w-4" /> Kredit
-                </button>
-              )}
-            </div>
-
-            <div className="mt-3 flex gap-2">
-              <button onClick={toggleWishlist}
-                className={`flex flex-1 items-center justify-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium md:px-4 md:py-2.5 md:text-sm md:gap-1.5 transition-colors ${inWishlist ? "border-red-300 bg-red-50 text-red-600" : "border-border hover:bg-secondary"}`}>
-                <Heart className={`h-3.5 w-3.5 md:h-4 md:w-4 ${inWishlist ? "fill-red-500" : ""}`} /> Saxla
-              </button>
-              <button onClick={toggleCompare}
-                className={`flex flex-1 items-center justify-center gap-1 rounded-xl border px-2 py-2 text-xs font-medium md:px-4 md:py-2.5 md:text-sm md:gap-1.5 transition-colors ${inCompare ? "border-[var(--brand)] bg-[var(--brand)]/5 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                <Scale className="h-3.5 w-3.5 md:h-4 md:w-4" /> Müqayisə
-              </button>
-              <button onClick={handleShare}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl border border-border px-2 py-2 text-xs font-medium hover:bg-secondary md:px-4 md:py-2.5 md:text-sm md:gap-1.5 transition-colors">
-                {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4" />} {copied ? "Kopyalandı" : "Paylaş"}
-              </button>
-            </div>
-
-            {/* Features */}
-            <div className="mt-4 grid grid-cols-3 gap-2 md:mt-6 md:gap-3">
-              {[
-                { icon: Truck, t: "Sürətli çatdırılma" },
-                { icon: ShieldCheck, t: "Rəsmi zəmanət" },
-                { icon: Store, t: "56 mağazada var" },
-              ].map(({ icon: Icon, t }) => (
-                <div key={t} className="flex flex-col items-center gap-1 rounded-xl border border-border p-2 text-center text-[10px] md:p-3 md:text-xs">
-                  <Icon className="h-4 w-4 text-[var(--brand)] md:h-5 md:w-5" />
-                  {t}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -527,28 +574,230 @@ function ProductPage() {
         {/* Related */}
         {related.length > 0 && (
           <div className="mt-10 md:mt-16">
-            <h2 className="mb-4 text-xl font-bold md:mb-5 md:text-2xl">Oxşar məhsullar</h2>
+            <p className="text-xs font-semibold text-[var(--accent-orange)] uppercase tracking-wide mb-1">Oxşar məhsullar</p>
+            <h2 className="mb-4 text-xl font-bold md:mb-5 md:text-2xl">Bunları da bəyənəcəksən!</h2>
             <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-4">
-              {related.map((p) => (
-                <Link key={p.id} to="/mehsul/$slug" params={{ slug: String(p.id) }}
-                  className="group overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
-                  <div className="aspect-square overflow-hidden bg-secondary/30">
-                    {getImageUrl(p.image)
-                      ? <img src={getImageUrl(p.image)!} alt={p.name} className="h-full w-full object-contain group-hover:scale-105 transition duration-500" loading="lazy" />
-                      : <div className="flex h-full w-full items-center justify-center text-4xl">{p.image || "📦"}</div>}
-                  </div>
-                  <div className="p-3 md:p-4">
-                    <div className="line-clamp-2 text-xs font-medium md:text-sm">{p.name}</div>
-                    <div className="mt-1 font-black md:mt-2">{p.price} AZN</div>
-                    <div className="mt-0.5 flex items-center gap-1 text-xs text-[var(--brand)]"><Zap className="h-3 w-3" /> {Math.round(p.price / 12)} AZN/ay</div>
-                  </div>
-                </Link>
-              ))}
+              {related.map((p) => {
+                const rImg = getImageUrl(p.image);
+                const rActive = (() => {
+                  if (p.extra_price != null) return p.extra_price;
+                  if (p.sale_price != null) return p.sale_price;
+                  if (p.old_price && p.old_price > p.price) return p.price;
+                  if (p.discount > 0) return Math.round(p.price * (1 - p.discount / 100));
+                  return p.price;
+                })();
+                const rOrig = p.extra_price != null ? p.price : p.sale_price != null ? p.price : p.old_price && p.old_price > p.price ? p.old_price : null;
+                const rDisc = rOrig ? Math.round((1 - rActive / rOrig) * 100) : 0;
+                const months = p.credit_months || 12;
+                return (
+                  <Link key={p.id} to="/mehsul/$slug" params={{ slug: String(p.id) }}
+                    className="group relative overflow-hidden rounded-2xl border border-border bg-card transition hover:-translate-y-1 hover:shadow-lg">
+                    {rDisc > 0 && (
+                      <div className="absolute right-2 top-2 z-10 rounded-lg bg-yellow-400 px-1.5 py-0.5 text-[10px] font-bold text-yellow-900">−{rDisc}%</div>
+                    )}
+                    <div className="aspect-square overflow-hidden bg-white">
+                      {rImg
+                        ? <img src={rImg} alt={p.name} className="h-full w-full object-contain group-hover:scale-105 transition duration-500" loading="lazy" />
+                        : <div className="flex h-full w-full items-center justify-center text-4xl">{p.image || "📦"}</div>}
+                    </div>
+                    <div className="p-3">
+                      <div className="line-clamp-2 text-xs font-medium md:text-sm">{p.name}</div>
+                      <div className="mt-1.5 flex items-baseline gap-1.5 flex-wrap">
+                        <span className="font-black text-base">{rActive} AZN</span>
+                        {rOrig && <span className="text-xs text-muted-foreground line-through">{rOrig} AZN</span>}
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-yellow-500 truncate">
+                        <Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{months} aya {(Math.ceil(rActive / months * 100) / 100).toFixed(2)} AZN/ay</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
       </div>
+      <div className="h-24 md:hidden" /> {/* sticky bar spacer */}
+
+      {/* ── Sticky bottom bar (mobile only) ── */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-background border-t border-border shadow-2xl px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            {(() => {
+              const origP = product.extra_price != null ? product.price : product.sale_price != null ? product.price : product.old_price && product.old_price > product.price ? product.old_price : null;
+              return origP ? <div className="text-xs text-muted-foreground line-through">{origP} AZN</div> : null;
+            })()}
+            <div className="text-xl font-black leading-tight">{activePrice} AZN</div>
+          </div>
+          <button onClick={() => setMobileSheet("quick")}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--accent-orange)]/10 border border-[var(--accent-orange)] py-3 text-sm font-semibold text-[var(--accent-orange)] transition">
+            <MousePointerClick className="h-4 w-4" /> Bir kliklə sifariş et
+          </button>
+          <button onClick={() => {
+              const colorSuffix = selectedColor ? ` — ${selectedColor.name}` : "";
+              addItem({ id: product.id, name: product.name + colorSuffix, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 });
+              toast.success("Səbətə əlavə edildi");
+            }}
+            className="flex-shrink-0 grid h-12 w-12 place-items-center rounded-xl bg-[var(--brand)] text-white hover:opacity-90">
+            <Plus className="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
       <SiteFooter />
+
+      {/* ── Mobile Bottom Sheet: Bir kliklə al ── */}
+      <MobileSheet open={mobileSheet === "quick"} onClose={() => setMobileSheet(null)}>
+        <div className="flex items-center justify-between px-4 py-3">
+          <div>
+            {(() => { const op = product.extra_price != null ? product.price : product.sale_price != null ? product.price : product.old_price && product.old_price > product.price ? product.old_price : null; return op ? <div className="text-xs text-muted-foreground line-through">{op} AZN</div> : null; })()}
+            <div className="text-2xl font-black">{activePrice} AZN</div>
+          </div>
+          <button onClick={() => { addItem({ id: product.id, name: product.name, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 }); toast.success("Səbətə əlavə edildi"); setMobileSheet(null); }}
+            className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90">
+            <ShoppingCart className="h-4 w-4" /> Səbətə at
+          </button>
+        </div>
+        <div className="px-4 pb-6 space-y-3">
+          <input className={minp} placeholder="Ad və soyad" value={orderForm.name}
+            onChange={e => setOrderForm({...orderForm, name: e.target.value})} />
+          <input className={minp} placeholder="Telefon nömrəsi" type="tel" value={orderForm.phone}
+            onChange={e => setOrderForm({...orderForm, phone: e.target.value})} />
+          <input className={minp} placeholder="Promokod" value={orderForm.promo}
+            onChange={e => setOrderForm({...orderForm, promo: e.target.value})} />
+          <button onClick={async () => { await submitOrder(); setMobileSheet(null); }} disabled={orderBusy}
+            className="w-full rounded-2xl bg-foreground py-4 font-bold text-background hover:opacity-90 disabled:opacity-50 text-sm">
+            {orderBusy ? "Göndərilir..." : "Bir kliklə al"}
+          </button>
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            <strong>Qeyd:</strong> Hörmətli müştəri, təqdim etdiyiniz promokod keçərlidirsə, satış nümayəndəsi sifarişinizi müvafiq şərtlərə uyğun şəkildə rəsmiləşdirəcəkdir.
+          </p>
+        </div>
+      </MobileSheet>
+
+      {/* ── Mobile Bottom Sheet: Hissə-hissə ödə ── */}
+      <MobileSheet open={mobileSheet === "credit"} onClose={() => setMobileSheet(null)}>
+        <div className="flex items-center justify-between px-4 py-3">
+          <div>
+            {(() => { const op = product.extra_price != null ? product.price : product.sale_price != null ? product.price : product.old_price && product.old_price > product.price ? product.old_price : null; return op ? <div className="text-xs text-muted-foreground line-through">{op} AZN</div> : null; })()}
+            <div className="text-2xl font-black">{activePrice} AZN</div>
+          </div>
+          <button onClick={() => setMobileSheet(null)}
+            className="grid h-9 w-9 place-items-center rounded-full bg-secondary hover:bg-border transition">
+            <XIcon className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="px-4 pb-6 space-y-4">
+          {(() => {
+            const nisyeCompanies = creditCompanies.filter(co => co.type === "nisye");
+            const creditOnlyCompanies = creditCompanies.filter(co => co.type !== "nisye");
+            const nisyeActive = orderForm.payment_type === "nisye" || creditCompanies.some(co => co.type === "nisye" && orderForm.payment_type === `cc_${co.id}`);
+            return (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {/* Nisyə al bölməsi */}
+                <button onClick={() => {
+                  if (nisyeCompanies.length > 0) {
+                    setOrderForm({...orderForm, payment_type: `cc_${nisyeCompanies[0].id}`});
+                    const plans = parsePlans(nisyeCompanies[0].plans);
+                    setCreditSelectedMonths(plans[0]?.months ?? 12);
+                  } else {
+                    setOrderForm({...orderForm, payment_type: "nisye"});
+                  }
+                }}
+                  className={`flex-shrink-0 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${nisyeActive ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground"}`}>
+                  🤝 Nisyə al
+                </button>
+                {/* Kredit şirkətləri */}
+                {creditOnlyCompanies.map(co => {
+                  const logoUrl = getImageUrl(co.logo);
+                  const active = orderForm.payment_type === `cc_${co.id}`;
+                  return (
+                    <button key={co.id} onClick={() => { setOrderForm({...orderForm, payment_type: `cc_${co.id}`}); const plans = parsePlans(co.plans); const keep = plans.find(p => p.months === creditSelectedMonths); if (!keep) setCreditSelectedMonths(plans.find(p => p.months === (product.credit_months || 12))?.months ?? plans[0]?.months ?? 12); }}
+                      className={`flex-shrink-0 rounded-xl border-2 transition overflow-hidden ${active ? "border-foreground" : "border-border hover:border-foreground"}`}
+                      style={{padding: 0, height: 36, width: 72}}>
+                      {logoUrl
+                        ? <img src={logoUrl} alt={co.name} className="h-full w-full object-cover" />
+                        : <span className="flex h-full w-full items-center justify-center text-xs font-semibold px-2">{co.name}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+          {(() => {
+            const selCo = creditCompanies.find(co => orderForm.payment_type === `cc_${co.id}`);
+            const plans = selCo ? parsePlans(selCo.plans) : [6,12,18,24].map(m => ({ months: m, rate: 0, label: "" }));
+            const freeMonths = product.credit_months || 999;
+            const selPlan = plans.find(p => p.months === creditSelectedMonths) ?? plans[0];
+            const remaining = Math.max(0, activePrice - downPayment);
+            const effectiveRate = (selPlan?.months ?? 0) <= freeMonths ? 0 : (selPlan?.rate ?? 0);
+            const financed = remaining * (1 + effectiveRate / 100);
+            const monthly = (Math.ceil(financed / creditSelectedMonths * 100) / 100).toFixed(2);
+            const totalPaid = (parseFloat(monthly) * creditSelectedMonths + downPayment).toFixed(2);
+            return (
+              <div className="space-y-3">
+                <div className="rounded-2xl bg-secondary/30 p-4 space-y-3">
+                  <p className="text-base font-bold">Müddət</p>
+                  <div className="flex flex-wrap gap-2">
+                    {plans.map(p => {
+                      const isFree = p.months <= freeMonths;
+                      const isSelected = creditSelectedMonths === p.months;
+                      return (
+                        <button key={p.months} onClick={() => setCreditSelectedMonths(p.months)}
+                          className={`rounded-xl border-2 px-4 py-2 text-sm font-semibold transition ${
+                            isSelected
+                              ? isFree ? "bg-[var(--brand)] border-[var(--brand)] text-white" : "bg-yellow-400 border-yellow-400 text-yellow-900"
+                              : isFree ? "border-border bg-background hover:bg-secondary" : "border-yellow-200 bg-yellow-50 text-yellow-700 hover:border-yellow-400"
+                          }`}>
+                          {p.months} ay
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                {/* İlkin ödəniş */}
+                <div className="rounded-2xl bg-secondary/30 p-4 space-y-3">
+                  <p className="text-base font-bold">İlkin ödəniş</p>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setDownPayment(d => Math.max(0, d - 50))}
+                      className="h-12 w-12 flex-shrink-0 rounded-2xl border border-border bg-background text-xl font-bold hover:bg-secondary transition">−</button>
+                    <div className="flex flex-1 items-center gap-2">
+                      <input
+                        type="number" min={0} max={activePrice}
+                        value={downPayment || ""}
+                        onChange={e => setDownPayment(Math.min(activePrice, Math.max(0, Number(e.target.value) || 0)))}
+                        placeholder="0"
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-center text-lg font-black outline-none focus:border-[var(--brand)]"
+                      />
+                      <span className="text-sm font-semibold text-muted-foreground flex-shrink-0">AZN</span>
+                    </div>
+                    <button onClick={() => setDownPayment(d => Math.min(activePrice, d + 50))}
+                      className="h-12 w-12 flex-shrink-0 rounded-2xl border-2 border-[var(--brand)] bg-background text-xl font-bold text-[var(--brand)] hover:bg-[var(--brand)]/5 transition">+</button>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground px-1">
+                  <strong>Qeyd:</strong> Sifarişin rəsmiləşdirilməsi zamanı 10%-ə qədər xidmət haqqı əlavə oluna bilər
+                </p>
+                <div className="flex gap-4 rounded-2xl bg-background px-4 py-3 border border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Aylıq ödəniş:</p>
+                    <p className="text-2xl font-black">{monthly} AZN</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Yekun məbləğ:</p>
+                    <p className="text-2xl font-black">{totalPaid} AZN</p>
+                  </div>
+                </div>
+                {/* Sifariş et */}
+                <button onClick={() => { setMobileSheet(null); setOrderModal(true); }}
+                  className="w-full rounded-2xl bg-[var(--brand)] py-4 font-bold text-white hover:opacity-90 text-sm">
+                  Sifariş et
+                </button>
+              </div>
+            );
+          })()}
+        </div>
+      </MobileSheet>
 
       {/* Order Modal */}
       {orderModal && (
@@ -712,7 +961,52 @@ function ProductPage() {
   );
 }
 
-// Bank kredit şərtləri
+function CreditCarousel({ companies, price, creditMonths, onOpen }: {
+  companies: CreditCompany[];
+  price: number;
+  creditMonths: number;
+  onOpen: () => void;
+}) {
+  const [idx, setIdx] = useState(0);
+  const monthly = (Math.ceil(price / creditMonths * 100) / 100).toFixed(2);
+
+  useEffect(() => {
+    if (companies.length <= 1) return;
+    const t = setInterval(() => setIdx(i => (i + 1) % companies.length), 3000);
+    return () => clearInterval(t);
+  }, [companies.length]);
+
+  const co = companies[idx];
+  const logoUrl = getImageUrl(co.logo);
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border-2 border-[var(--accent-orange)]">
+      {/* Slide */}
+      <button onClick={onOpen}
+        className="w-full flex items-center gap-4 bg-card px-5 py-4 text-left hover:bg-secondary/30 transition-colors">
+        <div className="flex h-14 w-28 flex-shrink-0 items-center justify-center">
+          {logoUrl
+            ? <img src={logoUrl} alt={co.name} className="max-h-full max-w-full object-contain" />
+            : <span className="text-base font-extrabold text-center text-[var(--accent-orange)]">{co.name}</span>}
+        </div>
+        <div className="min-w-0">
+          <div className="text-xl font-extrabold leading-tight">{monthly} AZN × {creditMonths} ay</div>
+          <div className="text-sm text-muted-foreground mt-0.5 truncate">{co.name} ilə {creditMonths} aya faizsiz ödə!</div>
+        </div>
+      </button>
+      {/* Dots */}
+      {companies.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5 pb-2.5">
+          {companies.map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)}
+              className={`rounded-full transition-all ${i === idx ? "w-4 h-1.5 bg-[var(--accent-orange)]" : "w-1.5 h-1.5 bg-[var(--accent-orange)]/30 hover:bg-[var(--accent-orange)]/60"}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ColorSwatches({ colors, selected, onSelect }: {
   colors: { name: string; hex: string }[];
   selected: { name: string; hex: string } | null;
@@ -804,9 +1098,13 @@ function ProductTabs({ product }: { product: Product }) {
 
       <div className="py-6">
         {tab === "desc" && (
-          <div className="prose prose-sm max-w-none text-sm text-foreground leading-relaxed">
+          <div className="max-w-3xl text-sm text-foreground leading-relaxed">
             {product.description
-              ? <p>{product.description}</p>
+              ? product.description.split("\n").map((line, i) =>
+                  line.trim() === ""
+                    ? <div key={i} className="h-3" />
+                    : <p key={i} className="mb-1">{line}</p>
+                )
               : <p className="text-muted-foreground">Məhsul haqqında məlumat əlavə edilməyib.</p>}
           </div>
         )}
@@ -815,25 +1113,28 @@ function ProductTabs({ product }: { product: Product }) {
           let specs: Spec[] = [];
           try { specs = JSON.parse(product.specifications || "[]"); } catch {}
           if (specs.length === 0) return <p className="text-sm text-muted-foreground">Texniki xüsusiyyətlər əlavə edilməyib.</p>;
-          // group by group field
           const groups: Record<string, Spec[]> = {};
           for (const s of specs) {
-            const g = s.group || "Ümumi";
+            const g = s.group?.trim() || "Ümumi";
             if (!groups[g]) groups[g] = [];
             groups[g].push(s);
           }
+          const groupEntries = Object.entries(groups);
           return (
-            <div className="space-y-6">
-              {Object.entries(groups).map(([grp, items]) => (
+            <div className="max-w-3xl space-y-8">
+              {groupEntries.map(([grp, items]) => (
                 <div key={grp}>
-                  <h3 className="mb-3 flex items-center gap-2 text-base font-bold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--brand)] inline-block" />{grp}
-                  </h3>
-                  <div className="rounded-xl border border-border overflow-hidden">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--brand)]/10 text-[var(--brand)]">
+                      <span className="text-base">⚙</span>
+                    </div>
+                    <h3 className="text-lg font-bold">{grp}</h3>
+                  </div>
+                  <div className="space-y-0 border-t border-border">
                     {items.map((s, i) => (
-                      <div key={i} className={`flex items-center justify-between gap-4 px-4 py-3 text-sm border-b border-border last:border-0 ${i % 2 === 0 ? "bg-background" : "bg-secondary/20"}`}>
-                        <span className="text-muted-foreground shrink-0">{s.label}</span>
-                        <span className="font-medium text-right">{s.value}</span>
+                      <div key={i} className="flex items-baseline gap-2 border-b border-border py-2.5 text-sm">
+                        <span className="text-muted-foreground min-w-0 flex-shrink-0 w-48">{s.label}:</span>
+                        <span className="font-medium">{s.value}</span>
                       </div>
                     ))}
                   </div>
@@ -933,13 +1234,15 @@ function ProductTabs({ product }: { product: Product }) {
   );
 }
 
-function InlineCredit({ price, isFree, onOpenCalc }: { price: number; isFree: boolean; onOpenCalc: () => void }) {
-  const rows = [6, 12, 18];
-  const [selected, setSelected] = useState(12);
+function InlineCredit({ price, isFree, creditMonths = 12, onOpenCalc }: { price: number; isFree: boolean; creditMonths?: number; onOpenCalc: () => void }) {
+  const allRows = [6, 12, 18, 24];
+  const rows = allRows.filter(m => m <= creditMonths);
+  const defaultSel = rows.includes(creditMonths) ? creditMonths : (rows[Math.floor(rows.length / 2)] ?? rows[0] ?? 12);
+  const [selected, setSelected] = useState(defaultSel);
   const monthly = (m: number) => (Math.ceil(price / m * 100) / 100).toFixed(2);
 
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-border shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-border shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between bg-[var(--brand)]/5 px-4 py-2.5 border-b border-border">
         <span className="text-sm font-bold text-foreground">{isFree ? "İlkin ödənişsiz hissə-hissə ödə!" : "Hissə-hissə ödə!"}</span>
@@ -995,11 +1298,10 @@ function InlineCredit({ price, isFree, onOpenCalc }: { price: number; isFree: bo
 }
 
 function CreditModal({ product, onClose, onOrder }: { product: Product; onClose: () => void; onOrder: () => void }) {
-  const [companies, setCompanies] = useState<import("@/lib/api").CreditCompany[]>([]);
+  const [companies, setCompanies] = useState<CreditCompany[]>([]);
   const [companyIdx, setCompanyIdx] = useState(0);
   const [months, setMonths] = useState(12);
   const [downPayment, setDownPayment] = useState("");
-  const [useDiscounted, setUseDiscounted] = useState(true);
 
   useEffect(() => {
     api.getCreditCompanies().then(list => {
@@ -1023,9 +1325,7 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
     if (product.discount > 0) return Math.round(product.price * (1 - product.discount / 100));
     return product.price;
   })();
-  const hasDiscount = activePrice < product.price;
-  const fullPrice = product.price;
-  const basePrice = hasDiscount ? (useDiscounted ? activePrice : fullPrice) : fullPrice;
+  const basePrice = activePrice;
 
   const currentCompany = companies[companyIdx];
   const currentPlans = currentCompany ? parsePlansLocal(currentCompany.plans) : [];
@@ -1035,13 +1335,14 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
   const down = Math.min(Math.max(parseFloat(downPayment) || 0, 0), basePrice - 1);
   const financed = basePrice - down;
 
-  const rate = validPlan?.rate ?? 0;
+  const freeMonthsLimit = product.credit_months || 999;
+  const effectiveRate = validMonths <= freeMonthsLimit ? 0 : (validPlan?.rate ?? 0);
   let monthly: number;
   let totalPaid: number;
   let overpay: number;
 
-  if (rate > 0) {
-    const total = Math.ceil(financed * (1 + rate / 100));
+  if (effectiveRate > 0) {
+    const total = Math.ceil(financed * (1 + effectiveRate / 100));
     monthly = Math.ceil(total / validMonths);
     totalPaid = monthly * validMonths + down;
     overpay = totalPaid - basePrice;
@@ -1060,19 +1361,6 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
         </div>
         <div className="p-5 space-y-4">
 
-          {/* Endirimli / tam qiymət */}
-          {hasDiscount && (
-            <div className="flex rounded-xl border border-border overflow-hidden text-xs font-semibold">
-              <button onClick={() => setUseDiscounted(true)}
-                className={`flex-1 py-2 transition-colors ${useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary/50"}`}>
-                Endirimli · {activePrice} AZN
-              </button>
-              <button onClick={() => setUseDiscounted(false)}
-                className={`flex-1 py-2 transition-colors ${!useDiscounted ? "bg-[var(--brand)] text-[var(--brand-foreground)]" : "hover:bg-secondary/50"}`}>
-                Tam · {fullPrice} AZN
-              </button>
-            </div>
-          )}
 
           {/* Məhsul qiyməti */}
           <div className="flex items-center justify-between rounded-xl bg-secondary/40 px-4 py-3">
@@ -1114,9 +1402,6 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" /> Faizsiz · Komissiyasız
                 </div>
               )}
-              {validPlan && validPlan.rate > 0 && (
-                <div className="mt-1.5 text-xs text-orange-600 font-medium">+{validPlan.rate}% faiz tətbiq olunur</div>
-              )}
             </div>
           )}
 
@@ -1125,12 +1410,24 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
             <div>
               <label className="mb-2 block text-sm font-semibold">Müddət</label>
               <div className="flex flex-wrap gap-2">
-                {currentPlans.map(p => (
-                  <button key={p.months} onClick={() => setMonths(p.months)}
-                    className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${validMonths === p.months ? "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]" : "border-border hover:bg-secondary"}`}>
-                    {p.months} ay{p.label ? ` · ${p.label}` : ""}
-                  </button>
-                ))}
+                {currentPlans.map(p => {
+                  const isSelected = validMonths === p.months;
+                  const hasFaiz = p.months > freeMonthsLimit && p.rate > 0;
+                  return (
+                    <button key={p.months} onClick={() => setMonths(p.months)}
+                      className={`rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition ${
+                        isSelected
+                          ? hasFaiz
+                            ? "border-yellow-400 bg-yellow-50 text-yellow-800"
+                            : "border-[var(--brand)] bg-[var(--brand)] text-[var(--brand-foreground)]"
+                          : hasFaiz
+                            ? "border-yellow-200 bg-yellow-50/50 text-yellow-700 hover:border-yellow-400"
+                            : "border-border hover:bg-secondary"
+                      }`}>
+                      {p.months} ay{p.label ? ` · ${p.label}` : ""}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -1183,3 +1480,62 @@ function CreditModal({ product, onClose, onOrder }: { product: Product; onClose:
 }
 
 const minp = "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors";
+
+function MobileSheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const startY = useRef(0);
+  const dragY = useRef(0);
+  const isDragging = useRef(false);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    startY.current = e.touches[0].clientY;
+    isDragging.current = true;
+    if (sheetRef.current) sheetRef.current.style.transition = "none";
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging.current) return;
+    const dy = e.touches[0].clientY - startY.current;
+    dragY.current = dy;
+    if (dy > 0 && sheetRef.current) {
+      sheetRef.current.style.transform = `translateY(${dy}px)`;
+    }
+  };
+
+  const onTouchEnd = () => {
+    isDragging.current = false;
+    if (sheetRef.current) sheetRef.current.style.transition = "";
+    if (dragY.current > 80) {
+      onClose();
+    } else if (sheetRef.current) {
+      sheetRef.current.style.transform = "";
+    }
+    dragY.current = 0;
+  };
+
+  // body scroll lock
+  React.useEffect(() => {
+    if (open) { document.body.style.overflow = "hidden"; }
+    else { document.body.style.overflow = ""; }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  return (
+    <div className={`fixed inset-0 z-50 flex flex-col justify-end md:hidden transition-all duration-300 ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
+      {/* Backdrop */}
+      <div className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
+        onClick={onClose} />
+      {/* Sheet */}
+      <div ref={sheetRef}
+        className={`relative bg-background rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto transition-transform duration-300 ease-out ${open ? "translate-y-0" : "translate-y-full"}`}
+        onClick={e => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing"
+          onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+          <div className="w-10 h-1 rounded-full bg-border" />
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
