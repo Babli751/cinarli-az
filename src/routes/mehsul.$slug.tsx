@@ -4,7 +4,7 @@ import {
   Heart, Scale, Share2, Truck, ShieldCheck, Store,
   ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
   ChevronLeft, ChevronRight as ChevronRightIcon, X as XIcon, Check,
-  ChevronDown, Plus,
+  ChevronDown, Plus, DoorOpen, Calendar, Handshake,
 } from "lucide-react";
 import { api, getImageUrl, type Product, type Category, type CreditCompany } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
@@ -32,8 +32,7 @@ function ProductPage() {
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
   const [lightbox, setLightbox] = useState(false);
-  const [orderModal, setOrderModal] = useState(false);
-  const [creditModal, setCreditModal] = useState(false);
+
   const [orderForm, setOrderForm] = useState({ name: "", phone: "", address: "", promo: "", payment_type: "cash" });
   const [promoResult, setPromoResult] = useState<{ discount: number; code: string; type: string; value: number } | null>(null);
   const [promoError, setPromoError] = useState("");
@@ -192,7 +191,7 @@ function ProductPage() {
         promo_discount: promoDiscount,
       });
       toast.success("Sifarişiniz qəbul edildi! Tezliklə əlaqə saxlayacağıq.");
-      setOrderModal(false);
+      setMobileSheet(null);
       setOrderForm({ name: "", phone: "", address: "", promo: "", payment_type: "cash" });
       setPromoResult(null); setPromoError("");
     } catch (e: any) { toast.error(e.message); }
@@ -449,10 +448,10 @@ function ProductPage() {
               </button>
             </div>
 
-            {/* Bir kliklə al + Hissə-hissə ödə — desktop 2 kart */}
-            <div className="grid lg:grid grid-cols-2 gap-3">
-              <button onClick={() => setOrderModal(true)}
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 hover:border-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/5 transition group">
+            {/* Bir kliklə al + Hissə-hissə ödə */}
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setMobileSheet("quick")}
+                className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-4 hover:border-[var(--accent-orange)] hover:bg-[var(--accent-orange)]/5 active:bg-secondary transition group">
                 <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary group-hover:bg-[var(--accent-orange)]/10">
                   <MousePointerClick className="h-5 w-5 text-[var(--accent-orange)]" />
                 </div>
@@ -462,8 +461,8 @@ function ProductPage() {
                 </div>
               </button>
               {(product.credit_months == null || product.credit_months > 0) && (
-                <button onClick={() => setCreditModal(true)}
-                  className="flex items-center gap-3 rounded-2xl border border-[var(--brand)] bg-[var(--brand)]/5 px-4 py-4 hover:bg-[var(--brand)]/10 transition">
+                <button onClick={() => { setCreditSelectedMonths(product.credit_months || 12); setMobileSheet("credit"); }}
+                  className="flex items-center gap-3 rounded-2xl border border-[var(--brand)] bg-[var(--brand)]/5 px-4 py-4 hover:bg-[var(--brand)]/10 active:bg-[var(--brand)]/15 transition">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-[var(--brand)]/10">
                     <CreditCard className="h-5 w-5 text-[var(--brand)]" />
                   </div>
@@ -477,43 +476,13 @@ function ProductPage() {
               )}
             </div>
 
-            {/* Mobil: düymə bloku */}
-            <div className="md:hidden space-y-2">
-              <button onClick={() => setMobileSheet("quick")}
-                className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl border border-border bg-card active:bg-secondary transition">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary">
-                  <MousePointerClick className="h-5 w-5 text-[var(--accent-orange)]" />
-                </div>
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-bold">Bir kliklə al</div>
-                  <div className="text-xs text-muted-foreground">Sürətli sifariş</div>
-                </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              </button>
-              {(product.credit_months == null || product.credit_months > 0) && (
-                <button onClick={() => { setCreditSelectedMonths(product.credit_months || 12); setMobileSheet("credit"); }}
-                  className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl border border-border bg-card active:bg-secondary transition">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-secondary">
-                    <CreditCard className="h-5 w-5 text-[var(--brand)]" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="text-sm font-bold">Hissə-hissə ödə</div>
-                    <div className="text-xs text-[var(--brand)] font-semibold">
-                      {(Math.ceil(activePrice / (product.credit_months || 12) * 100) / 100).toFixed(2)} AZN / {product.credit_months || 12} ay
-                    </div>
-                  </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                </button>
-              )}
-            </div>
-
             {/* Kredit şirkətləri carousel — desktop only */}
             {(() => {
               const hasCredit = product.credit_months == null ? true : product.credit_months > 0;
               if (!hasCredit || creditCompanies.length === 0) return null;
               return (
                 <div>
-                  <CreditCarousel companies={creditCompanies} price={activePrice} creditMonths={product.credit_months || 12} onOpen={() => setCreditModal(true)} />
+                  <CreditCarousel companies={creditCompanies} price={activePrice} creditMonths={product.credit_months || 12} onOpen={() => setMobileSheet("credit")} />
                 </div>
               );
             })()}
@@ -646,32 +615,73 @@ function ProductPage() {
 
       <SiteFooter />
 
+
       {/* ── Mobile Bottom Sheet: Bir kliklə al ── */}
       <MobileSheet open={mobileSheet === "quick"} onClose={() => setMobileSheet(null)}>
-        <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div>
-            {(() => { const op = product.extra_price != null ? product.price : product.sale_price != null ? product.price : product.old_price && product.old_price > product.price ? product.old_price : null; return op ? <div className="text-xs text-muted-foreground line-through">{op} AZN</div> : null; })()}
-            <div className="text-2xl font-black">{activePrice} AZN</div>
+            <h2 className="text-lg font-bold">Bir kliklə sifariş</h2>
+            <p className="text-xs text-muted-foreground line-clamp-1">{product.name}</p>
           </div>
-          <button onClick={() => { addItem({ id: product.id, name: product.name, price: activePrice, image: product.image, qty, credit_months: product.credit_months || 12 }); toast.success("Səbətə əlavə edildi"); setMobileSheet(null); }}
-            className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-3 text-sm font-semibold text-white hover:opacity-90">
-            <ShoppingCart className="h-4 w-4" /> Səbətə at
+          <button onClick={() => setMobileSheet(null)} className="grid h-9 w-9 place-items-center rounded-full bg-secondary">
+            <XIcon className="h-4 w-4" />
           </button>
         </div>
-        <div className="px-4 pb-6 space-y-3">
-          <input className={minp} placeholder="Ad və soyad" value={orderForm.name}
-            onChange={e => setOrderForm({...orderForm, name: e.target.value})} />
-          <input className={minp} placeholder="Telefon nömrəsi" type="tel" value={orderForm.phone}
-            onChange={e => setOrderForm({...orderForm, phone: e.target.value})} />
-          <input className={minp} placeholder="Promokod" value={orderForm.promo}
-            onChange={e => setOrderForm({...orderForm, promo: e.target.value})} />
+        <div className="px-4 pb-8 pt-4 space-y-4">
+          <div className="flex items-center justify-between rounded-xl bg-secondary/40 px-4 py-3">
+            <span className="text-sm text-muted-foreground">Məhsul qiyməti</span>
+            <span className="text-xl font-black text-[var(--brand)]">{activePrice} AZN</span>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Ad Soyad *</label>
+            <input className={minp} placeholder="Adınızı yazın" value={orderForm.name}
+              onChange={e => setOrderForm({...orderForm, name: e.target.value})} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Telefon *</label>
+            <input className={minp} placeholder="+994 XX XXX XX XX" type="tel" value={orderForm.phone}
+              onChange={e => setOrderForm({...orderForm, phone: e.target.value})} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Ünvan</label>
+            <input className={minp} placeholder="Çatdırılma ünvanı" value={orderForm.address}
+              onChange={e => setOrderForm({...orderForm, address: e.target.value})} />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Ödəniş üsulu</label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { key: "card",   Icon: CreditCard,  label: "Kartla ödə" },
+                { key: "cash",   Icon: DoorOpen,    label: "Qapıda ödə" },
+                { key: "credit", Icon: Calendar,    label: "Taksitlə alıram" },
+                { key: "nisye",  Icon: Handshake,   label: "Taksit Kartı" },
+              ] as const).map(({ key, Icon, label }) => (
+                <button key={key} type="button" onClick={() => setOrderForm({...orderForm, payment_type: key})}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition-colors ${orderForm.payment_type === key ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
+                  <Icon className="h-5 w-5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium">Promokod</label>
+            <div className="flex gap-2">
+              <input className={`${minp} flex-1`} placeholder="Promokodu daxil edin" value={orderForm.promo}
+                onChange={e => { setOrderForm({...orderForm, promo: e.target.value}); setPromoResult(null); setPromoError(""); }}
+                onKeyDown={e => e.key === "Enter" && applyPromo()} />
+              <button onClick={applyPromo} disabled={promoBusy || !orderForm.promo.trim()}
+                className="rounded-xl border border-border px-3 py-2 text-sm font-semibold hover:bg-secondary disabled:opacity-40">
+                {promoBusy ? "..." : "Tətbiq"}
+              </button>
+            </div>
+            {promoResult && <p className="mt-1 text-xs text-green-600 font-semibold">✓ −{promoResult.discount} AZN endirim</p>}
+            {promoError && <p className="mt-1 text-xs text-destructive">{promoError}</p>}
+          </div>
           <button onClick={async () => { await submitOrder(); setMobileSheet(null); }} disabled={orderBusy}
-            className="w-full rounded-2xl bg-foreground py-4 font-bold text-background hover:opacity-90 disabled:opacity-50 text-sm">
-            {orderBusy ? "Göndərilir..." : "Bir kliklə al"}
+            className="w-full rounded-xl bg-[var(--brand)] py-3.5 font-semibold text-white hover:opacity-90 disabled:opacity-50">
+            {orderBusy ? "Göndərilir..." : "Sifarişi göndər"}
           </button>
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
-            <strong>Qeyd:</strong> Hörmətli müştəri, təqdim etdiyiniz promokod keçərlidirsə, satış nümayəndəsi sifarişinizi müvafiq şərtlərə uyğun şəkildə rəsmiləşdirəcəkdir.
-          </p>
         </div>
       </MobileSheet>
 
@@ -704,8 +714,9 @@ function ProductPage() {
                     setOrderForm({...orderForm, payment_type: "nisye"});
                   }
                 }}
-                  className={`flex-shrink-0 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${nisyeActive ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground"}`}>
-                  🤝 Nisyə al
+                  className={`flex-shrink-0 flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 text-xs font-semibold transition overflow-hidden ${nisyeActive ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground"}`}
+                  style={{height: 44, minWidth: 96}}>
+                  🤝 Taksit Kartı
                 </button>
                 {/* Kredit şirkətləri */}
                 {creditOnlyCompanies.map(co => {
@@ -714,7 +725,7 @@ function ProductPage() {
                   return (
                     <button key={co.id} onClick={() => { setOrderForm({...orderForm, payment_type: `cc_${co.id}`}); const plans = parsePlans(co.plans); const keep = plans.find(p => p.months === creditSelectedMonths); if (!keep) setCreditSelectedMonths(plans.find(p => p.months === (product.credit_months || 12))?.months ?? plans[0]?.months ?? 12); }}
                       className={`flex-shrink-0 rounded-xl border-2 transition overflow-hidden ${active ? "border-foreground" : "border-border hover:border-foreground"}`}
-                      style={{padding: 0, height: 36, width: 72}}>
+                      style={{padding: 0, height: 44, width: 96}}>
                       {logoUrl
                         ? <img src={logoUrl} alt={co.name} className="h-full w-full object-cover" />
                         : <span className="flex h-full w-full items-center justify-center text-xs font-semibold px-2">{co.name}</span>}
@@ -727,13 +738,15 @@ function ProductPage() {
           {(() => {
             const selCo = creditCompanies.find(co => orderForm.payment_type === `cc_${co.id}`);
             const plans = selCo ? parsePlans(selCo.plans) : [6,12,18,24].map(m => ({ months: m, rate: 0, label: "" }));
-            const freeMonths = product.credit_months || 999;
+            // şirkətin öz free_months-u varsa onu işlət, yoxsa məhsulun credit_months-u
+            const freeMonths = selCo?.free_months != null ? selCo.free_months : (product.credit_months || 999);
             const selPlan = plans.find(p => p.months === creditSelectedMonths) ?? plans[0];
+            const activeMonths = selPlan?.months ?? creditSelectedMonths;
             const remaining = Math.max(0, activePrice - downPayment);
-            const effectiveRate = (selPlan?.months ?? 0) <= freeMonths ? 0 : (selPlan?.rate ?? 0);
+            const effectiveRate = activeMonths <= freeMonths ? 0 : (selPlan?.rate ?? 0);
             const financed = remaining * (1 + effectiveRate / 100);
-            const monthly = (Math.ceil(financed / creditSelectedMonths * 100) / 100).toFixed(2);
-            const totalPaid = (parseFloat(monthly) * creditSelectedMonths + downPayment).toFixed(2);
+            const monthly = (Math.ceil(financed / activeMonths * 100) / 100).toFixed(2);
+            const totalPaid = (parseFloat(monthly) * activeMonths + downPayment).toFixed(2);
             return (
               <div className="space-y-3">
                 <div className="rounded-2xl bg-secondary/30 p-4 space-y-3">
@@ -789,7 +802,7 @@ function ProductPage() {
                   </div>
                 </div>
                 {/* Sifariş et */}
-                <button onClick={() => { setMobileSheet(null); setOrderModal(true); }}
+                <button onClick={() => setMobileSheet("quick")}
                   className="w-full rounded-2xl bg-[var(--brand)] py-4 font-bold text-white hover:opacity-90 text-sm">
                   Sifariş et
                 </button>
@@ -799,108 +812,7 @@ function ProductPage() {
         </div>
       </MobileSheet>
 
-      {/* Order Modal */}
-      {orderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOrderModal(false)}>
-          <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-background shadow-2xl">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <div>
-                <h2 className="text-lg font-bold">Bir kliklə sifariş</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">{product.name}</p>
-              </div>
-              <button onClick={() => setOrderModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><XIcon className="h-5 w-5" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Ad Soyad *</label>
-                <input className={minp} value={orderForm.name} onChange={e => setOrderForm({...orderForm, name: e.target.value})} placeholder="Adınızı yazın" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Telefon *</label>
-                <input className={minp} value={orderForm.phone} onChange={e => setOrderForm({...orderForm, phone: e.target.value})} placeholder="+994 XX XXX XX XX" type="tel" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Ünvan</label>
-                <input className={minp} value={orderForm.address} onChange={e => setOrderForm({...orderForm, address: e.target.value})} placeholder="Çatdırılma ünvanı" />
-              </div>
 
-              {/* Ödəniş növü */}
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Ödəniş növü</label>
-                <div className="flex gap-2">
-                  {[{ v: "cash", l: "💵 Nağd" }, { v: "credit", l: "💳 Kredit" }].map(o => (
-                    <button key={o.v} onClick={() => setOrderForm({...orderForm, payment_type: o.v})}
-                      className={`flex-1 rounded-xl border py-2 text-sm font-semibold transition ${orderForm.payment_type === o.v ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                      {o.l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Promokod */}
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Promokod</label>
-                <div className="flex gap-2">
-                  <input className={minp + " flex-1"} value={orderForm.promo}
-                    onChange={e => { setOrderForm({...orderForm, promo: e.target.value}); setPromoResult(null); setPromoError(""); }}
-                    placeholder="Promokodu daxil edin"
-                    onKeyDown={e => e.key === "Enter" && applyPromo()} />
-                  <button onClick={applyPromo} disabled={promoBusy || !orderForm.promo.trim()}
-                    className="rounded-xl bg-[var(--brand)] px-4 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 transition">
-                    {promoBusy ? "..." : "Tətbiq et"}
-                  </button>
-                </div>
-                {promoResult && (
-                  <div className="mt-1.5 flex items-center gap-1.5 text-xs font-semibold text-green-700">
-                    <Check className="h-3.5 w-3.5" /> {promoResult.code} — {promoResult.type === "percent" ? `${promoResult.value}%` : `${promoResult.value} AZN`} endirim tətbiq edildi
-                  </div>
-                )}
-                {promoError && <p className="mt-1 text-xs text-red-600">{promoError}</p>}
-              </div>
-
-              {/* Xülasə */}
-              {(() => {
-                const price = calcActivePrice(product);
-                const originalPrice = product.extra_price != null ? product.price : product.sale_price != null ? product.price : product.old_price && product.old_price > product.price ? product.old_price : null;
-                const promoDiscount = promoResult?.discount ?? 0;
-                const finalTotal = Math.max(0, price * qty - promoDiscount);
-                return (
-                  <div className="rounded-xl bg-secondary/50 p-3 text-sm space-y-1">
-                    <div className="flex justify-between"><span className="text-muted-foreground">Məhsul:</span><span className="font-semibold line-clamp-1">{product.name}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">Miqdar:</span><span className="font-semibold">{qty} ədəd</span></div>
-                    {originalPrice && (
-                      <div className="flex justify-between"><span className="text-muted-foreground">Əvvəlki qiymət:</span><span className="line-through text-muted-foreground">{originalPrice * qty} AZN</span></div>
-                    )}
-                    {promoDiscount > 0 && (
-                      <div className="flex justify-between text-green-700"><span>Promokod endirimi:</span><span className="font-semibold">-{promoDiscount} AZN</span></div>
-                    )}
-                    <div className="flex justify-between border-t border-border pt-1 mt-1">
-                      <span className="text-muted-foreground font-medium">Cəmi:</span>
-                      <span className="font-black text-lg text-[var(--brand)]">{finalTotal} AZN</span>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-            <div className="flex gap-3 border-t border-border px-6 py-4">
-              <button onClick={() => setOrderModal(false)} className="flex-1 rounded-xl border border-border py-2.5 font-medium hover:bg-secondary">Ləğv et</button>
-              <button onClick={submitOrder} disabled={orderBusy}
-                className="flex-1 rounded-xl bg-[var(--accent-orange)] py-2.5 font-semibold text-white hover:opacity-90 disabled:opacity-50">
-                {orderBusy ? "..." : "Sifariş ver"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Credit Modal */}
-      {creditModal && (
-        <CreditModal
-          product={product}
-          onClose={() => setCreditModal(false)}
-          onOrder={() => { setCreditModal(false); setOrderModal(true); }}
-        />
-      )}
 
       {/* Login Modal */}
       {loginModal && (
@@ -1521,7 +1433,7 @@ function MobileSheet({ open, onClose, children }: { open: boolean; onClose: () =
   }, [open]);
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col justify-end md:hidden transition-all duration-300 ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
+    <div className={`fixed inset-0 z-50 flex flex-col justify-end transition-all duration-300 ${open ? "pointer-events-auto" : "pointer-events-none"}`}>
       {/* Backdrop */}
       <div className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose} />

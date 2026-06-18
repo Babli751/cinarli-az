@@ -14,6 +14,7 @@ export interface CreditCompany {
   is_active: number;
   position: number;
   type?: "credit" | "nisye";
+  free_months?: number | null;
 }
 
 export function getImageUrl(image: string | undefined | null): string | null {
@@ -203,6 +204,7 @@ export interface Category {
   parent_id?: number | null;
   is_hidden?: number;
   featured_product_id?: number | null;
+  banner_credit_months?: number | null;
   created_at?: string;
 }
 

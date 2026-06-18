@@ -303,10 +303,10 @@ app.post("/api/categories", authMiddleware, adminMiddleware, async (c) => {
 });
 
 app.put("/api/categories/:id", authMiddleware, adminMiddleware, async (c) => {
-  const { slug, name, description, parent_id, is_hidden, featured_product_id } = await c.req.json();
+  const { slug, name, description, parent_id, is_hidden, featured_product_id, banner_credit_months } = await c.req.json();
   const icon = autoIcon(name);
   try {
-    db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=?, featured_product_id=? WHERE id=?").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, featured_product_id || null, c.req.param("id"));
+    db.prepare("UPDATE categories SET slug=?, name=?, icon=?, description=?, parent_id=?, is_hidden=?, featured_product_id=?, banner_credit_months=? WHERE id=?").run(slug, name, icon, description || "", parent_id || null, is_hidden ? 1 : 0, featured_product_id || null, banner_credit_months || null, c.req.param("id"));
     return c.json({ ok: true });
   } catch (e: any) {
     if (e.message?.includes("UNIQUE")) return c.json({ error: "Bu slug artıq mövcuddur" }, 400);
@@ -664,16 +664,16 @@ app.get("/api/credit-companies/active", (c) => {
 app.post("/api/credit-companies", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const plans = Array.isArray(b.plans) ? JSON.stringify(b.plans) : "[]";
-  const r = db.prepare("INSERT INTO credit_companies (name, logo, plans, is_active, position, type) VALUES (?,?,?,?,?,?)").run(
-    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, b.type || "credit"
+  const r = db.prepare("INSERT INTO credit_companies (name, logo, plans, is_active, position, type, free_months) VALUES (?,?,?,?,?,?,?)").run(
+    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, b.type || "credit", b.free_months ?? null
   );
   return c.json({ id: r.lastInsertRowid });
 });
 app.put("/api/credit-companies/:id", authMiddleware, adminMiddleware, async (c) => {
   const b = await c.req.json();
   const plans = Array.isArray(b.plans) ? JSON.stringify(b.plans) : "[]";
-  db.prepare("UPDATE credit_companies SET name=?,logo=?,plans=?,is_active=?,position=?,type=? WHERE id=?").run(
-    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, b.type || "credit", c.req.param("id")
+  db.prepare("UPDATE credit_companies SET name=?,logo=?,plans=?,is_active=?,position=?,type=?,free_months=? WHERE id=?").run(
+    b.name, b.logo || "", plans, b.is_active !== false ? 1 : 0, b.position || 0, b.type || "credit", b.free_months ?? null, c.req.param("id")
   );
   return c.json({ ok: true });
 });

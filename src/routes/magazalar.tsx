@@ -1,23 +1,101 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PageShell } from "@/components/SiteLayout";
 import { MapPin, Phone, Clock } from "lucide-react";
 import { api, type Store } from "@/lib/api";
+import "leaflet/dist/leaflet.css";
 
 export const Route = createFileRoute("/magazalar")({
   head: () => ({ meta: [{ title: "Mağazalar — Manqo" }, { name: "description", content: "Manqo mağaza şəbəkəsi və ünvanları." }] }),
   component: Magazalar,
 });
 
-// Azerbaijan bounding box: lat 38.4–41.9, lng 44.8–50.4
-const MAP_LAT_MIN = 38.4, MAP_LAT_MAX = 41.9;
-const MAP_LNG_MIN = 44.8, MAP_LNG_MAX = 50.4;
-const SVG_W = 600, SVG_H = 300;
+const PULSE_STYLE = `
+  .store-dot { position:relative; width:20px; height:20px; }
+  .store-dot-inner { position:absolute; inset:3px; background:#14b8a6; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px #14b8a6; z-index:1; }
+  .store-dot-ring { position:absolute; inset:0; border-radius:50%; background:#14b8a6; opacity:0.5; animation:storePulse 1.8s ease-out infinite; }
+  @keyframes storePulse { 0%{transform:scale(0.5);opacity:0.7} 100%{transform:scale(2.2);opacity:0} }
+`;
 
-function latLngToSvg(lat: number, lng: number) {
-  const x = ((lng - MAP_LNG_MIN) / (MAP_LNG_MAX - MAP_LNG_MIN)) * SVG_W;
-  const y = SVG_H - ((lat - MAP_LAT_MIN) / (MAP_LAT_MAX - MAP_LAT_MIN)) * SVG_H;
-  return { x, y };
+function StoreMap({ stores, selected, onSelect }: { stores: Store[]; selected: number | null; onSelect: (id: number | null) => void }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const leafletMap = useRef<import("leaflet").Map | null>(null);
+  const markersRef = useRef<Record<number, import("leaflet").Marker>>({});
+
+  useEffect(() => {
+    if (!mapRef.current || leafletMap.current) return;
+
+    // Inject pulse CSS once
+    if (!document.getElementById("store-pulse-css")) {
+      const style = document.createElement("style");
+      style.id = "store-pulse-css";
+      style.textContent = PULSE_STYLE;
+      document.head.appendChild(style);
+    }
+
+    import("leaflet").then(L => {
+      const map = L.map(mapRef.current!, { zoomControl: true, scrollWheelZoom: false });
+      leafletMap.current = map;
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      const mappable = stores.filter(s => s.lat != null && s.lng != null);
+
+      if (mappable.length === 0) {
+        map.setView([40.4, 49.9], 7);
+        return;
+      }
+
+      const pulseIcon = L.divIcon({
+        className: "",
+        html: `<div class="store-dot"><div class="store-dot-ring"></div><div class="store-dot-inner"></div></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -12],
+      });
+
+      mappable.forEach(s => {
+        const marker = L.marker([s.lat!, s.lng!], { icon: pulseIcon })
+          .addTo(map)
+          .bindPopup(
+            `<strong style="font-size:13px">${s.name}</strong>${s.city ? `<br/><span style="color:#14b8a6;font-size:11px">${s.city}</span>` : ""}${s.address ? `<br/><span style="font-size:11px">${s.address}</span>` : ""}${s.phone ? `<br/><span style="font-size:11px">${s.phone}</span>` : ""}`,
+            { closeButton: false, maxWidth: 200 }
+          );
+        marker.on("click", () => onSelect(s.id === selected ? null : s.id));
+        markersRef.current[s.id] = marker;
+      });
+
+      if (mappable.length === 1) {
+        map.setView([mappable[0].lat!, mappable[0].lng!], 13);
+      } else {
+        const group = L.featureGroup(Object.values(markersRef.current));
+        map.fitBounds(group.getBounds().pad(0.3));
+      }
+    });
+
+    return () => {
+      leafletMap.current?.remove();
+      leafletMap.current = null;
+      markersRef.current = {};
+    };
+  }, [stores]);
+
+  // Open/close popup when selected changes
+  useEffect(() => {
+    if (!leafletMap.current) return;
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      if (Number(id) === selected) {
+        marker.openPopup();
+      } else {
+        marker.closePopup();
+      }
+    });
+  }, [selected]);
+
+  return <div ref={mapRef} style={{ height: 340 }} className="w-full rounded-2xl overflow-hidden" />;
 }
 
 function Magazalar() {
@@ -27,73 +105,18 @@ function Magazalar() {
   useEffect(() => { api.getStores().then(setStores).catch(() => {}); }, []);
 
   const mappable = stores.filter(s => s.lat != null && s.lng != null);
-  const selectedStore = stores.find(s => s.id === selected);
 
   return (
     <PageShell title="Mağazalar" subtitle="Yaxınlıqdakı mağazanı seçin.">
-      {/* SVG xəritə */}
-      {mappable.length > 0 && (
-        <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full" style={{ background: "#e8f4f8" }}>
-            {/* Azərbaycan ölkə fonu */}
-            <rect x="0" y="0" width={SVG_W} height={SVG_H} fill="#e8f4f8" rx="0" />
-            {/* Sadə ölkə outline — approximate polygon */}
-            <path
-              d="M72,220 L85,210 L90,195 L110,185 L125,175 L140,168 L158,162 L172,155 L185,148 L200,140 L215,132 L230,125 L248,118 L262,110 L275,105 L288,100 L300,96 L315,92 L328,88 L342,85 L356,82 L368,80 L380,78 L392,77 L404,76 L416,78 L428,82 L438,88 L446,96 L452,106 L455,118 L453,130 L448,142 L440,154 L430,164 L418,172 L405,178 L390,182 L374,185 L358,186 L342,186 L326,185 L310,183 L294,180 L278,178 L262,177 L246,178 L230,180 L214,184 L198,190 L182,197 L166,205 L150,213 L134,220 L118,226 L102,230 L88,232 L76,230 Z"
-              fill="#c8e6c9" stroke="#81c784" strokeWidth="1.5"
-            />
-            {/* Xəzər dənizi */}
-            <ellipse cx="530" cy="130" rx="55" ry="120" fill="#bbdefb" opacity="0.6" />
-            <text x="520" y="135" fontSize="10" fill="#1565c0" textAnchor="middle" fontWeight="500">Xəzər</text>
-
-            {/* Mağaza nöqtələri */}
-            {mappable.map(s => {
-              const { x, y } = latLngToSvg(s.lat!, s.lng!);
-              const isSelected = selected === s.id;
-              return (
-                <g key={s.id} onClick={() => setSelected(s.id === selected ? null : s.id)} style={{ cursor: "pointer" }}>
-                  {/* Pulse ring */}
-                  {isSelected && (
-                    <circle cx={x} cy={y} r="16" fill="none" stroke="#14b8a6" strokeWidth="2" opacity="0.5">
-                      <animate attributeName="r" from="8" to="22" dur="1.2s" repeatCount="indefinite" />
-                      <animate attributeName="opacity" from="0.7" to="0" dur="1.2s" repeatCount="indefinite" />
-                    </circle>
-                  )}
-                  {/* Outer glow */}
-                  <circle cx={x} cy={y} r="10" fill={isSelected ? "#14b8a6" : "#fff"} stroke={isSelected ? "#0d9488" : "#14b8a6"} strokeWidth="2" />
-                  {/* Inner dot */}
-                  <circle cx={x} cy={y} r="4" fill={isSelected ? "#fff" : "#14b8a6"}>
-                    {!isSelected && (
-                      <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite" />
-                    )}
-                  </circle>
-                  {/* Label */}
-                  <text x={x} y={y - 14} textAnchor="middle" fontSize="9" fontWeight="600" fill="#1e293b"
-                    style={{ pointerEvents: "none", userSelect: "none" }}>
-                    {s.city || s.name}
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-
-          {/* Seçilmiş mağaza info */}
-          {selectedStore && (
-            <div className="border-t border-border px-5 py-4 bg-[var(--brand)]/5 flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-[var(--brand)] flex-shrink-0 mt-0.5" />
-              <div>
-                <div className="font-bold text-sm">{selectedStore.name}</div>
-                {selectedStore.city && <div className="text-xs text-[var(--brand)] font-semibold">{selectedStore.city}</div>}
-                <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-                  {selectedStore.address && <div>{selectedStore.address}</div>}
-                  {selectedStore.phone && <div>{selectedStore.phone}</div>}
-                  {selectedStore.hours && <div>{selectedStore.hours}</div>}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Leaflet xəritə */}
+      <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <StoreMap stores={stores} selected={selected} onSelect={setSelected} />
+        {mappable.length === 0 && (
+          <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border">
+            Mağaza ünvanları xəritədə göstərilmək üçün koordinat tələb edir.
+          </div>
+        )}
+      </div>
 
       {/* Mağaza kartları */}
       {stores.length === 0 ? (

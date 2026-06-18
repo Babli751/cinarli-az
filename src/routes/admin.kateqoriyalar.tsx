@@ -283,17 +283,35 @@ function CatsAdmin() {
                 />
               </Field>
               {editing.id && (
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">Banner məhsulu (opsional)</label>
-                  <select
-                    className={inp}
-                    value={editing.featured_product_id ?? ""}
-                    onChange={e => setEditing({ ...editing, featured_product_id: e.target.value ? Number(e.target.value) : null })}>
-                    <option value="">— Avtomatik (ən ucuz aylıq) —</option>
-                    {allProducts.filter(p => p.is_active !== 0).map(p => (
-                      <option key={p.id} value={p.id}>{p.name} — {p.extra_price ?? p.sale_price ?? p.price} AZN</option>
-                    ))}
-                  </select>
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Banner məhsulu (opsional)</label>
+                    <select
+                      className={inp}
+                      value={editing.featured_product_id ?? ""}
+                      onChange={e => setEditing({ ...editing, featured_product_id: e.target.value ? Number(e.target.value) : null })}>
+                      <option value="">— Avtomatik (ən ucuz aylıq) —</option>
+                      {allProducts.filter(p => p.is_active !== 0).map(p => (
+                        <option key={p.id} value={p.id}>{p.name} — {p.extra_price ?? p.sale_price ?? p.price} AZN</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">Bannerdə aylıq ödəniş neçə aya bölünsün</label>
+                    <select
+                      className={inp}
+                      value={editing.banner_credit_months ?? ""}
+                      onChange={e => setEditing({ ...editing, banner_credit_months: e.target.value ? Number(e.target.value) : null })}>
+                      <option value="">— Məhsulun öz krediti (default) —</option>
+                      <option value={3}>3 aya</option>
+                      <option value={6}>6 aya</option>
+                      <option value={9}>9 aya</option>
+                      <option value={12}>12 aya</option>
+                      <option value={18}>18 aya</option>
+                      <option value={24}>24 aya</option>
+                      <option value={36}>36 aya</option>
+                    </select>
+                  </div>
                 </div>
               )}
 

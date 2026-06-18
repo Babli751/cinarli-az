@@ -121,9 +121,11 @@ function CategoryPage() {
           const pinned = cat?.featured_product_id
             ? allProducts.find(p => p.id === cat.featured_product_id)
             : null;
+          const bannerMonths = cat?.banner_credit_months || null;
           const calcMonthly = (p: typeof pool[0]) => {
             const ap = p.extra_price ?? p.sale_price ?? (p.old_price && p.old_price > p.price ? p.price : p.discount > 0 ? Math.round(p.price * (1 - p.discount / 100)) : p.price);
-            return { p, monthly: Math.ceil(ap / (p.credit_months || 12) * 100) / 100 };
+            const months = bannerMonths || p.credit_months || 12;
+            return { p, monthly: Math.ceil(ap / months * 100) / 100, months };
           };
           const cheapest = pinned
             ? calcMonthly(pinned)
@@ -137,7 +139,7 @@ function CategoryPage() {
                 <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
               </div>
               <div className="flex-shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">ayda cəmi</p>
+                <p className="text-xs text-muted-foreground">{cheapest.months} aya · ayda cəmi</p>
                 <p className="rounded-xl border-2 border-[var(--brand)] px-3 py-1 text-lg font-black text-[var(--brand)]">{cheapest.monthly.toFixed(2)} AZN</p>
               </div>
             </Link>
@@ -153,9 +155,11 @@ function CategoryPage() {
           const pinned = cat?.featured_product_id
             ? allProducts.find(p => p.id === cat.featured_product_id)
             : null;
+          const bannerMonths = cat?.banner_credit_months || null;
           const calcMonthly = (p: typeof pool[0]) => {
             const ap = p.extra_price ?? p.sale_price ?? (p.old_price && p.old_price > p.price ? p.price : p.discount > 0 ? Math.round(p.price * (1 - p.discount / 100)) : p.price);
-            return { p, monthly: Math.ceil(ap / (p.credit_months || 12) * 100) / 100 };
+            const months = bannerMonths || p.credit_months || 12;
+            return { p, monthly: Math.ceil(ap / months * 100) / 100, months };
           };
           const cheapest = pinned
             ? calcMonthly(pinned)
@@ -169,7 +173,7 @@ function CategoryPage() {
                 <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
               </div>
               <div className="flex-shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">ayda cəmi</p>
+                <p className="text-xs text-muted-foreground">{cheapest.months} aya · ayda cəmi</p>
                 <p className="rounded-xl border-2 border-[var(--brand)] px-3 py-1 text-lg font-black text-[var(--brand)]">{cheapest.monthly.toFixed(2)} AZN</p>
               </div>
             </Link>

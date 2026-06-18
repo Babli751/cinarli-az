@@ -167,9 +167,31 @@ function CreditCompaniesPage() {
                   </button>
                   <button type="button" onClick={() => setEditing({ ...editing, type: "nisye" })}
                     className={`flex-1 rounded-xl border-2 py-2.5 text-sm font-semibold transition ${editing.type === "nisye" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-border hover:bg-secondary"}`}>
-                    🤝 Nisyə al
+                    🤝 Taksit Kartı
                   </button>
                 </div>
+              </div>
+
+              {/* Faizsiz ay limiti */}
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">Bu şirkət üçün faizsiz ay limiti</label>
+                <select
+                  className={inp}
+                  value={editing.free_months ?? ""}
+                  onChange={e => setEditing({ ...editing, free_months: e.target.value === "" ? null : Number(e.target.value) })}
+                >
+                  <option value="">— Məhsulun öz limiti (default) —</option>
+                  <option value={0}>Faizsiz yoxdur (hamısı faizli)</option>
+                  <option value={3}>3 aya kimi faizsiz</option>
+                  <option value={6}>6 aya kimi faizsiz</option>
+                  <option value={9}>9 aya kimi faizsiz</option>
+                  <option value={12}>12 aya kimi faizsiz</option>
+                  <option value={18}>18 aya kimi faizsiz</option>
+                  <option value={24}>24 aya kimi faizsiz</option>
+                  <option value={36}>36 aya kimi faizsiz</option>
+                  <option value={999}>Hamısı faizsiz</option>
+                </select>
+                <p className="mt-1 text-xs text-muted-foreground">Məhsulda "6 ay faizsiz" qoyulsa da bu şirkətdə fərqli limit tətbiq oluna bilər</p>
               </div>
 
               <label className="flex items-center gap-3 cursor-pointer">
