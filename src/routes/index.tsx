@@ -20,8 +20,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const { addItem } = useCart();
-  const [tab1, setTab1] = useState<"popular" | "new">("popular");
-  const [tab2, setTab2] = useState<"bestseller" | "discount">("bestseller");
   const [products, setProducts] = useState<Product[]>([]);
   const [popular, setPopular] = useState<Product[]>([]);
   const [mostSold, setMostSold] = useState<Product[]>([]);
@@ -66,14 +64,11 @@ function Index() {
 
   const byNewest = (arr: Product[]) => [...arr].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
-  const list1 = tab1 === "popular"
-    ? byNewest(popular)
-    : byNewest(products).slice(0, 24);
-
+  const listPopular = byNewest(popular);
+  const listNew = byNewest(products).slice(0, 24);
   const hasDiscount = (p: Product) => p.extra_price != null || p.sale_price != null || (p.old_price && p.old_price > p.price) || p.discount > 0;
-  const list2 = tab2 === "bestseller"
-    ? byNewest(mostSold)
-    : byNewest(products).filter(hasDiscount).slice(0, 24);
+  const listBestseller = byNewest(mostSold);
+  const listDiscount = byNewest(products).filter(hasDiscount).slice(0, 24);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -175,7 +170,7 @@ function Index() {
                       <div className="mt-3 flex gap-2">
                         <button onClick={(e) => {
                           e.preventDefault();
-                          addItem({ id: featured.id!, name: featured.name, price: activePrice, image: featured.image, qty: 1 });
+                          addItem({ id: featured.id!, name: featured.name, price: activePrice, image: featured.image, qty: 1, credit_months: featured.credit_months || 12 });
                           navigate({ to: "/sebet" });
                         }}
                           className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--accent-orange)] py-2.5 text-sm font-bold text-white hover:opacity-90">
@@ -183,7 +178,7 @@ function Index() {
                         </button>
                         <button onClick={(e) => {
                           e.preventDefault();
-                          addItem({ id: featured.id!, name: featured.name, price: activePrice, image: featured.image, qty: 1 });
+                          addItem({ id: featured.id!, name: featured.name, price: activePrice, image: featured.image, qty: 1, credit_months: featured.credit_months || 12 });
                         }}
                           className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg bg-[var(--brand)] text-white hover:opacity-90"
                           title="Səbətə əlavə et">
@@ -223,6 +218,7 @@ function Index() {
           ))}
         </div>
       </section>
+
 
       {/* Banner Carousel */}
       <section className="mx-auto max-w-7xl px-4 pt-6">
@@ -266,30 +262,17 @@ function Index() {
         </div>
       </section>
 
-      {/* Products Section 1 */}
-      <ProductCarousel
-        items={list1}
-        emptyText="Admin paneldən məhsul əlavə edin"
-        tabs={[
-          { key: "popular", label: "Populyar" },
-          { key: "new", label: "Yeni" },
-        ]}
-        activeTab={tab1}
-        onTabChange={(t) => setTab1(t as "popular" | "new")}
-      />
+      {/* Populyar */}
+      <ProductCarousel items={listPopular} title="Populyar" emptyText="Admin paneldən məhsul əlavə edin" />
 
-      {/* Products Section 2 */}
-      <ProductCarousel
-        items={list2}
-        emptyText={tab2 === "discount" ? "Endirimli məhsul yoxdur" : "Admin paneldən məhsul əlavə edin"}
-        tabs={[
-          { key: "bestseller", label: "Çox satılan" },
-          { key: "discount", label: "Endirimli" },
-        ]}
-        activeTab={tab2}
-        onTabChange={(t) => setTab2(t as "bestseller" | "discount")}
-        isLast
-      />
+      {/* Yeni */}
+      <ProductCarousel items={listNew} title="Yeni" emptyText="Admin paneldən məhsul əlavə edin" />
+
+      {/* Çox satılan */}
+      <ProductCarousel items={listBestseller} title="Çox satılan" emptyText="Admin paneldən məhsul əlavə edin" />
+
+      {/* Endirimli */}
+      <ProductCarousel items={listDiscount} title="Endirimli" emptyText="Endirimli məhsul yoxdur" isLast />
 
       {/* Brand slider — footer üstündə */}
       {brands.length > 0 && (
@@ -342,13 +325,11 @@ function AdPlaceholder() {
 }
 
 function ProductCarousel({
-  items, emptyText, tabs, activeTab, onTabChange, isLast,
+  items, emptyText, title, isLast,
 }: {
   items: Product[];
   emptyText: string;
-  tabs: { key: string; label: string }[];
-  activeTab: string;
-  onTabChange: (t: string) => void;
+  title: string;
   isLast?: boolean;
 }) {
   const tripled = [...items, ...items, ...items];
@@ -371,15 +352,10 @@ function ProductCarousel({
     <section className={`mx-auto max-w-7xl px-4 py-6 md:py-10 ${isLast ? "pb-16" : ""}`}>
       <div className="mb-4 md:mb-5 flex items-center justify-between gap-2">
         <div className="flex items-baseline gap-3 md:gap-6 flex-wrap">
-          {tabs.map((t) => (
-            <button key={t.key} onClick={() => onTabChange(t.key)}
-              className={`text-lg md:text-2xl lg:text-3xl font-bold transition ${activeTab === t.key ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"}`}>
-              {t.label}
-            </button>
-          ))}
+          <span className="text-lg md:text-2xl lg:text-3xl font-bold">{title}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/mehsullar/$filter" params={{ filter: activeTab }}
+          <Link to="/mehsullar/$filter" params={{ filter: title === "Populyar" ? "popular" : title === "Yeni" ? "new" : title === "Çox satılan" ? "bestseller" : "discount" }}
             className="flex items-center gap-1 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary transition-colors">
             Hamısı <ArrowRight className="h-3 w-3" />
           </Link>
@@ -460,6 +436,7 @@ function calcPrice(p: Product) {
 
 function ProductCard({ p }: { p: Product }) {
   const { activePrice, originalPrice } = calcPrice(p);
+  const { addItem } = useCart();
   const discountPct = originalPrice ? Math.round((1 - activePrice / originalPrice) * 100) : 0;
   const savingAmt = originalPrice ? (originalPrice - activePrice) : 0;
   const months = p.credit_months || 12;
@@ -478,7 +455,7 @@ function ProductCard({ p }: { p: Product }) {
         <button className="grid h-8 w-8 place-items-center rounded-full bg-white/90 text-muted-foreground shadow hover:text-[var(--brand)]"><Scale className="h-4 w-4" /></button>
       </div>
       <div className="relative aspect-[4/3] overflow-hidden bg-white flex items-center justify-center">
-        <ProductImg p={p} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <ProductImg p={p} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
         {(p.credit_months == null || p.credit_months > 0) && (
           <div className="absolute left-2 bottom-2 z-10">
             <div className="rounded-xl bg-[var(--brand)] text-white text-center px-2 py-1 leading-tight shadow-lg">
@@ -512,7 +489,9 @@ function ProductCard({ p }: { p: Product }) {
           </div>
         ) : null}
         {(p.stock > 0 || p.in_stock === 1) && (
-          <button className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">
+          <button
+            onClick={e => { e.preventDefault(); addItem({ id: p.id, name: p.name, price: activePrice, image: p.image, qty: 1, credit_months: p.credit_months || 12 }); }}
+            className="mt-3 md:mt-4 w-full rounded-lg bg-[var(--accent-orange)] py-2 md:py-2.5 text-center font-semibold text-white text-sm md:text-base transition hover:opacity-90">
             Səbətə əlavə et
           </button>
         )}

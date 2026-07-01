@@ -214,6 +214,7 @@ try { db.exec(`CREATE TABLE IF NOT EXISTS product_reviews (
 
 try { db.exec("ALTER TABLE credit_companies ADD COLUMN type TEXT DEFAULT 'credit'"); } catch {}
 try { db.exec("ALTER TABLE credit_companies ADD COLUMN free_months INTEGER DEFAULT NULL"); } catch {}
+try { db.exec("ALTER TABLE categories ADD COLUMN banner_company_id INTEGER DEFAULT NULL"); } catch {}
 try { db.exec("ALTER TABLE stores ADD COLUMN lat REAL DEFAULT NULL"); } catch {}
 try { db.exec("ALTER TABLE stores ADD COLUMN lng REAL DEFAULT NULL"); } catch {}
 

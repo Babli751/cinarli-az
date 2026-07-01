@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { api, getImageUrl, type Product, type Category, type Brand } from "@/lib/api";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, X, Search, ImageIcon, TrendingUp, Flame } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Search, ImageIcon, TrendingUp, Flame, Shuffle } from "lucide-react";
 
 export const Route = createFileRoute("/admin/mehsullar")({
   component: ProductsAdmin,
@@ -93,6 +93,26 @@ function ProductsAdmin() {
     }
   };
 
+  const randomizePopular = async () => {
+    try {
+      const all = items.filter(p => p.is_active);
+      const picked = [...all].sort(() => Math.random() - 0.5).slice(0, 12);
+      await Promise.all(all.map(p => api.setPopular(p.id, picked.some(s => s.id === p.id))));
+      load();
+      toast.success("Populyar məhsullar yeniləndi");
+    } catch { toast.error("Xəta"); }
+  };
+
+  const randomizeMostSold = async () => {
+    try {
+      const all = items.filter(p => p.is_active);
+      const picked = [...all].sort(() => Math.random() - 0.5).slice(0, 12);
+      await Promise.all(all.map(p => api.setMostSold(p.id, picked.some(s => s.id === p.id))));
+      load();
+      toast.success("Çox satılan məhsullar yeniləndi");
+    } catch { toast.error("Xəta"); }
+  };
+
 const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -120,10 +140,20 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
           <h1 className="text-2xl font-black md:text-3xl">Məhsullar</h1>
           <p className="text-muted-foreground">{filtered.length} / {items.length} məhsul</p>
         </div>
-        <button onClick={() => { setEditing({ is_active: 1, image: "", stock: 0, price: 0, discount: 0 }); setExtraImages([]); }}
-          className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">
-          <Plus className="h-4 w-4" /> Yeni məhsul
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={randomizePopular} title="Populyar məhsulları random seç"
+            className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-700 hover:bg-blue-100 transition">
+            <Shuffle className="h-4 w-4" /> Populyar
+          </button>
+          <button onClick={randomizeMostSold} title="Çox satılanları random seç"
+            className="flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-semibold text-orange-700 hover:bg-orange-100 transition">
+            <Shuffle className="h-4 w-4" /> Çox satılan
+          </button>
+          <button onClick={() => { setEditing({ is_active: 1, image: "", stock: 0, price: 0, discount: 0 }); setExtraImages([]); }}
+            className="flex items-center gap-2 rounded-xl bg-[var(--brand)] px-5 py-2.5 font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">
+            <Plus className="h-4 w-4" /> Yeni məhsul
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

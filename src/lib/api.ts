@@ -205,6 +205,7 @@ export interface Category {
   is_hidden?: number;
   featured_product_id?: number | null;
   banner_credit_months?: number | null;
+  banner_company_id?: number | null;
   created_at?: string;
 }
 

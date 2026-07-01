@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { api, type Category } from "@/lib/api";
+import { api, type Category, type CreditCompany } from "@/lib/api";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, X, EyeOff, ChevronUp, ChevronDown, ChevronRight } from "lucide-react";
@@ -17,6 +17,7 @@ function CatsAdmin() {
   const [editMode, setEditMode] = useState<EditMode>("parent");
   const [productCounts, setProductCounts] = useState<Record<string, number>>({});
   const [allProducts, setAllProducts] = useState<import("@/lib/api").Product[]>([]);
+  const [creditCompanies, setCreditCompanies] = useState<CreditCompany[]>([]);
 
   const load = async () => {
     const [cats, products] = await Promise.all([api.getCategoriesAll(), api.getProducts()]);
@@ -26,7 +27,10 @@ function CatsAdmin() {
     products.forEach((p) => { if (p.category_slug) counts[p.category_slug] = (counts[p.category_slug] || 0) + 1; });
     setProductCounts(counts);
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.getCreditCompaniesAll().then(setCreditCompanies).catch(() => {});
+  }, []);
 
   const openNew = (mode: EditMode, parentId?: number) => {
     setEditMode(mode);
@@ -297,19 +301,15 @@ function CatsAdmin() {
                     </select>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-sm font-medium">Bannerdə aylıq ödəniş neçə aya bölünsün</label>
+                    <label className="mb-1.5 block text-sm font-medium">Bannerdə kredit şirkəti</label>
                     <select
                       className={inp}
-                      value={editing.banner_credit_months ?? ""}
-                      onChange={e => setEditing({ ...editing, banner_credit_months: e.target.value ? Number(e.target.value) : null })}>
-                      <option value="">— Məhsulun öz krediti (default) —</option>
-                      <option value={3}>3 aya</option>
-                      <option value={6}>6 aya</option>
-                      <option value={9}>9 aya</option>
-                      <option value={12}>12 aya</option>
-                      <option value={18}>18 aya</option>
-                      <option value={24}>24 aya</option>
-                      <option value={36}>36 aya</option>
+                      value={editing.banner_company_id ?? ""}
+                      onChange={e => setEditing({ ...editing, banner_company_id: e.target.value ? Number(e.target.value) : null })}>
+                      <option value="">— Göstərilməsin —</option>
+                      {creditCompanies.filter(co => co.type !== "nisye").map(co => (
+                        <option key={co.id} value={co.id}>{co.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as YeniRouteImport } from './routes/yeni'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SifarisRouteImport } from './routes/sifaris'
 import { Route as SebetRouteImport } from './routes/sebet'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OutletRouteImport } from './routes/outlet'
@@ -54,6 +55,11 @@ const YeniRoute = YeniRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SifarisRoute = SifarisRouteImport.update({
+  id: '/sifaris',
+  path: '/sifaris',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SebetRoute = SebetRouteImport.update({
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/outlet': typeof OutletRoute
   '/privacy': typeof PrivacyRoute
   '/sebet': typeof SebetRoute
+  '/sifaris': typeof SifarisRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
   '/admin/bannerler': typeof AdminBannerlerRoute
@@ -283,6 +290,7 @@ export interface FileRoutesByTo {
   '/outlet': typeof OutletRoute
   '/privacy': typeof PrivacyRoute
   '/sebet': typeof SebetRoute
+  '/sifaris': typeof SifarisRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
   '/admin/bannerler': typeof AdminBannerlerRoute
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/outlet': typeof OutletRoute
   '/privacy': typeof PrivacyRoute
   '/sebet': typeof SebetRoute
+  '/sifaris': typeof SifarisRoute
   '/terms': typeof TermsRoute
   '/yeni': typeof YeniRoute
   '/admin/bannerler': typeof AdminBannerlerRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/outlet'
     | '/privacy'
     | '/sebet'
+    | '/sifaris'
     | '/terms'
     | '/yeni'
     | '/admin/bannerler'
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/outlet'
     | '/privacy'
     | '/sebet'
+    | '/sifaris'
     | '/terms'
     | '/yeni'
     | '/admin/bannerler'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/outlet'
     | '/privacy'
     | '/sebet'
+    | '/sifaris'
     | '/terms'
     | '/yeni'
     | '/admin/bannerler'
@@ -476,6 +488,7 @@ export interface RootRouteChildren {
   OutletRoute: typeof OutletRoute
   PrivacyRoute: typeof PrivacyRoute
   SebetRoute: typeof SebetRoute
+  SifarisRoute: typeof SifarisRoute
   TermsRoute: typeof TermsRoute
   YeniRoute: typeof YeniRoute
   BrendSlugRoute: typeof BrendSlugRoute
@@ -498,6 +511,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sifaris': {
+      id: '/sifaris'
+      path: '/sifaris'
+      fullPath: '/sifaris'
+      preLoaderRoute: typeof SifarisRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sebet': {
@@ -792,6 +812,7 @@ const rootRouteChildren: RootRouteChildren = {
   OutletRoute: OutletRoute,
   PrivacyRoute: PrivacyRoute,
   SebetRoute: SebetRoute,
+  SifarisRoute: SifarisRoute,
   TermsRoute: TermsRoute,
   YeniRoute: YeniRoute,
   BrendSlugRoute: BrendSlugRoute,

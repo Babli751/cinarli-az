@@ -1,10 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Trash2, Plus, Minus, ShoppingCart, X, CreditCard, DoorOpen, Calendar, Handshake } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart } from "lucide-react";
 import { PageShell } from "@/components/SiteLayout";
 import { useCart } from "@/hooks/useCart";
-import { getImageUrl, api } from "@/lib/api";
-import { toast } from "sonner";
+import { getImageUrl } from "@/lib/api";
 
 export const Route = createFileRoute("/sebet")({
   component: CartPage,
@@ -23,18 +22,11 @@ function parseCoupon(code: string | null): { type: string; label: string; discou
 
 function CartPage() {
   const { items, removeItem, updateQty, clearCart, total } = useCart();
-  const [orderModal, setOrderModal] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
-  const [paymentType, setPaymentType] = useState<"card" | "cash" | "credit" | "nisye">("card");
-  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
   const [couponCode] = useState(() => localStorage.getItem(COUPON_KEY) ?? "");
   const [couponInput, setCouponInput] = useState("");
   const [couponApplied, setCouponApplied] = useState<ReturnType<typeof parseCoupon>>(null);
   const [couponError, setCouponError] = useState("");
-  const [promoInput, setPromoInput] = useState("");
-  const [promoResult, setPromoResult] = useState<{ discount: number; label: string } | null>(null);
-  const [promoError, setPromoError] = useState("");
-  const [promoBusy, setPromoBusy] = useState(false);
 
   const applyCoupon = () => {
     const parsed = parseCoupon(couponInput.trim().toUpperCase());
@@ -43,58 +35,7 @@ function CartPage() {
     setCouponError("");
   };
 
-  const applyPromo = async () => {
-    if (!promoInput.trim()) return;
-    setPromoBusy(true);
-    setPromoError("");
-    try {
-      const res = await api.validatePromo(promoInput.trim().toUpperCase(), finalTotalBase);
-      setPromoResult({ discount: res.discount, label: promoInput.trim().toUpperCase() });
-    } catch (e: any) {
-      setPromoError(e.message || "Promokod tapılmadı");
-      setPromoResult(null);
-    } finally {
-      setPromoBusy(false);
-    }
-  };
-
   const discountAmount = couponApplied ? Math.round(total * couponApplied.discountPct / 100) : 0;
-  const finalTotalBase = total - discountAmount;
-  const promoDiscount = promoResult?.discount ?? 0;
-  const finalTotal = finalTotalBase - promoDiscount;
-
-  const submitOrder = async () => {
-    if (!form.name.trim()) return toast.error("Ad mütləqdir");
-    if (!form.phone.trim()) return toast.error("Telefon mütləqdir");
-    setBusy(true);
-    const avgMonths = Math.round(items.reduce((s, i) => s + (i.credit_months || 12) * i.qty, 0) / Math.max(items.reduce((s, i) => s + i.qty, 0), 1));
-    try {
-      await api.createOrder({
-        customer_name: form.name,
-        phone: form.phone,
-        address: form.address,
-        notes: couponApplied ? `${form.notes ? form.notes + " | " : ""}Kupon: ${couponApplied.label}` : form.notes,
-        total: finalTotal,
-        items: JSON.stringify(items.map(i => ({ id: i.id, name: i.name, qty: i.qty, price: i.price }))),
-        status: "pending",
-        payment_type: paymentType,
-        credit_months: paymentType === "credit" || paymentType === "nisye" ? avgMonths : undefined,
-        promo_code: promoResult ? promoResult.label : "",
-        promo_discount: promoResult ? promoResult.discount : 0,
-      });
-      toast.success("Sifarişiniz qəbul edildi! Tezliklə əlaqə saxlayacağıq.");
-      clearCart();
-      setOrderModal(false);
-      setForm({ name: "", phone: "", address: "", notes: "" });
-      setPaymentType("cash");
-      setPromoInput("");
-      setPromoResult(null);
-    } catch (e: any) {
-      toast.error(e.message);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   if (items.length === 0) {
     return (
@@ -117,7 +58,7 @@ function CartPage() {
             return (
               <div key={item.id} className="rounded-2xl border border-border bg-card p-3">
                 <div className="flex items-start gap-3">
-                  <div className="h-18 w-18 flex-shrink-0 overflow-hidden rounded-xl bg-secondary/30" style={{width:72,height:72}}>
+                  <div className="flex-shrink-0 overflow-hidden rounded-xl bg-secondary/30" style={{width:72,height:72}}>
                     {url
                       ? <img src={url} alt={item.name} className="h-full w-full object-contain" />
                       : <div className="flex h-full w-full items-center justify-center text-3xl">{item.image || "📦"}</div>}
@@ -158,9 +99,17 @@ function CartPage() {
               </div>
             ))}
           </div>
+
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-sm text-green-600">
+              <span>Kupon endirimi ({couponApplied?.label})</span>
+              <span>−{discountAmount} AZN</span>
+            </div>
+          )}
+
           <div className="border-t border-border pt-3 flex justify-between font-black text-lg">
             <span>Cəmi</span>
-            <span className="text-[var(--brand)]">{total} AZN</span>
+            <span className="text-[var(--brand)]">{total - discountAmount} AZN</span>
           </div>
 
           {/* Coupon */}
@@ -169,7 +118,7 @@ function CartPage() {
               <div className="flex gap-2">
                 <input
                   className="flex-1 rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-[var(--brand)] transition-colors"
-                  placeholder="Kupon kodu..."
+                  placeholder="Çarx kuponu..."
                   value={couponInput}
                   onChange={e => { setCouponInput(e.target.value); setCouponError(""); }}
                   onKeyDown={e => e.key === "Enter" && applyCoupon()}
@@ -179,7 +128,7 @@ function CartPage() {
                 </button>
               </div>
               {couponCode && (
-                <button onClick={() => { setCouponInput(couponCode); }} className="text-xs text-[var(--brand)] hover:underline">
+                <button onClick={() => setCouponInput(couponCode)} className="text-xs text-[var(--brand)] hover:underline">
                   Çarx kuponu: {couponCode}
                 </button>
               )}
@@ -196,119 +145,13 @@ function CartPage() {
             </div>
           )}
 
-          {discountAmount > 0 && (
-            <div className="flex justify-between font-black text-lg text-green-600">
-              <span>Endirimlə</span>
-              <span>{finalTotal} AZN</span>
-            </div>
-          )}
-
-          {(() => {
-            const avgMonths = Math.round(items.reduce((s, i) => s + (i.credit_months || 12) * i.qty, 0) / Math.max(items.reduce((s, i) => s + i.qty, 0), 1));
-            return (
-              <div className="rounded-xl bg-[var(--brand)]/5 p-3 text-xs text-center text-[var(--brand)] font-medium">
-                Faizsiz kredit: {(Math.ceil(finalTotal / avgMonths * 100) / 100).toFixed(2)} AZN/ay × {avgMonths} ay
-              </div>
-            );
-          })()}
-          <button onClick={() => setOrderModal(true)}
+          <button
+            onClick={() => navigate({ to: "/sifaris", search: { cart: 1, product_id: 0, qty: 1, name: "", phone: "", address: "", promo: "" } })}
             className="block w-full rounded-xl bg-[var(--brand)] py-3 text-center font-semibold text-[var(--brand-foreground)] hover:opacity-90 transition-opacity">
             Sifarişi təsdiqlə
           </button>
         </div>
       </div>
-
-      {/* Order modal */}
-      {orderModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm" onClick={() => setOrderModal(false)}>
-          <div onClick={e => e.stopPropagation()} className="w-full max-w-md rounded-2xl bg-background shadow-2xl max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4 flex-shrink-0">
-              <h2 className="text-lg font-bold">Sifariş məlumatları</h2>
-              <button onClick={() => setOrderModal(false)} className="rounded-lg p-1.5 hover:bg-secondary"><X className="h-5 w-5" /></button>
-            </div>
-            <div className="p-6 space-y-4 overflow-y-auto">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Ad Soyad *</label>
-                <input className={inp} placeholder="Məs: Əli Əliyev" value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Telefon *</label>
-                <input className={inp} placeholder="+994 50 000 00 00" value={form.phone}
-                  onChange={e => setForm({ ...form, phone: e.target.value })} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Çatdırılma ünvanı</label>
-                <input className={inp} placeholder="Şəhər, küçə, ev nömrəsi" value={form.address}
-                  onChange={e => setForm({ ...form, address: e.target.value })} />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Ödəniş üsulu</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    { key: "card",   Icon: CreditCard, label: "Kartla ödə" },
-                    { key: "cash",   Icon: DoorOpen,   label: "Qapıda ödə" },
-                    { key: "credit", Icon: Calendar,   label: "Taksitlə alıram" },
-                    { key: "nisye",  Icon: Handshake,  label: "Nisyə alıram" },
-                  ] as const).map(({ key, Icon, label }) => (
-                    <button key={key} type="button" onClick={() => setPaymentType(key)}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition-colors ${paymentType === key ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                      <Icon className="h-5 w-5" />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Promokod</label>
-                <div className="flex gap-2">
-                  <input className={`${inp} flex-1`} placeholder="Promokod..." value={promoInput}
-                    onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoResult(null); setPromoError(""); }}
-                    onKeyDown={e => e.key === "Enter" && applyPromo()} />
-                  <button onClick={applyPromo} disabled={promoBusy || !promoInput.trim()}
-                    className="rounded-xl border border-border px-3 py-2 text-sm font-semibold hover:bg-secondary disabled:opacity-40 transition-colors">
-                    {promoBusy ? "..." : "Tətbiq"}
-                  </button>
-                </div>
-                {promoResult && <p className="mt-1 text-xs text-green-600 font-semibold">✓ −{promoResult.discount} AZN endirim</p>}
-                {promoError && <p className="mt-1 text-xs text-destructive">{promoError}</p>}
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium">Qeyd (opsional)</label>
-                <textarea className={inp} rows={2} placeholder="Əlavə məlumat..." value={form.notes}
-                  onChange={e => setForm({ ...form, notes: e.target.value })} />
-              </div>
-              <div className="rounded-xl bg-secondary/40 px-4 py-3 space-y-1">
-                {(discountAmount > 0 || promoDiscount > 0) && (
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Məbləğ</span><span>{total} AZN</span>
-                  </div>
-                )}
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600 font-semibold">
-                    <span>{couponApplied?.label}</span><span>−{discountAmount} AZN</span>
-                  </div>
-                )}
-                {promoDiscount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600 font-semibold">
-                    <span>Promokod ({promoResult?.label})</span><span>−{promoDiscount} AZN</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold">
-                  <span>Cəmi məbləğ</span>
-                  <span className="text-[var(--brand)]">{finalTotal} AZN</span>
-                </div>
-              </div>
-              <button onClick={submitOrder} disabled={busy}
-                className="w-full rounded-xl bg-[var(--brand)] py-3 font-semibold text-[var(--brand-foreground)] hover:opacity-90 disabled:opacity-50 transition-opacity">
-                {busy ? "Göndərilir..." : "Sifarişi göndər"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </PageShell>
   );
 }
-
-const inp = "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-[var(--brand)] transition-colors";

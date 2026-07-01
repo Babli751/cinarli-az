@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
 import { Heart, Scale, Zap, ChevronRight, SlidersHorizontal, X } from "lucide-react";
-import { api, getImageUrl, type Product, type Category } from "@/lib/api";
+import { api, getImageUrl, type Product, type Category, type CreditCompany, type CreditPlan } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { SpinWheelBanner } from "@/components/SpinWheel";
@@ -32,12 +32,13 @@ function CategoryPage() {
   const [catsLoaded, setCatsLoaded] = useState(false);
   const [search, setSearch] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
-  // null = all products; string = filter by that sub slug
   const [subFilter, setSubFilter] = useState<string | null>(null);
+  const [creditCompanies, setCreditCompanies] = useState<CreditCompany[]>([]);
 
   useEffect(() => {
     api.getProducts({ active: true }).then(setAllProducts).catch(() => {});
     api.getCategories().then((cats) => { setCategories(cats); setCatsLoaded(true); }).catch(() => { setCatsLoaded(true); });
+    api.getCreditCompanies().then(setCreditCompanies).catch(() => {});
   }, []);
 
   useEffect(() => { setSubFilter(null); }, [slug]);
@@ -113,67 +114,57 @@ function CategoryPage() {
         {/* Featured product banner */}
         {(() => {
           if (allProducts.length === 0) return null;
-          const slugsInScope = isParent
-            ? [slug, ...subCats.map(c => c.slug)]
-            : [slug];
+          const slugsInScope = isParent ? [slug, ...subCats.map(c => c.slug)] : [slug];
           const pool = allProducts.filter(p => slugsInScope.includes(p.category_slug ?? ""));
           if (pool.length === 0) return null;
-          const pinned = cat?.featured_product_id
-            ? allProducts.find(p => p.id === cat.featured_product_id)
-            : null;
-          const bannerMonths = cat?.banner_credit_months || null;
+
+          const bannerCo = cat?.banner_company_id
+            ? creditCompanies.find(co => co.id === cat.banner_company_id) ?? null
+            : creditCompanies.find(co => co.is_active) ?? null;
+
+          const parsePlans = (raw: CreditPlan[] | string): CreditPlan[] => {
+            if (Array.isArray(raw)) return raw;
+            try { return JSON.parse(raw as string); } catch { return []; }
+          };
+
           const calcMonthly = (p: typeof pool[0]) => {
             const ap = p.extra_price ?? p.sale_price ?? (p.old_price && p.old_price > p.price ? p.price : p.discount > 0 ? Math.round(p.price * (1 - p.discount / 100)) : p.price);
-            const months = bannerMonths || p.credit_months || 12;
-            return { p, monthly: Math.ceil(ap / months * 100) / 100, months };
+            let months = p.credit_months || 12;
+            let rate = 0;
+            if (bannerCo) {
+              const plans = parsePlans(bannerCo.plans);
+              // max müddətli plan seç
+              const maxPlan = plans.reduce((a, b) => b.months > a.months ? b : a, plans[0]);
+              if (maxPlan) {
+                months = maxPlan.months;
+                const freeLimit = bannerCo.free_months != null ? bannerCo.free_months : (p.credit_months || 999);
+                rate = months > freeLimit ? (maxPlan.rate ?? 0) : 0;
+              }
+            }
+            const total = ap * (1 + rate / 100);
+            return { p, monthly: Math.ceil(total / months * 100) / 100, months };
           };
-          const cheapest = pinned
-            ? calcMonthly(pinned)
-            : calcMonthly(pool[Math.floor(Math.random() * pool.length)]);
+
+          const pinned = cat?.featured_product_id ? allProducts.find(p => p.id === cat.featured_product_id) : null;
+          const cheapest = pinned ? calcMonthly(pinned) : calcMonthly(pool[Math.floor(Math.random() * pool.length)]);
           const url = getImageUrl(cheapest.p.image);
+          const coLogoUrl = bannerCo?.logo ? getImageUrl(bannerCo.logo) : null;
+
           return (
             <Link to="/mehsul/$slug" params={{ slug: String(cheapest.p.id) }}
               className="mt-3 flex items-center gap-4 rounded-2xl border border-[var(--brand)]/30 bg-gradient-to-r from-[var(--brand)]/5 to-transparent px-4 py-3 hover:border-[var(--brand)]/60 transition-colors">
               {url && <img src={url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-contain bg-white" />}
               <div className="flex-1 min-w-0">
                 <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
+                {bannerCo && (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    {coLogoUrl
+                      ? <img src={coLogoUrl} alt={bannerCo.name} className="h-5 w-10 object-contain rounded" />
+                      : <span className="text-xs font-semibold text-muted-foreground">{bannerCo.name}</span>}
+                  </div>
+                )}
               </div>
               <div className="flex-shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">{cheapest.months} aya · ayda cəmi</p>
-                <p className="rounded-xl border-2 border-[var(--brand)] px-3 py-1 text-lg font-black text-[var(--brand)]">{cheapest.monthly.toFixed(2)} AZN</p>
-              </div>
-            </Link>
-          );
-        })()}        {/* Featured product banner */}
-        {(() => {
-          if (allProducts.length === 0) return null;
-          const slugsInScope = isParent
-            ? [slug, ...subCats.map(c => c.slug)]
-            : [slug];
-          const pool = allProducts.filter(p => slugsInScope.includes(p.category_slug ?? ""));
-          if (pool.length === 0) return null;
-          const pinned = cat?.featured_product_id
-            ? allProducts.find(p => p.id === cat.featured_product_id)
-            : null;
-          const bannerMonths = cat?.banner_credit_months || null;
-          const calcMonthly = (p: typeof pool[0]) => {
-            const ap = p.extra_price ?? p.sale_price ?? (p.old_price && p.old_price > p.price ? p.price : p.discount > 0 ? Math.round(p.price * (1 - p.discount / 100)) : p.price);
-            const months = bannerMonths || p.credit_months || 12;
-            return { p, monthly: Math.ceil(ap / months * 100) / 100, months };
-          };
-          const cheapest = pinned
-            ? calcMonthly(pinned)
-            : calcMonthly(pool[Math.floor(Math.random() * pool.length)]);
-          const url = getImageUrl(cheapest.p.image);
-          return (
-            <Link to="/mehsul/$slug" params={{ slug: String(cheapest.p.id) }}
-              className="mt-3 flex items-center gap-4 rounded-2xl border border-[var(--brand)]/30 bg-gradient-to-r from-[var(--brand)]/5 to-transparent px-4 py-3 hover:border-[var(--brand)]/60 transition-colors">
-              {url && <img src={url} alt="" className="h-14 w-14 flex-shrink-0 rounded-xl object-contain bg-white" />}
-              <div className="flex-1 min-w-0">
-                <p className="line-clamp-1 text-sm font-semibold">{cheapest.p.name}</p>
-              </div>
-              <div className="flex-shrink-0 text-right">
-                <p className="text-xs text-muted-foreground">{cheapest.months} aya · ayda cəmi</p>
                 <p className="rounded-xl border-2 border-[var(--brand)] px-3 py-1 text-lg font-black text-[var(--brand)]">{cheapest.monthly.toFixed(2)} AZN</p>
               </div>
             </Link>

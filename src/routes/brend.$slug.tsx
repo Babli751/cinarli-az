@@ -145,7 +145,7 @@ function BrandPage() {
                           <div className="mt-0.5 flex items-center gap-1 text-[10px] font-semibold text-yellow-500 truncate">
                             <Zap className="h-3 w-3 flex-shrink-0" /><span className="truncate">{p.interest_free !== 0 ? "Faizsiz " : ""}{months} aya {Math.round(activePrice / months)} AZN/ay</span>
                           </div>
-                          <button onClick={() => addItem({ id: p.id, name: p.name, price: activePrice, image: p.image })}
+                          <button onClick={() => addItem({ id: p.id, name: p.name, price: activePrice, image: p.image, credit_months: p.credit_months || 12 })}
                             className="mt-2 w-full rounded-lg bg-[var(--brand)] py-1.5 text-xs font-semibold text-[var(--brand-foreground)] hover:opacity-90">
                             Səbətə əlavə et
                           </button>

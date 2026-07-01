@@ -25,7 +25,6 @@ function StoreMap({ stores, selected, onSelect }: { stores: Store[]; selected: n
   useEffect(() => {
     if (!mapRef.current || leafletMap.current) return;
 
-    // Inject pulse CSS once
     if (!document.getElementById("store-pulse-css")) {
       const style = document.createElement("style");
       style.id = "store-pulse-css";
@@ -44,10 +43,9 @@ function StoreMap({ stores, selected, onSelect }: { stores: Store[]; selected: n
 
       const mappable = stores.filter(s => s.lat != null && s.lng != null);
 
-      if (mappable.length === 0) {
-        map.setView([40.4, 49.9], 7);
-        return;
-      }
+      map.setView([40.4, 47.5], 7);
+
+      if (mappable.length === 0) return;
 
       const pulseIcon = L.divIcon({
         className: "",
@@ -68,12 +66,6 @@ function StoreMap({ stores, selected, onSelect }: { stores: Store[]; selected: n
         markersRef.current[s.id] = marker;
       });
 
-      if (mappable.length === 1) {
-        map.setView([mappable[0].lat!, mappable[0].lng!], 13);
-      } else {
-        const group = L.featureGroup(Object.values(markersRef.current));
-        map.fitBounds(group.getBounds().pad(0.3));
-      }
     });
 
     return () => {
@@ -83,7 +75,6 @@ function StoreMap({ stores, selected, onSelect }: { stores: Store[]; selected: n
     };
   }, [stores]);
 
-  // Open/close popup when selected changes
   useEffect(() => {
     if (!leafletMap.current) return;
     Object.entries(markersRef.current).forEach(([id, marker]) => {
@@ -108,7 +99,6 @@ function Magazalar() {
 
   return (
     <PageShell title="Mağazalar" subtitle="Yaxınlıqdakı mağazanı seçin.">
-      {/* Leaflet xəritə */}
       <div className="mb-8 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <StoreMap stores={stores} selected={selected} onSelect={setSelected} />
         {mappable.length === 0 && (
@@ -118,7 +108,6 @@ function Magazalar() {
         )}
       </div>
 
-      {/* Mağaza kartları */}
       {stores.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">Hələ mağaza əlavə edilməyib</div>
       ) : (

@@ -1,10 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Heart, Scale, Share2, Truck, ShieldCheck, Store,
   ChevronRight, ShoppingCart, MousePointerClick, CreditCard, Star, Zap,
   ChevronLeft, ChevronRight as ChevronRightIcon, X as XIcon, Check,
-  ChevronDown, Plus, DoorOpen, Calendar, Handshake,
+  ChevronDown, Plus, DoorOpen, Calendar,
 } from "lucide-react";
 import { api, getImageUrl, type Product, type Category, type CreditCompany } from "@/lib/api";
 import { SiteHeader, SiteFooter } from "@/components/SiteLayout";
@@ -23,6 +23,7 @@ const parsePlans = (raw: import("@/lib/api").CreditPlan[] | string): import("@/l
 
 function ProductPage() {
   const { slug } = Route.useParams();
+  const navigate = useNavigate();
   const { user, login, register } = useAuth();
   const { addItem } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
@@ -303,10 +304,17 @@ function ProductPage() {
                 <span className="text-sm text-muted-foreground">({reviewCount} rəy)</span>
                 <span className="ml-auto text-xs text-muted-foreground">Məhsul kodu: <strong>#{product.id}</strong></span>
               </div>
-              <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${(product.stock > 0 || product.in_stock === 1) ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-600"}`}>
-                <Store className="h-3.5 w-3.5" />
-                {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
-              </span>
+              <div className="flex flex-col gap-1.5">
+                {(product.commission_free_months ?? 0) > 0 && (
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-[var(--brand)]/40 bg-[var(--brand)] px-3 py-1.5 text-xs font-bold text-white">
+                    💳 {product.commission_free_months} aya komissiyasız
+                  </span>
+                )}
+                <span className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${(product.stock > 0 || product.in_stock === 1) ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-600"}`}>
+                  <Store className="h-3.5 w-3.5" />
+                  {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
+                </span>
+              </div>
               <h1 className="text-2xl font-bold leading-snug lg:text-3xl">{product.name}</h1>
               {(() => {
                 type Color = { name: string; hex: string };
@@ -319,8 +327,8 @@ function ProductPage() {
                 const originalPrice = (() => {
                   if (product.extra_price != null) return product.price;
                   if (product.sale_price != null) return product.price;
-                  if (product.old_price && product.old_price > product.price) return product.old_price;
                   if (product.discount > 0) return product.price;
+                  // old_price tək başına varsa göstərmə — real endirim yoxdur
                   return null as number | null;
                 })();
                 return (
@@ -377,9 +385,14 @@ function ProductPage() {
               <span className="ml-auto text-xs text-muted-foreground">Məhsul kodu: <strong>#{product.id}</strong></span>
             </div>
 
-            {/* Stok badge — mobil/tablet */}
-            <div className="block lg:hidden">
-              <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${(product.stock > 0 || product.in_stock === 1) ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-600"}`}>
+            {/* Stok + komissiyasız badge — mobil/tablet */}
+            <div className="block lg:hidden flex flex-col gap-1.5">
+              {(product.commission_free_months ?? 0) > 0 && (
+                <span className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-[var(--brand)]/40 bg-[var(--brand)] px-3 py-1.5 text-xs font-bold text-white">
+                  💳 {product.commission_free_months} aya komissiyasız
+                </span>
+              )}
+              <span className={`inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold ${(product.stock > 0 || product.in_stock === 1) ? "border-green-200 bg-green-50 text-green-700" : "border-red-200 bg-red-50 text-red-600"}`}>
                 <Store className="h-3.5 w-3.5" />
                 {product.in_stock === 1 && product.stock === 0 ? "Stokda var" : product.stock > 0 ? `Stokda: ${product.stock} ədəd` : "Stokda yoxdur"}
               </span>
@@ -643,26 +656,9 @@ function ProductPage() {
               onChange={e => setOrderForm({...orderForm, phone: e.target.value})} />
           </div>
           <div>
-            <label className="mb-1.5 block text-sm font-medium">Ünvan</label>
-            <input className={minp} placeholder="Çatdırılma ünvanı" value={orderForm.address}
+            <label className="mb-1.5 block text-sm font-medium">Çatdırılma ünvanı</label>
+            <input className={minp} placeholder="Ünvanı daxil edin" value={orderForm.address}
               onChange={e => setOrderForm({...orderForm, address: e.target.value})} />
-          </div>
-          <div>
-            <label className="mb-1.5 block text-sm font-medium">Ödəniş üsulu</label>
-            <div className="grid grid-cols-2 gap-2">
-              {([
-                { key: "card",   Icon: CreditCard,  label: "Kartla ödə" },
-                { key: "cash",   Icon: DoorOpen,    label: "Qapıda ödə" },
-                { key: "credit", Icon: Calendar,    label: "Taksitlə alıram" },
-                { key: "nisye",  Icon: Handshake,   label: "Taksit Kartı" },
-              ] as const).map(({ key, Icon, label }) => (
-                <button key={key} type="button" onClick={() => setOrderForm({...orderForm, payment_type: key})}
-                  className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-xs font-semibold transition-colors ${orderForm.payment_type === key ? "border-[var(--brand)] bg-[var(--brand)]/10 text-[var(--brand)]" : "border-border hover:bg-secondary"}`}>
-                  <Icon className="h-5 w-5" />
-                  {label}
-                </button>
-              ))}
-            </div>
           </div>
           <div>
             <label className="mb-1.5 block text-sm font-medium">Promokod</label>
@@ -678,9 +674,22 @@ function ProductPage() {
             {promoResult && <p className="mt-1 text-xs text-green-600 font-semibold">✓ −{promoResult.discount} AZN endirim</p>}
             {promoError && <p className="mt-1 text-xs text-destructive">{promoError}</p>}
           </div>
-          <button onClick={async () => { await submitOrder(); setMobileSheet(null); }} disabled={orderBusy}
-            className="w-full rounded-xl bg-[var(--brand)] py-3.5 font-semibold text-white hover:opacity-90 disabled:opacity-50">
-            {orderBusy ? "Göndərilir..." : "Sifarişi göndər"}
+          <button onClick={() => {
+            setMobileSheet(null);
+            navigate({
+              to: "/sifaris",
+              search: {
+                product_id: product.id,
+                qty: 1,
+                name: orderForm.name,
+                phone: orderForm.phone,
+                address: orderForm.address,
+                promo: orderForm.promo,
+              },
+            });
+          }}
+            className="w-full rounded-xl bg-[var(--brand)] py-3.5 font-semibold text-white hover:opacity-90">
+            Sifarişi rəsmiləşdir →
           </button>
         </div>
       </MobileSheet>
@@ -699,26 +708,9 @@ function ProductPage() {
         </div>
         <div className="px-4 pb-6 space-y-4">
           {(() => {
-            const nisyeCompanies = creditCompanies.filter(co => co.type === "nisye");
             const creditOnlyCompanies = creditCompanies.filter(co => co.type !== "nisye");
-            const nisyeActive = orderForm.payment_type === "nisye" || creditCompanies.some(co => co.type === "nisye" && orderForm.payment_type === `cc_${co.id}`);
             return (
               <div className="flex gap-2 overflow-x-auto pb-1">
-                {/* Nisyə al bölməsi */}
-                <button onClick={() => {
-                  if (nisyeCompanies.length > 0) {
-                    setOrderForm({...orderForm, payment_type: `cc_${nisyeCompanies[0].id}`});
-                    const plans = parsePlans(nisyeCompanies[0].plans);
-                    setCreditSelectedMonths(plans[0]?.months ?? 12);
-                  } else {
-                    setOrderForm({...orderForm, payment_type: "nisye"});
-                  }
-                }}
-                  className={`flex-shrink-0 flex items-center justify-center gap-1.5 rounded-xl border-2 px-3 text-xs font-semibold transition overflow-hidden ${nisyeActive ? "border-foreground bg-foreground text-background" : "border-border hover:border-foreground"}`}
-                  style={{height: 44, minWidth: 96}}>
-                  🤝 Taksit Kartı
-                </button>
-                {/* Kredit şirkətləri */}
                 {creditOnlyCompanies.map(co => {
                   const logoUrl = getImageUrl(co.logo);
                   const active = orderForm.payment_type === `cc_${co.id}`;
@@ -880,7 +872,6 @@ function CreditCarousel({ companies, price, creditMonths, onOpen }: {
   onOpen: () => void;
 }) {
   const [idx, setIdx] = useState(0);
-  const monthly = (Math.ceil(price / creditMonths * 100) / 100).toFixed(2);
 
   useEffect(() => {
     if (companies.length <= 1) return;
@@ -890,6 +881,18 @@ function CreditCarousel({ companies, price, creditMonths, onOpen }: {
 
   const co = companies[idx];
   const logoUrl = getImageUrl(co.logo);
+
+  // Per-company free months limit
+  const freeLimit = co.free_months != null ? co.free_months : creditMonths;
+  const isFree = creditMonths <= freeLimit;
+  const coPlans = parsePlans(co.plans);
+  const plan = coPlans.find(p => p.months === creditMonths) ?? coPlans.reduce((a, b) => Math.abs(b.months - creditMonths) < Math.abs(a.months - creditMonths) ? b : a, coPlans[0]);
+  const rate = isFree ? 0 : (plan?.rate ?? 0);
+  const total = price * (1 + rate / 100);
+  const monthly = (Math.ceil(total / creditMonths * 100) / 100).toFixed(2);
+  const subtitle = isFree
+    ? `${co.name} ilə ${creditMonths} aya faizsiz · komissiyasız`
+    : `${co.name} ilə ${creditMonths} ay · +${rate}% faiz`;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border-2 border-[var(--accent-orange)]">
@@ -903,7 +906,7 @@ function CreditCarousel({ companies, price, creditMonths, onOpen }: {
         </div>
         <div className="min-w-0">
           <div className="text-xl font-extrabold leading-tight">{monthly} AZN × {creditMonths} ay</div>
-          <div className="text-sm text-muted-foreground mt-0.5 truncate">{co.name} ilə {creditMonths} aya faizsiz ödə!</div>
+          <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{subtitle}</div>
         </div>
       </button>
       {/* Dots */}
